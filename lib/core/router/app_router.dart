@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../features/welcome/presentation/welcome_screen.dart';
+import '../../features/welcome/presentation/screens/welcome_screen.dart';
 
 /// Centralised route definitions for the application.
 ///
