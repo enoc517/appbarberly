@@ -1,17 +1,25 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:firebase_core/firebase_core.dart';
 
-import 'app.dart';
+import 'core/router/app_router.dart';
+import 'firebase_options.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  runApp(const MyApp());
+}
 
-  // Edge-to-edge UI for the immersive welcome experience.
-  SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
-  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
-    statusBarColor: Colors.transparent,
-    systemNavigationBarColor: Colors.transparent,
-  ));
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
 
-  runApp(const App());
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp.router(
+      routerConfig: AppRouter.router,
+      debugShowCheckedModeBanner: false,
+    );
+  }
 }

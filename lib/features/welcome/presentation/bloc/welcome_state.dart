@@ -1,20 +1,18 @@
 import 'package:equatable/equatable.dart';
 
-/// Possible navigation targets from the Welcome screen.
-enum WelcomeNavigation { none, login, onboarding }
+enum WelcomeStatus { initial, loading, goToLogin, goToHome }
 
-/// State for the Welcome feature.
 class WelcomeState extends Equatable {
-  final WelcomeNavigation navigation;
+  final WelcomeStatus status;
 
-  const WelcomeState({this.navigation = WelcomeNavigation.none});
+  const WelcomeState({this.status = WelcomeStatus.initial});
 
-  WelcomeState copyWith({WelcomeNavigation? navigation}) {
+  WelcomeState copyWith({WelcomeStatus? status}) {
     return WelcomeState(
-      navigation: navigation ?? this.navigation,
+      status: status ?? this.status,
     );
   }
 
   @override
-  List<Object?> get props => [navigation];
+  List<Object?> get props => [status];
 }

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "241008140977",
+    "project_id": "app-barberly",
+    "storage_bucket": "app-barberly.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:241008140977:android:85340f5340d311bd273890",
+        "android_client_info": {
+          "package_name": "com.example.barberly"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDtZgD5KUuQkmSft7kL2kzHbuKLI4QC8-0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
