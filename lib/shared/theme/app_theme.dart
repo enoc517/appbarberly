@@ -2,35 +2,40 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 /// ─────────────────────────────────────────────────────────────────────────────
-/// Stitch & Style — "Celestial Tailor" Design System
-/// Based on DESIGN.md: Space Blue palette, tonal layering, no-line rule.
+/// Stitch & Style — Galactic Grooming Theme
+/// Aligned to DESIGN.md + palette reference.
+/// Tonal layering, no-divider rule, editorial typography.
 /// ─────────────────────────────────────────────────────────────────────────────
 
 class AppColors {
   AppColors._();
 
-  // ── Core Palette ──────────────────────────────────────────────────────────
-  static const Color primary = Color(0xFF000000);
+  // ── Brand palette ---------------------------------------------------------
+  // Primary navy from the palette reference.
+  static const Color primary = Color(0xFF0D1B2A);
   static const Color onPrimary = Color(0xFFFFFFFF);
   static const Color primaryContainer = Color(0xFF0F1C2C);
-  static const Color onPrimaryContainer = Color(0xFF778598);
+  static const Color onPrimaryContainer = Color(0xFFBAC8DC);
 
-  static const Color secondary = Color(0xFFB7102A);
+  // Secondary red accent.
+  static const Color secondary = Color(0xFFE63946);
   static const Color onSecondary = Color(0xFFFFFFFF);
-  static const Color secondaryContainer = Color(0xFFDB313F);
-  static const Color onSecondaryContainer = Color(0xFFFFFBFF);
+  static const Color secondaryContainer = Color(0xFFE63946);
+  static const Color onSecondaryContainer = Color(0xFFFFFFFF);
 
-  static const Color tertiary = Color(0xFF000000);
+  // Tertiary pink accent.
+  static const Color tertiary = Color(0xFFFF4D6D);
   static const Color onTertiary = Color(0xFFFFFFFF);
-  static const Color tertiaryContainer = Color(0xFF40000F);
-  static const Color onTertiaryContainer = Color(0xFFEF4162);
+  static const Color tertiaryContainer = Color(0xFFFF4D6D);
+  static const Color onTertiaryContainer = Color(0xFFFFFFFF);
 
+  // ── Semantic ----------------------------------------------------------------
   static const Color error = Color(0xFFBA1A1A);
   static const Color onError = Color(0xFFFFFFFF);
   static const Color errorContainer = Color(0xFFFFDAD6);
   static const Color onErrorContainer = Color(0xFF93000A);
 
-  // ── Surfaces (Tonal Layering) ─────────────────────────────────────────────
+  // ── Surfaces (tonal layering) ----------------------------------------------
   static const Color surface = Color(0xFFF8F9FA);
   static const Color surfaceBright = Color(0xFFF8F9FA);
   static const Color surfaceDim = Color(0xFFD9DADB);
@@ -54,7 +59,7 @@ class AppColors {
   static const Color inverseOnSurface = Color(0xFFF0F1F2);
   static const Color inversePrimary = Color(0xFFBAC8DC);
 
-  // ── Fixed Tones ───────────────────────────────────────────────────────────
+  // ── Fixed tones ------------------------------------------------------------
   static const Color primaryFixed = Color(0xFFD6E4F9);
   static const Color primaryFixedDim = Color(0xFFBAC8DC);
   static const Color secondaryFixed = Color(0xFFFFDAD8);
@@ -62,18 +67,14 @@ class AppColors {
   static const Color tertiaryFixed = Color(0xFFFFDADB);
   static const Color tertiaryFixedDim = Color(0xFFFFB2B8);
 
-  // ── Semantic / Shorthand ──────────────────────────────────────────────────
-  /// "Lilo Red" — high-impact CTAs and tropical pink accents.
-  static const Color liloRed = secondaryContainer;
+  // ── Semantic helpers -------------------------------------------------------
+  static const Color liloRed = secondary;
 
-  /// Ambient shadow color per DESIGN.md: on_surface at 6% opacity.
   static Color ambientShadow = onSurface.withValues(alpha: 0.06);
-
-  /// Ghost border fallback: outline_variant at 15% opacity.
   static Color ghostBorder = outlineVariant.withValues(alpha: 0.15);
 }
 
-// ── Typography ────────────────────────────────────────────────────────────────
+// ── Typography ---------------------------------------------------------------
 
 class AppTypography {
   AppTypography._();
@@ -81,7 +82,6 @@ class AppTypography {
   static const String headlineFamily = 'Manrope';
   static const String bodyFamily = 'Inter';
 
-  // Display — Manrope, editorial-grade
   static const TextStyle displayLarge = TextStyle(
     fontFamily: headlineFamily,
     fontSize: 56,
@@ -105,7 +105,6 @@ class AppTypography {
     height: 1.22,
   );
 
-  // Headlines — Manrope, authoritative
   static const TextStyle headlineLarge = TextStyle(
     fontFamily: headlineFamily,
     fontSize: 32,
@@ -127,7 +126,6 @@ class AppTypography {
     height: 1.33,
   );
 
-  // Title — Manrope
   static const TextStyle titleLarge = TextStyle(
     fontFamily: headlineFamily,
     fontSize: 22,
@@ -151,7 +149,6 @@ class AppTypography {
     height: 1.43,
   );
 
-  // Body — Inter
   static const TextStyle bodyLarge = TextStyle(
     fontFamily: bodyFamily,
     fontSize: 16,
@@ -176,7 +173,6 @@ class AppTypography {
     height: 1.33,
   );
 
-  // Labels — Inter
   static const TextStyle labelLarge = TextStyle(
     fontFamily: bodyFamily,
     fontSize: 14,
@@ -202,20 +198,20 @@ class AppTypography {
   );
 }
 
-// ── Roundedness Scale ─────────────────────────────────────────────────────────
+// ── Roundedness --------------------------------------------------------------
 
 class AppRadius {
   AppRadius._();
 
-  static const double sm = 2.0;
-  static const double md = 4.0;
-  static const double lg = 4.0;
-  static const double xl = 8.0;
-  static const double full = 12.0;
+  static const double sm = 4.0;
+  static const double md = 8.0;
+  static const double lg = 10.0;
+  static const double xl = 12.0; // matches DESIGN.md's 0.75rem
+  static const double full = 999.0;
   static const double circle = 999.0;
 }
 
-// ── Theme Builder ─────────────────────────────────────────────────────────────
+// ── Theme --------------------------------------------------------------------
 
 class AppTheme {
   AppTheme._();
@@ -259,12 +255,19 @@ class AppTheme {
       colorScheme: colorScheme,
       scaffoldBackgroundColor: AppColors.background,
       fontFamily: AppTypography.bodyFamily,
+      splashFactory: InkSparkle.splashFactory,
 
       appBarTheme: const AppBarTheme(
+        backgroundColor: Colors.transparent,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        centerTitle: false,
         systemOverlayStyle: SystemUiOverlayStyle(
           statusBarColor: Colors.transparent,
-          statusBarIconBrightness: Brightness.light,
+          statusBarIconBrightness: Brightness.dark,
+          statusBarBrightness: Brightness.light,
           systemNavigationBarColor: Colors.transparent,
+          systemNavigationBarIconBrightness: Brightness.dark,
         ),
       ),
 
@@ -288,15 +291,15 @@ class AppTheme {
 
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          backgroundColor: AppColors.secondaryContainer,
-          foregroundColor: AppColors.onSecondaryContainer,
+          backgroundColor: AppColors.primaryContainer,
+          foregroundColor: AppColors.onPrimary,
           textStyle: AppTypography.labelLarge.copyWith(
             fontFamily: AppTypography.headlineFamily,
             fontWeight: FontWeight.w700,
           ),
-          padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
+          padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.full),
+            borderRadius: BorderRadius.circular(AppRadius.xl),
           ),
           elevation: 0,
         ),
@@ -310,9 +313,9 @@ class AppTheme {
             fontFamily: AppTypography.headlineFamily,
             fontWeight: FontWeight.w700,
           ),
-          padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
+          padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.full),
+            borderRadius: BorderRadius.circular(AppRadius.xl),
           ),
           elevation: 0,
         ),
@@ -325,11 +328,21 @@ class AppTheme {
             fontFamily: AppTypography.headlineFamily,
             fontWeight: FontWeight.w600,
           ),
-          padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
+          padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.full),
+            borderRadius: BorderRadius.circular(AppRadius.xl),
           ),
           side: BorderSide(color: AppColors.ghostBorder),
+        ),
+      ),
+
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: AppColors.secondary,
+          textStyle: AppTypography.labelLarge.copyWith(
+            fontFamily: AppTypography.bodyFamily,
+            fontWeight: FontWeight.w700,
+          ),
         ),
       ),
 
@@ -348,8 +361,18 @@ class AppTheme {
           borderRadius: BorderRadius.circular(AppRadius.xl),
           borderSide: BorderSide.none,
         ),
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.xl),
+          borderSide: BorderSide.none,
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.xl),
+          borderSide: BorderSide.none,
+        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        hintStyle: AppTypography.bodyMedium.copyWith(
+          color: AppColors.outline,
+        ),
         labelStyle: AppTypography.bodyMedium.copyWith(
           color: AppColors.onSurfaceVariant,
         ),
@@ -366,8 +389,33 @@ class AppTheme {
 
       dividerTheme: const DividerThemeData(
         thickness: 0,
-        space: 12,
+        space: 0,
         color: Colors.transparent,
+      ),
+
+      chipTheme: ChipThemeData(
+        backgroundColor: AppColors.surfaceContainer,
+        selectedColor: AppColors.primaryContainer,
+        secondarySelectedColor: AppColors.secondaryContainer,
+        labelStyle: AppTypography.labelMedium.copyWith(
+          color: AppColors.onSurface,
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.full),
+        ),
+        side: BorderSide.none,
+      ),
+
+      snackBarTheme: SnackBarThemeData(
+        backgroundColor: AppColors.primaryContainer,
+        contentTextStyle: AppTypography.bodyMedium.copyWith(
+          color: AppColors.onPrimary,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.xl),
+        ),
+        behavior: SnackBarBehavior.floating,
       ),
     );
   }

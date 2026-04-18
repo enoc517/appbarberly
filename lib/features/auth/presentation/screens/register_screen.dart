@@ -3,21 +3,27 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../shared/theme/app_theme.dart';
 
-class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+class RegisterScreen extends StatefulWidget {
+  const RegisterScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  State<RegisterScreen> createState() => _RegisterScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _RegisterScreenState extends State<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
+  final _fullNameController = TextEditingController();
+  final _phoneController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+
   bool _obscurePassword = true;
+  bool _isProfessional = false;
 
   @override
   void dispose() {
+    _fullNameController.dispose();
+    _phoneController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
@@ -28,9 +34,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
     FocusScope.of(context).unfocus();
 
-    // TODO: Conectar con AuthBloc / use case de login.
+    // TODO: Conectar con AuthBloc / use case de registro.
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Login pendiente de integración')),
+      const SnackBar(content: Text('Registro pendiente de integración')),
     );
   }
 
@@ -38,7 +44,6 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     final width = MediaQuery.sizeOf(context).width;
     final isWide = width >= 900;
-    final scheme = Theme.of(context).colorScheme;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -63,32 +68,35 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
             Center(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 28,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 1120),
                   child: isWide
                       ? Row(
                           children: [
-                            Expanded(
-                              child: _BrandPanel(theme: Theme.of(context)),
-                            ),
+                            Expanded(child: _BrandPanel(theme: Theme.of(context))),
                             const SizedBox(width: 32),
                             Expanded(
-                              child: _LoginCard(
+                              child: _RegisterCard(
                                 formKey: _formKey,
+                                fullNameController: _fullNameController,
+                                phoneController: _phoneController,
                                 emailController: _emailController,
                                 passwordController: _passwordController,
                                 obscurePassword: _obscurePassword,
+                                isProfessional: _isProfessional,
                                 onTogglePassword: () {
                                   setState(() {
                                     _obscurePassword = !_obscurePassword;
                                   });
                                 },
+                                onToggleProfessional: (value) {
+                                  setState(() {
+                                    _isProfessional = value;
+                                  });
+                                },
                                 onSubmit: _submit,
-                                onGoRegister: () => context.go('/register'),
+                                onGoLogin: () => context.go('/login'),
                               ),
                             ),
                           ],
@@ -96,20 +104,27 @@ class _LoginScreenState extends State<LoginScreen> {
                       : Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const _BrandHeader(),
                             const SizedBox(height: 28),
-                            _LoginCard(
+                            _RegisterCard(
                               formKey: _formKey,
+                              fullNameController: _fullNameController,
+                              phoneController: _phoneController,
                               emailController: _emailController,
                               passwordController: _passwordController,
                               obscurePassword: _obscurePassword,
+                              isProfessional: _isProfessional,
                               onTogglePassword: () {
                                 setState(() {
                                   _obscurePassword = !_obscurePassword;
                                 });
                               },
+                              onToggleProfessional: (value) {
+                                setState(() {
+                                  _isProfessional = value;
+                                });
+                              },
                               onSubmit: _submit,
-                              onGoRegister: () => context.go('/register'),
+                              onGoLogin: () => context.go('/login'),
                             ),
                           ],
                         ),
@@ -123,24 +138,32 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 }
 
-class _LoginCard extends StatelessWidget {
-  const _LoginCard({
+class _RegisterCard extends StatelessWidget {
+  const _RegisterCard({
     required this.formKey,
+    required this.fullNameController,
+    required this.phoneController,
     required this.emailController,
     required this.passwordController,
     required this.obscurePassword,
+    required this.isProfessional,
     required this.onTogglePassword,
+    required this.onToggleProfessional,
     required this.onSubmit,
-    required this.onGoRegister,
+    required this.onGoLogin,
   });
 
   final GlobalKey<FormState> formKey;
+  final TextEditingController fullNameController;
+  final TextEditingController phoneController;
   final TextEditingController emailController;
   final TextEditingController passwordController;
   final bool obscurePassword;
+  final bool isProfessional;
   final VoidCallback onTogglePassword;
+  final ValueChanged<bool> onToggleProfessional;
   final VoidCallback onSubmit;
-  final VoidCallback onGoRegister;
+  final VoidCallback onGoLogin;
 
   @override
   Widget build(BuildContext context) {
@@ -164,20 +187,65 @@ class _LoginCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Bienvenido de nuevo',
-              style: AppTypography.headlineMedium.copyWith(
-                color: AppColors.onSurface,
-                fontWeight: FontWeight.w800,
-                height: 1.1,
+            Center(
+              child: Column(
+                children: [
+                  Text(
+                    'Crear cuenta',
+                    textAlign: TextAlign.center,
+                    style: AppTypography.headlineMedium.copyWith(
+                      color: AppColors.onSurface,
+                      fontWeight: FontWeight.w800,
+                      height: 1.1,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    'Comienza tu viaje en barberos',
+                    textAlign: TextAlign.center,
+                    style: AppTypography.bodyLarge.copyWith(
+                      color: AppColors.onSurfaceVariant,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
               ),
             ),
             const SizedBox(height: 36),
+            const _FieldLabel(text: 'Nombre completo'),
+            const SizedBox(height: 10),
+            _TextField(
+              controller: fullNameController,
+              hintText: 'Ej. Julián Casablancas',
+              prefixIcon: Icons.person_rounded,
+              validator: (value) {
+                final text = value?.trim() ?? '';
+                if (text.isEmpty) return 'Ingresa tu nombre completo';
+                if (text.length < 3) return 'Ingresa un nombre válido';
+                return null;
+              },
+            ),
+            const SizedBox(height: 22),
+            const _FieldLabel(text: 'Teléfono'),
+            const SizedBox(height: 10),
+            _TextField(
+              controller: phoneController,
+              hintText: '+34 600 000 000',
+              keyboardType: TextInputType.phone,
+              prefixIcon: Icons.phone_rounded,
+              validator: (value) {
+                final text = value?.trim() ?? '';
+                if (text.isEmpty) return 'Ingresa tu teléfono';
+                if (text.length < 8) return 'Ingresa un teléfono válido';
+                return null;
+              },
+            ),
+            const SizedBox(height: 22),
             const _FieldLabel(text: 'Correo electrónico'),
             const SizedBox(height: 10),
             _TextField(
               controller: emailController,
-              hintText: 'tu@ejemplo.com',
+              hintText: 'nombre@ejemplo.com',
               keyboardType: TextInputType.emailAddress,
               prefixIcon: Icons.mail_outline_rounded,
               validator: (value) {
@@ -187,7 +255,7 @@ class _LoginCard extends StatelessWidget {
                 return null;
               },
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 22),
             const _FieldLabel(text: 'Contraseña'),
             const SizedBox(height: 10),
             _TextField(
@@ -199,8 +267,8 @@ class _LoginCard extends StatelessWidget {
                 onPressed: onTogglePassword,
                 icon: Icon(
                   obscurePassword
-                      ? Icons.visibility_outlined
-                      : Icons.visibility_off_outlined,
+                      ? Icons.visibility_rounded
+                      : Icons.visibility_off_rounded,
                 ),
               ),
               validator: (value) {
@@ -212,40 +280,22 @@ class _LoginCard extends StatelessWidget {
                 return null;
               },
             ),
-            const SizedBox(height: 8),
-            Align(
-              alignment: Alignment.centerRight,
-              child: TextButton(
-                onPressed: () {
-                  // TODO: Recuperación de contraseña.
-                },
-                style: TextButton.styleFrom(
-                  foregroundColor: AppColors.secondary,
-                  padding: EdgeInsets.zero,
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                ),
-                child: Text(
-                  '¿Olvidaste tu contraseña?',
-                  style: AppTypography.labelLarge.copyWith(
-                    color: AppColors.secondary,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
+            const SizedBox(height: 22),
+            _ProfessionalSwitch(
+              value: isProfessional,
+              onChanged: onToggleProfessional,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 28),
             SizedBox(
               width: double.infinity,
               height: 56,
               child: ElevatedButton(
                 onPressed: onSubmit,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primaryContainer, // #0F1C2C
+                  backgroundColor: AppColors.primaryContainer,
                   foregroundColor: AppColors.onPrimary,
                   elevation: 0,
-                  shadowColor: AppColors.primaryContainer.withValues(
-                    alpha: 0.18,
-                  ),
+                  shadowColor: AppColors.primaryContainer.withValues(alpha: 0.18),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(AppRadius.xl),
                   ),
@@ -255,101 +305,34 @@ class _LoginCard extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      'Entrar',
-                      style: TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w800,
-                      ),
+                      'Crear cuenta',
+                      style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
                     ),
                     SizedBox(width: 10),
-                    Icon(Icons.login_rounded, size: 22),
+                    Icon(Icons.arrow_forward_rounded, size: 22),
                   ],
                 ),
               ),
             ),
             const SizedBox(height: 28),
-            Row(
-              children: [
-                Expanded(
-                  child: Divider(
-                    height: 1,
-                    color: AppColors.outlineVariant.withValues(alpha: 0.35),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  child: Text(
-                    'O inicia sesión con',
-                    style: AppTypography.labelLarge.copyWith(
-                      color: AppColors.onSurfaceVariant,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-                Expanded(
-                  child: Divider(
-                    height: 1,
-                    color: AppColors.outlineVariant.withValues(alpha: 0.35),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-            Row(
-              children: [
-                Expanded(
-                  child: _SocialButton(
-                    label: 'Google',
-                    icon: Image.asset(
-                      'assets/icons/google.png',
-                      width: 22,
-                      height: 22,
-                      errorBuilder: (_, __, ___) => Icon(
-                        Icons.g_mobiledata_rounded,
-                        size: 28,
-                        color: AppColors.onSurface,
-                      ),
-                    ),
-                    onPressed: () {
-                      // TODO: Google sign-in.
-                    },
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: _SocialButton(
-                    label: 'Apple',
-                    icon: Icon(
-                      Icons.apple_rounded,
-                      size: 24,
-                      color: AppColors.onSurface,
-                    ),
-                    onPressed: () {
-                      // TODO: Apple sign-in.
-                    },
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 22),
             Center(
               child: Wrap(
                 crossAxisAlignment: WrapCrossAlignment.center,
                 alignment: WrapAlignment.center,
                 children: [
                   Text(
-                    '¿Aún no eres parte del equipo? ',
+                    '¿Ya tienes cuenta? ',
                     style: AppTypography.bodyMedium.copyWith(
                       color: AppColors.onSurfaceVariant,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
                   GestureDetector(
-                    onTap: onGoRegister,
+                    onTap: onGoLogin,
                     child: Text(
-                      'Registrarse',
+                      'Iniciar sesión',
                       style: AppTypography.bodyMedium.copyWith(
-                        color: AppColors.onSurface,
+                        color: AppColors.secondary,
                         fontWeight: FontWeight.w800,
                       ),
                     ),
@@ -364,29 +347,56 @@ class _LoginCard extends StatelessWidget {
   }
 }
 
-class _BrandHeader extends StatelessWidget {
-  const _BrandHeader();
+class _ProfessionalSwitch extends StatelessWidget {
+  const _ProfessionalSwitch({
+    required this.value,
+    required this.onChanged,
+  });
+
+  final bool value;
+  final ValueChanged<bool> onChanged;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Image.asset('assets/logos/logo4.png', height: 110, fit: BoxFit.contain),
-
-        const SizedBox(height: 8),
-        Text(
-          'Una experiencia única',
-          textAlign: TextAlign.center,
-          style: AppTypography.bodyLarge.copyWith(
-            color: AppColors.onSurfaceVariant,
-            fontWeight: FontWeight.w500,
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Perfil Profesional',
+                  style: AppTypography.titleLarge.copyWith(
+                    color: AppColors.onSurface,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Soy Barbero / Dueño de local',
+                  style: AppTypography.bodyMedium.copyWith(
+                    color: AppColors.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
-      ],
+          Switch.adaptive(
+            value: value,
+            onChanged: onChanged,
+            activeThumbColor: AppColors.secondaryContainer,
+            activeTrackColor: AppColors.secondaryContainer.withValues(alpha: 0.22),
+            inactiveThumbColor: Colors.white,
+            inactiveTrackColor: AppColors.surfaceContainerHighest,
+          ),
+        ],
+      ),
     );
   }
 }
+
 
 class _BrandPanel extends StatelessWidget {
   const _BrandPanel({required this.theme});
@@ -404,9 +414,7 @@ class _BrandPanel extends StatelessWidget {
           end: Alignment.bottomRight,
           colors: [AppColors.surface, AppColors.surfaceContainerLow],
         ),
-        border: Border.all(
-          color: AppColors.outlineVariant.withValues(alpha: 0.6),
-        ),
+        border: Border.all(color: AppColors.outlineVariant.withValues(alpha: 0.6)),
       ),
       child: Stack(
         children: [
@@ -433,9 +441,19 @@ class _BrandPanel extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Image.asset(
-                    'assets/logos/logo4.png',
+                    'assets/logos/logo3.png',
                     height: 140,
                     fit: BoxFit.contain,
+                  ),
+                  const SizedBox(height: 28),
+                  Text(
+                    'Barberly',
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.displaySmall?.copyWith(
+                      fontSize: 44,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.onSurface,
+                    ),
                   ),
                   const SizedBox(height: 12),
                   Text(
@@ -469,6 +487,7 @@ class _FieldLabel extends StatelessWidget {
       style: AppTypography.labelLarge.copyWith(
         color: AppColors.onSurfaceVariant,
         fontWeight: FontWeight.w700,
+        letterSpacing: 1.1,
       ),
     );
   }
@@ -514,74 +533,26 @@ class _TextField extends StatelessWidget {
         fillColor: AppColors.surfaceContainerHighest,
         prefixIcon: Icon(prefixIcon, color: AppColors.outline),
         suffixIcon: suffixIcon,
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 18,
-          vertical: 18,
-        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(22),
+          borderRadius: BorderRadius.circular(AppRadius.xl),
           borderSide: BorderSide.none,
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(22),
+          borderRadius: BorderRadius.circular(AppRadius.xl),
           borderSide: BorderSide.none,
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(22),
-          borderSide: BorderSide(color: AppColors.primaryContainer, width: 1.5),
+          borderRadius: BorderRadius.circular(AppRadius.xl),
+          borderSide: BorderSide.none,
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(22),
-          borderSide: const BorderSide(color: Colors.redAccent, width: 1.2),
+          borderRadius: BorderRadius.circular(AppRadius.xl),
+          borderSide: BorderSide.none,
         ),
         focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(22),
-          borderSide: const BorderSide(color: Colors.redAccent, width: 1.5),
-        ),
-      ),
-    );
-  }
-}
-
-class _SocialButton extends StatelessWidget {
-  const _SocialButton({
-    required this.label,
-    required this.icon,
-    required this.onPressed,
-  });
-
-  final String label;
-  final Widget icon;
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 56,
-      child: OutlinedButton(
-        onPressed: onPressed,
-        style: OutlinedButton.styleFrom(
-          backgroundColor: AppColors.surfaceContainer,
-          side: BorderSide(
-            color: AppColors.outlineVariant.withValues(alpha: 0.45),
-          ),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(18),
-          ),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            icon,
-            const SizedBox(width: 12),
-            Text(
-              label,
-              style: AppTypography.labelLarge.copyWith(
-                color: AppColors.onSurface,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ],
+          borderRadius: BorderRadius.circular(AppRadius.xl),
+          borderSide: BorderSide.none,
         ),
       ),
     );
@@ -599,7 +570,10 @@ class _GlowCircle extends StatelessWidget {
     return Container(
       width: size,
       height: size,
-      decoration: BoxDecoration(shape: BoxShape.circle, color: color),
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: color,
+      ),
     );
   }
 }

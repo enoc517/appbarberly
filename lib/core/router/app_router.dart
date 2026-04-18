@@ -1,3 +1,4 @@
+import 'package:barberly/features/auth/presentation/screens/register_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -5,6 +6,7 @@ import 'package:go_router/go_router.dart';
 // ── Features ─────────────────────────────────────────────
 import '../../features/welcome/presentation/screens/welcome_screen.dart';
 import '../../features/welcome/presentation/bloc/welcome_bloc.dart';
+import '../../features/auth/presentation/screens/login_screen.dart';
 
 // ── Router ───────────────────────────────────────────────
 class AppRouter {
@@ -37,13 +39,13 @@ class AppRouter {
       GoRoute(
         path: login,
         name: 'login',
-        builder: (context, state) => const _PlaceholderScreen(title: 'Login'),
+        builder: (context, state) => const LoginScreen(),
       ),
       GoRoute(
         path: register,
         name: 'register',
         builder: (context, state) =>
-            const _PlaceholderScreen(title: 'Register'),
+            const RegisterScreen(),
       ),
       // ── Dashboard (barber) ────────────────────────────
       GoRoute(
