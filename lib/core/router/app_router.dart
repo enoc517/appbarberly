@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import '../../features/welcome/presentation/screens/welcome_screen.dart';
 import '../../features/welcome/presentation/bloc/welcome_bloc.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
+import '../../features/auth/presentation/screens/reset_password_screen.dart';
 
 // ── Router ───────────────────────────────────────────────
 class AppRouter {
@@ -18,6 +19,7 @@ class AppRouter {
   static const String dashboard = '/dashboard';
   static const String home = '/home';
   static const String register = '/register';
+  static const String reset_password = '/reset-password';
 
   // ── Router instance ────────────────────────────────────
   static final GoRouter router = GoRouter(
@@ -41,12 +43,21 @@ class AppRouter {
         name: 'login',
         builder: (context, state) => const LoginScreen(),
       ),
+
+      // ── Register ───────────────────────────────────────
       GoRoute(
         path: register,
         name: 'register',
-        builder: (context, state) =>
-            const RegisterScreen(),
+        builder: (context, state) => const RegisterScreen(),
       ),
+
+      // ── Reset Password ─────────────────────────────────
+      GoRoute(
+        path: reset_password,
+        name: 'reset_password',
+        builder: (context, state) => const ResetPasswordScreen(),
+      ),
+
       // ── Dashboard (barber) ────────────────────────────
       GoRoute(
         path: dashboard,
