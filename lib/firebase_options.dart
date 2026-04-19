@@ -17,10 +17,7 @@ import 'package:flutter/foundation.dart'
 class DefaultFirebaseOptions {
   static FirebaseOptions get currentPlatform {
     if (kIsWeb) {
-      throw UnsupportedError(
-        'DefaultFirebaseOptions have not been configured for web - '
-        'you can reconfigure this by running the FlutterFire CLI again.',
-      );
+      return web;
     }
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
@@ -28,15 +25,9 @@ class DefaultFirebaseOptions {
       case TargetPlatform.iOS:
         return ios;
       case TargetPlatform.macOS:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for macos - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return macos;
       case TargetPlatform.windows:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for windows - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return windows;
       case TargetPlatform.linux:
         throw UnsupportedError(
           'DefaultFirebaseOptions have not been configured for linux - '
@@ -50,19 +41,47 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyDtZgD5KUuQkmSft7kL2kzHbuKLI4QC8-0',
-    appId: '1:241008140977:android:85340f5340d311bd273890',
-    messagingSenderId: '241008140977',
-    projectId: 'app-barberly',
-    storageBucket: 'app-barberly.firebasestorage.app',
+    apiKey: 'AIzaSyBsPo5WL5uNqHSF44BiMfy-9e6vXEWG510',
+    appId: '1:566264148896:android:a3fa41b4dfef10f4992ac5',
+    messagingSenderId: '566264148896',
+    projectId: 'barberly-dev-6aef2',
+    storageBucket: 'barberly-dev-6aef2.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyBnmeFuHjA-QiH1YE4iAwXAAt9lvn_O1J0',
-    appId: '1:241008140977:ios:63d1201722cd9f46273890',
-    messagingSenderId: '241008140977',
-    projectId: 'app-barberly',
-    storageBucket: 'app-barberly.firebasestorage.app',
+    apiKey: 'AIzaSyAk_q09p2b_-BCo-1jGCQQrt_L1z57kSCU',
+    appId: '1:566264148896:ios:5b5135270172a253992ac5',
+    messagingSenderId: '566264148896',
+    projectId: 'barberly-dev-6aef2',
+    storageBucket: 'barberly-dev-6aef2.firebasestorage.app',
     iosBundleId: 'com.example.barberly',
   );
+
+  static const FirebaseOptions web = FirebaseOptions(
+    apiKey: 'AIzaSyCa0J5mCRDysAn3xCqSuC1DcCeFgdD5Z3U',
+    appId: '1:566264148896:web:0ef19f84c7dbcc79992ac5',
+    messagingSenderId: '566264148896',
+    projectId: 'barberly-dev-6aef2',
+    authDomain: 'barberly-dev-6aef2.firebaseapp.com',
+    storageBucket: 'barberly-dev-6aef2.firebasestorage.app',
+  );
+
+  static const FirebaseOptions macos = FirebaseOptions(
+    apiKey: 'AIzaSyAk_q09p2b_-BCo-1jGCQQrt_L1z57kSCU',
+    appId: '1:566264148896:ios:5b5135270172a253992ac5',
+    messagingSenderId: '566264148896',
+    projectId: 'barberly-dev-6aef2',
+    storageBucket: 'barberly-dev-6aef2.firebasestorage.app',
+    iosBundleId: 'com.example.barberly',
+  );
+
+  static const FirebaseOptions windows = FirebaseOptions(
+    apiKey: 'AIzaSyCa0J5mCRDysAn3xCqSuC1DcCeFgdD5Z3U',
+    appId: '1:566264148896:web:4d8f920146dfa4cc992ac5',
+    messagingSenderId: '566264148896',
+    projectId: 'barberly-dev-6aef2',
+    authDomain: 'barberly-dev-6aef2.firebaseapp.com',
+    storageBucket: 'barberly-dev-6aef2.firebasestorage.app',
+  );
+
 }
