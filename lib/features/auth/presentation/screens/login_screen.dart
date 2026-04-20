@@ -142,29 +142,6 @@ class _LoginCard extends StatelessWidget {
   final VoidCallback onSubmit;
   final VoidCallback onGoRegister;
 
-  Future<bool> _showConfirmPasswordChange(BuildContext context) async {
-    return await showDialog<bool>(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: const Text('¿Deseas cambiar tu contraseña?'),
-            content: const Text(
-              'Esta acción te llevará a la pantalla de restablecimiento.',
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context, false), // Retorna false
-                child: const Text('Cancelar'),
-              ),
-              FilledButton(
-                onPressed: () => Navigator.pop(context, true), // Retorna true
-                child: const Text('Sí, continuar'),
-              ),
-            ],
-          ),
-        ) ??
-        false; // El ?? false es por si el usuario cierra el diálogo tocando fuera de él
-  }
-
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -239,14 +216,8 @@ class _LoginCard extends StatelessWidget {
             Align(
               alignment: Alignment.centerRight,
               child: TextButton(
-                onPressed: () async {
-                  // Esperamos la respuesta del diálogo
-                  final bool confirmacion = await _showConfirmPasswordChange(
-                    context,
-                  );
-                  if (confirmacion) {                   
-                    GoRouter.of(context).go('/reset-password');
-                  }
+                onPressed: () async {                                                                      
+                  GoRouter.of(context).go('/forgot_password');                  
                 },
                 style: TextButton.styleFrom(
                   foregroundColor: AppColors.secondary,

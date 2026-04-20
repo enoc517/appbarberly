@@ -1,23 +1,23 @@
-import 'package:barberly/shared/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
-// Asumiendo que estas son las rutas de tus archivos según la estructura previa
-import '../bloc/reset_password_bloc.dart';
+import '/../../../shared/theme/app_theme.dart';
+// Asegúrate de que esta ruta apunte a tu nuevo bloc unificado
+import '../bloc/password_recovery_bloc.dart';
 
 class ResetPasswordScreen extends StatelessWidget {
   const ResetPasswordScreen({super.key});
 
-  static const String routeName = 'reset-password';
-  static const String routePath = '/reset-password';
+  static const String routeName = 'reset_password';
+  static const String routePath = '/reset_password';
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider<ResetPasswordBloc>(
-      create: (_) => ResetPasswordBloc(),
-      child: const _ResetPasswordView(),
-    );
+    // IMPORTANTE: Ya no creamos el BlocProvider aquí.
+    // Esta vista asume que el PasswordRecoveryBloc se está proveyendo
+    // desde el enrutador (GoRouter) para mantener la memoria de los 3 pasos.
+    return const _ResetPasswordView();
   }
 }
 
@@ -65,8 +65,9 @@ class _ResetPasswordViewState extends State<_ResetPasswordView> {
             ),
             onPressed: () {
               Navigator.pop(confirmContext);
-              context.read<ResetPasswordBloc>().add(
-                ResetPasswordSubmitted(
+              // Cambiamos el evento al nuevo NewPasswordSubmitted
+              context.read<PasswordRecoveryBloc>().add(
+                NewPasswordSubmitted(
                   newPassword: _passController.text,
                   confirmPassword: _confirmPassController.text,
                 ),
@@ -81,8 +82,6 @@ class _ResetPasswordViewState extends State<_ResetPasswordView> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Scaffold(
       backgroundColor: AppColors.surface,
       appBar: AppBar(
@@ -94,20 +93,22 @@ class _ResetPasswordViewState extends State<_ResetPasswordView> {
             color: AppColors.onSurface,
             size: 20,
           ),
-          onPressed: () => context.pop(),
+          onPressed: () => context
+              .pop(), // Mejor context.pop() para retroceder al token si es necesario
         ),
-
         centerTitle: true,
       ),
-      body: BlocListener<ResetPasswordBloc, ResetPasswordState>(
+      // Cambiamos a PasswordRecoveryBloc y State
+      body: BlocListener<PasswordRecoveryBloc, PasswordRecoveryState>(
         listener: (context, state) {
-          if (state.isSuccess) {
+          // Validamos contra el nuevo enum RecoveryStatus
+          if (state.status == RecoveryStatus.success) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Contraseña actualizada con éxito')),
             );
             context.go('/login');
           }
-          if (state.isError) {
+          if (state.status == RecoveryStatus.error) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(state.errorMessage ?? 'Error al actualizar'),
@@ -175,40 +176,41 @@ class _ResetPasswordViewState extends State<_ResetPasswordView> {
                 SizedBox(
                   width: double.infinity,
                   height: 56,
-                  child: BlocBuilder<ResetPasswordBloc, ResetPasswordState>(
-                    builder: (context, state) {
-                      return FilledButton(
-                        onPressed: state.isLoading
-                            ? null
-                            : () {
-                                if (_formKey.currentState!.validate()) {
-                                  _showConfirmationDialog(context);
-                                }
-                              },
-                        style: FilledButton.styleFrom(
-                          backgroundColor: AppColors.primaryContainer,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                        ),
-                        child: state.isLoading
-                            ? const CircularProgressIndicator(
-                                color: Colors.white,
-                              )
-                            : Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: const [
-                                  Text(
-                                    'Actualizar Contraseña',
-                                    style: TextStyle(fontSize: 16),
-                                  ),
-                                  SizedBox(width: 8),
-                                  Icon(Icons.arrow_forward, size: 20),
-                                ],
+                  child:
+                      BlocBuilder<PasswordRecoveryBloc, PasswordRecoveryState>(
+                        builder: (context, state) {
+                          return FilledButton(
+                            onPressed: state.isLoading
+                                ? null
+                                : () {
+                                    if (_formKey.currentState!.validate()) {
+                                      _showConfirmationDialog(context);
+                                    }
+                                  },
+                            style: FilledButton.styleFrom(
+                              backgroundColor: AppColors.primaryContainer,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20),
                               ),
-                      );
-                    },
-                  ),
+                            ),
+                            child: state.isLoading
+                                ? const CircularProgressIndicator(
+                                    color: Colors.white,
+                                  )
+                                : Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: const [
+                                      Text(
+                                        'Actualizar Contraseña',
+                                        style: TextStyle(fontSize: 16),
+                                      ),
+                                      SizedBox(width: 8),
+                                      Icon(Icons.arrow_forward, size: 20),
+                                    ],
+                                  ),
+                          );
+                        },
+                      ),
                 ),
               ],
             ),
@@ -223,13 +225,13 @@ class _ResetPasswordViewState extends State<_ResetPasswordView> {
     required String label,
     required bool isNew,
   }) {
-    return BlocBuilder<ResetPasswordBloc, ResetPasswordState>(
+    return BlocBuilder<PasswordRecoveryBloc, PasswordRecoveryState>(
       buildWhen: (p, c) => isNew
-          ? p.isNewPasswordObscured != c.isNewPasswordObscured
+          ? p.isPasswordObscured != c.isPasswordObscured
           : p.isConfirmPasswordObscured != c.isConfirmPasswordObscured,
       builder: (context, state) {
         final isObscured = isNew
-            ? state.isNewPasswordObscured
+            ? state.isPasswordObscured
             : state.isConfirmPasswordObscured;
 
         return TextFormField(
@@ -242,20 +244,23 @@ class _ResetPasswordViewState extends State<_ResetPasswordView> {
             suffixIcon: IconButton(
               icon: Icon(isObscured ? Icons.visibility_off : Icons.visibility),
               onPressed: () {
-                context.read<ResetPasswordBloc>().add(
+                // Actualizado a los nuevos eventos
+                context.read<PasswordRecoveryBloc>().add(
                   isNew
-                      ? const NewPasswordVisibilityToggled()
-                      : const ConfirmPasswordVisibilityToggled(),
+                      ? PasswordVisibilityToggled()
+                      : ConfirmPasswordVisibilityToggled(),
                 );
               },
             ),
           ),
           validator: (value) {
-            if (value == null || value.isEmpty)
+            if (value == null || value.isEmpty) {
               return 'Este campo es requerido';
+            }
             if (value.length < 8) return 'Mínimo 8 caracteres';
-            if (!isNew && value != _passController.text)
+            if (!isNew && value != _passController.text) {
               return 'Las contraseñas no coinciden';
+            }
             return null;
           },
         );
