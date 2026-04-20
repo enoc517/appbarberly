@@ -5,19 +5,28 @@ import '../../domain/entities/barbershop.dart';
 import '../../domain/entities/service.dart';
 import '../../domain/entities/time_slot.dart';
 import '../../domain/repositories/barbershop_repository.dart';
-import '../datasources/barbershop_mock_datasource.dart';
+import '../datasources/barbershop_firestore_datasource.dart';
 
 class BarbershopRepositoryImpl implements BarbershopRepository {
-  final BarbershopMockDataSource _dataSource;
-  const BarbershopRepositoryImpl(this._dataSource);
+  BarbershopRepositoryImpl({required BarbershopFirestoreDataSource dataSource})
+      : _dataSource = dataSource;
+
+  final BarbershopFirestoreDataSource _dataSource;
 
   @override
   Future<Result<Barbershop>> getBarbershop(String id) async {
     try {
-      final data = await _dataSource.fetchBarbershop(id);
-      return Ok(data);
+      final dto = await _dataSource.getBarbershop(id);
+      final entity = dto.shop.toEntity(
+        services: dto.services,
+        barbers: dto.barbers,
+        slotsByDay: dto.slotsByDay,
+      );
+      return Ok(entity);
+    } on StateError catch (e) {
+      return Fail(NotFoundFailure(e.message));
     } catch (e) {
-      return const Fail(UnknownFailure('No se pudo cargar la barbería'));
+      return Fail(UnknownFailure(e.toString()));
     }
   }
 
@@ -29,10 +38,19 @@ class BarbershopRepositoryImpl implements BarbershopRepository {
     required TimeSlot slot,
   }) async {
     try {
-      await _dataSource.confirmBooking();
+      await _dataSource.confirmBooking(
+        barbershopId: barbershopId,
+        serviceId: service.id,
+        barberId: barber.id,
+        slotStartTime: slot.startTime,
+        durationMinutes: service.duration.inMinutes,
+        price: service.price,
+      );
       return const Ok(null);
+    } on StateError catch (e) {
+      return Fail(NotFoundFailure(e.message));
     } catch (e) {
-      return const Fail(ServerFailure('No se pudo confirmar la reserva'));
+      return Fail(UnknownFailure(e.toString()));
     }
   }
 }

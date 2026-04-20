@@ -1,4 +1,5 @@
 import 'package:barberly/features/auth/presentation/screens/register_screen.dart';
+import 'package:barberly/features/barber/barbershop_profile/data/datasources/barbershop_firestore_datasource.dart';
 import 'package:barberly/features/barber/dashboard/data/datasources/dashboard_mock_datasource.dart';
 import 'package:barberly/features/barber/dashboard/data/repositories/dashboard_repository_impl.dart';
 import 'package:barberly/features/barber/dashboard/domain/usecases/get_dashboard_data.dart';
@@ -14,7 +15,6 @@ import '../../features/welcome/presentation/bloc/welcome_bloc.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/barber/barbershop_profile/presentation/screens/perfil_barberia_screen.dart';
 import '../../shared/widgets/main_shell.dart';
-import '../../features/barber/barbershop_profile/data/datasources/barbershop_mock_datasource.dart';
 import '../../features/barber/barbershop_profile/data/repositories/barbershop_repository_impl.dart';
 import '../../features/barber/barbershop_profile/domain/usecases/confirm_booking.dart';
 import '../../features/barber/barbershop_profile/domain/usecases/get_barbershop.dart';
@@ -128,8 +128,8 @@ StatefulShellBranch(
                 name: 'perfil',
                 builder: (context, state) {
                   // Service locator "pobre" — cuando integres get_it, se mueve allá.
-                  final dataSource = BarbershopMockDataSource();
-                  final repository = BarbershopRepositoryImpl(dataSource);
+                  final dataSource = BarbershopFirestoreDataSource();
+                  final repository = BarbershopRepositoryImpl(dataSource: dataSource);
                   final getBarbershop = GetBarbershop(repository);
                   final confirmBooking = ConfirmBooking(repository);
 
