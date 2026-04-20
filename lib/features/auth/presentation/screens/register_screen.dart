@@ -230,7 +230,7 @@ class _RegisterCard extends StatelessWidget {
             const SizedBox(height: 10),
             _TextField(
               controller: phoneController,
-              hintText: '+34 600 000 000',
+              hintText: '+506 88888888',
               keyboardType: TextInputType.phone,
               prefixIcon: Icons.phone_rounded,
               validator: (value) {
