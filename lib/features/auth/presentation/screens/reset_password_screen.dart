@@ -93,8 +93,9 @@ class _ResetPasswordViewState extends State<_ResetPasswordView> {
             color: AppColors.onSurface,
             size: 20,
           ),
-          onPressed: () => context
-              .pop(), // Mejor context.pop() para retroceder al token si es necesario
+          onPressed: () => GoRouter.of(context).go(
+            '/login',
+          ), // Mejor context.pop() para retroceder al token si es necesario
         ),
         centerTitle: true,
       ),
