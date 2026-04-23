@@ -1,4 +1,5 @@
 import 'package:barberly/features/auth/presentation/screens/register_screen.dart';
+import 'package:barberly/features/auth/presentation/screens/verify_token_screen.dart';
 import 'package:barberly/features/barber/barbershop_profile/data/datasources/barbershop_firestore_datasource.dart';
 import 'package:barberly/features/barber/dashboard/data/datasources/dashboard_mock_datasource.dart';
 import 'package:barberly/features/barber/dashboard/data/repositories/dashboard_repository_impl.dart';
@@ -34,9 +35,12 @@ class AppRouter {
   static const String dashboard = '/dashboard';
   static const String home = '/home';
   static const String register = '/register';
+  static const String forgot_password = '/forgot_password';
+  static const String verify_token = '/verify_token';
+  static const String reset_password = '/reset_password';
   static const String perfilBarberia = '/perfil-barberia';
 
-// ── Rutas dentro del shell (con bottom nav) ────────────
+  // ── Rutas dentro del shell (con bottom nav) ────────────
   static const String explorar = '/explorar';
   static const String citas = '/citas';
   static const String panel = '/panel';
@@ -47,7 +51,7 @@ class AppRouter {
 
   // ── Router instance ────────────────────────────────────
   static final GoRouter router = GoRouter(
-    initialLocation: explorar,
+    initialLocation: welcome,
     debugLogDiagnostics: true,
 
     routes: [
@@ -73,6 +77,33 @@ class AppRouter {
         path: register,
         name: 'register',
         builder: (context, state) => const RegisterScreen(),
+      ),
+
+      ShellRoute(
+        builder: (context, state, child) {
+          // Este provider envuelve a los 3 hijos y mantiene los datos (email, token)
+          return BlocProvider(
+            create: (context) => PasswordRecoveryBloc(),
+            child: child,
+          );
+        },
+        routes: [
+          GoRoute(
+            path: forgot_password,
+            name: 'forgot_password',
+            builder: (context, state) => const ForgotPasswordScreen(),
+          ),
+          GoRoute(
+            path: verify_token,
+            name: 'verify_token',
+            builder: (context, state) => const VerifyTokenScreen(),
+          ),
+          GoRoute(
+            path: reset_password,
+            name: 'reset_password',
+            builder: (context, state) => const ResetPasswordScreen(),
+          ),
+        ],
       ),
 
       // ── Shell con bottom nav ─────────────────────────
@@ -105,23 +136,23 @@ class AppRouter {
           ),
 
           // Branch 2: PANEL
-StatefulShellBranch(
-  routes: [
-    GoRoute(
-      path: panel,
-      name: 'panel',
-      builder: (context, state) {
-        final ds = DashboardMockDataSource();
-        final repo = DashboardRepositoryImpl(ds);
-        final useCase = GetDashboardData(repo);
-        return BlocProvider(
-          create: (_) => DashboardCubit(useCase)..load('barber-1'),
-          child: const DashboardScreen(),
-        );
-      },
-    ),
-  ],
-),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: panel,
+                name: 'panel',
+                builder: (context, state) {
+                  final ds = DashboardMockDataSource();
+                  final repo = DashboardRepositoryImpl(ds);
+                  final useCase = GetDashboardData(repo);
+                  return BlocProvider(
+                    create: (_) => DashboardCubit(useCase)..load('barber-1'),
+                    child: const DashboardScreen(),
+                  );
+                },
+              ),
+            ],
+          ),
 
           // Branch 3: PERFIL
           StatefulShellBranch(
@@ -132,18 +163,25 @@ StatefulShellBranch(
                 builder: (context, state) {
                   // Service locator "pobre" — cuando integres get_it, se mueve allá.
                   final dataSource = BarbershopFirestoreDataSource();
-                  final repository = BarbershopRepositoryImpl(dataSource: dataSource);
+                  final repository = BarbershopRepositoryImpl(
+                    dataSource: dataSource,
+                  );
                   final getBarbershop = GetBarbershop(repository);
                   final confirmBooking = ConfirmBooking(repository);
 
                   final today = DateTime.now();
-                  final startOfToday = DateTime(today.year, today.month, today.day);
+                  final startOfToday = DateTime(
+                    today.year,
+                    today.month,
+                    today.day,
+                  );
 
                   return MultiBlocProvider(
                     providers: [
                       BlocProvider(
-                        create: (_) => BarbershopProfileCubit(getBarbershop)
-                          ..load('shop-1'),
+                        create: (_) =>
+                            BarbershopProfileCubit(getBarbershop)
+                              ..load('shop-1'),
                       ),
                       BlocProvider(
                         create: (_) => BookingCubit(
@@ -164,7 +202,6 @@ StatefulShellBranch(
     ],
   );
 }
-
 
 // ── Placeholder temporal ─────────────────────────────────
 class _PlaceholderScreen extends StatelessWidget {
