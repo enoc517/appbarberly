@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../shared/theme/app_theme.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../bloc/auth_bloc.dart';
+import '../bloc/auth_event.dart';
+import '../bloc/auth_state.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -34,9 +38,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     FocusScope.of(context).unfocus();
 
-    // TODO: Conectar con AuthBloc / use case de registro.
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Registro pendiente de integración')),
+    context.read<AuthBloc>().add(
+      AuthSignUpRequested(
+        fullName: _fullNameController.text.trim(),
+        phone: _phoneController.text.trim(),
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+        isProfessional: _isProfessional,
+      ),
     );
   }
 
@@ -44,40 +53,116 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Widget build(BuildContext context) {
     final width = MediaQuery.sizeOf(context).width;
     final isWide = width >= 900;
+    final isLoading = context.select(
+      (AuthBloc bloc) => bloc.state.status == AuthStatus.loading,
+    );
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: Stack(
-          children: [
-            Positioned(
-              top: -90,
-              right: -80,
-              child: _GlowCircle(
-                size: 240,
-                color: AppColors.primaryContainer.withValues(alpha: 0.04),
+    return BlocListener<AuthBloc, AuthState>(
+      listenWhen: (prev, curr) => prev.status != curr.status,
+      listener: (context, state) {
+        if (state.status == AuthStatus.emailVerificationPending) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Registro exitoso. Revisa tu correo para verificar la cuenta.',
               ),
             ),
-            Positioned(
-              bottom: -120,
-              left: -100,
-              child: _GlowCircle(
-                size: 280,
-                color: AppColors.secondaryContainer.withValues(alpha: 0.03),
+          );
+
+          Future.delayed(const Duration(milliseconds: 700), () {
+            if (context.mounted) {
+              context.go('/verify-email');
+            }
+          });
+
+          return;
+        }
+        if (state.status == AuthStatus.authenticated) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('Registro exitoso')));
+
+          Future.delayed(const Duration(milliseconds: 700), () {
+            if (context.mounted) {
+              context.go('/explorar'); // o /panel según rol después
+            }
+          });
+        }
+
+        if (state.status == AuthStatus.failure && state.errorMessage != null) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(state.errorMessage!)));
+        }
+      },
+      child: Scaffold(
+        backgroundColor: AppColors.background,
+        body: SafeArea(
+          child: Stack(
+            children: [
+              Positioned(
+                top: -90,
+                right: -80,
+                child: _GlowCircle(
+                  size: 240,
+                  color: AppColors.primaryContainer.withValues(alpha: 0.04),
+                ),
               ),
-            ),
-            Center(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 1120),
-                  child: isWide
-                      ? Row(
-                          children: [
-                            Expanded(child: _BrandPanel(theme: Theme.of(context))),
-                            const SizedBox(width: 32),
-                            Expanded(
-                              child: _RegisterCard(
+              Positioned(
+                bottom: -120,
+                left: -100,
+                child: _GlowCircle(
+                  size: 280,
+                  color: AppColors.secondaryContainer.withValues(alpha: 0.03),
+                ),
+              ),
+              Center(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 28,
+                  ),
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 1120),
+                    child: isWide
+                        ? Row(
+                            children: [
+                              Expanded(
+                                child: _BrandPanel(theme: Theme.of(context)),
+                              ),
+                              const SizedBox(width: 32),
+                              Expanded(
+                                child: _RegisterCard(
+                                  isLoading: isLoading,
+                                  formKey: _formKey,
+                                  fullNameController: _fullNameController,
+                                  phoneController: _phoneController,
+                                  emailController: _emailController,
+                                  passwordController: _passwordController,
+                                  obscurePassword: _obscurePassword,
+                                  isProfessional: _isProfessional,
+                                  onTogglePassword: () {
+                                    setState(() {
+                                      _obscurePassword = !_obscurePassword;
+                                    });
+                                  },
+                                  onToggleProfessional: (value) {
+                                    setState(() {
+                                      _isProfessional = value;
+                                    });
+                                  },
+                                  onSubmit: _submit,
+                                  onGoLogin: () => context.go('/login'),
+                                ),
+                              ),
+                            ],
+                          )
+                        : Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const SizedBox(height: 28),
+                              _RegisterCard(
+                                isLoading: isLoading,
                                 formKey: _formKey,
                                 fullNameController: _fullNameController,
                                 phoneController: _phoneController,
@@ -98,40 +183,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 onSubmit: _submit,
                                 onGoLogin: () => context.go('/login'),
                               ),
-                            ),
-                          ],
-                        )
-                      : Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const SizedBox(height: 28),
-                            _RegisterCard(
-                              formKey: _formKey,
-                              fullNameController: _fullNameController,
-                              phoneController: _phoneController,
-                              emailController: _emailController,
-                              passwordController: _passwordController,
-                              obscurePassword: _obscurePassword,
-                              isProfessional: _isProfessional,
-                              onTogglePassword: () {
-                                setState(() {
-                                  _obscurePassword = !_obscurePassword;
-                                });
-                              },
-                              onToggleProfessional: (value) {
-                                setState(() {
-                                  _isProfessional = value;
-                                });
-                              },
-                              onSubmit: _submit,
-                              onGoLogin: () => context.go('/login'),
-                            ),
-                          ],
-                        ),
+                            ],
+                          ),
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -140,6 +198,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
 class _RegisterCard extends StatelessWidget {
   const _RegisterCard({
+    required this.isLoading,
     required this.formKey,
     required this.fullNameController,
     required this.phoneController,
@@ -164,6 +223,7 @@ class _RegisterCard extends StatelessWidget {
   final ValueChanged<bool> onToggleProfessional;
   final VoidCallback onSubmit;
   final VoidCallback onGoLogin;
+  final bool isLoading;
 
   @override
   Widget build(BuildContext context) {
@@ -230,7 +290,7 @@ class _RegisterCard extends StatelessWidget {
             const SizedBox(height: 10),
             _TextField(
               controller: phoneController,
-              hintText: '+34 600 000 000',
+              hintText: '+506 88888888',
               keyboardType: TextInputType.phone,
               prefixIcon: Icons.phone_rounded,
               validator: (value) {
@@ -290,27 +350,60 @@ class _RegisterCard extends StatelessWidget {
               width: double.infinity,
               height: 56,
               child: ElevatedButton(
-                onPressed: onSubmit,
+                onPressed: isLoading ? null : onSubmit,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primaryContainer,
                   foregroundColor: AppColors.onPrimary,
                   elevation: 0,
-                  shadowColor: AppColors.primaryContainer.withValues(alpha: 0.18),
+                  shadowColor: AppColors.primaryContainer.withValues(
+                    alpha: 0.18,
+                  ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(AppRadius.xl),
                   ),
                 ),
-                child: const Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'Crear cuenta',
-                      style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
-                    ),
-                    SizedBox(width: 10),
-                    Icon(Icons.arrow_forward_rounded, size: 22),
-                  ],
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 200),
+                  child: isLoading
+                      ? Row(
+                          key: const ValueKey('loading'),
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: AppColors.onPrimary,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            const Text(
+                              'Creando cuenta...',
+                              style: TextStyle(
+                                fontSize: 17,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ],
+                        )
+                      : const Row(
+                          key: ValueKey('idle'),
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'Crear cuenta',
+                              style: TextStyle(
+                                fontSize: 17,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                            SizedBox(width: 10),
+                            Icon(Icons.arrow_forward_rounded, size: 22),
+                          ],
+                        ),
                 ),
               ),
             ),
@@ -348,10 +441,7 @@ class _RegisterCard extends StatelessWidget {
 }
 
 class _ProfessionalSwitch extends StatelessWidget {
-  const _ProfessionalSwitch({
-    required this.value,
-    required this.onChanged,
-  });
+  const _ProfessionalSwitch({required this.value, required this.onChanged});
 
   final bool value;
   final ValueChanged<bool> onChanged;
@@ -387,7 +477,9 @@ class _ProfessionalSwitch extends StatelessWidget {
             value: value,
             onChanged: onChanged,
             activeThumbColor: AppColors.secondaryContainer,
-            activeTrackColor: AppColors.secondaryContainer.withValues(alpha: 0.22),
+            activeTrackColor: AppColors.secondaryContainer.withValues(
+              alpha: 0.22,
+            ),
             inactiveThumbColor: Colors.white,
             inactiveTrackColor: AppColors.surfaceContainerHighest,
           ),
@@ -396,7 +488,6 @@ class _ProfessionalSwitch extends StatelessWidget {
     );
   }
 }
-
 
 class _BrandPanel extends StatelessWidget {
   const _BrandPanel({required this.theme});
@@ -414,7 +505,9 @@ class _BrandPanel extends StatelessWidget {
           end: Alignment.bottomRight,
           colors: [AppColors.surface, AppColors.surfaceContainerLow],
         ),
-        border: Border.all(color: AppColors.outlineVariant.withValues(alpha: 0.6)),
+        border: Border.all(
+          color: AppColors.outlineVariant.withValues(alpha: 0.6),
+        ),
       ),
       child: Stack(
         children: [
@@ -533,7 +626,10 @@ class _TextField extends StatelessWidget {
         fillColor: AppColors.surfaceContainerHighest,
         prefixIcon: Icon(prefixIcon, color: AppColors.outline),
         suffixIcon: suffixIcon,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 18,
+          vertical: 18,
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.xl),
           borderSide: BorderSide.none,
@@ -570,10 +666,7 @@ class _GlowCircle extends StatelessWidget {
     return Container(
       width: size,
       height: size,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: color,
-      ),
+      decoration: BoxDecoration(shape: BoxShape.circle, color: color),
     );
   }
 }
