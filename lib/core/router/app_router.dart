@@ -1,3 +1,14 @@
+// Flutter & External Packages
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
+
+// Shared
+import 'package:barberly/shared/widgets/main_shell.dart';
+
+// Features: Auth
 import 'package:barberly/features/auth/data/datasources/auth_remote_datasource.dart';
 import 'package:barberly/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:barberly/features/auth/domain/usecases/get_current_user.dart';
@@ -7,9 +18,15 @@ import 'package:barberly/features/auth/domain/usecases/sign_out.dart';
 import 'package:barberly/features/auth/domain/usecases/sign_up.dart';
 import 'package:barberly/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:barberly/features/auth/presentation/bloc/auth_event.dart';
+import 'package:barberly/features/auth/presentation/bloc/password_recovery_bloc.dart';
+import 'package:barberly/features/auth/presentation/screens/forgot_password_screen.dart';
 import 'package:barberly/features/auth/presentation/screens/login_screen.dart';
 import 'package:barberly/features/auth/presentation/screens/register_screen.dart';
+import 'package:barberly/features/auth/presentation/screens/reset_password_screen.dart';
 import 'package:barberly/features/auth/presentation/screens/verify_email_screen.dart';
+import 'package:barberly/features/auth/presentation/screens/verify_token_screen.dart';
+
+// Features: Barber (Barbershop Profile)
 import 'package:barberly/features/barber/barbershop_profile/data/datasources/barbershop_mock_datasource.dart';
 import 'package:barberly/features/barber/barbershop_profile/data/repositories/barbershop_repository_impl.dart';
 import 'package:barberly/features/barber/barbershop_profile/domain/usecases/confirm_booking.dart';
@@ -17,19 +34,18 @@ import 'package:barberly/features/barber/barbershop_profile/domain/usecases/get_
 import 'package:barberly/features/barber/barbershop_profile/presentation/bloc/barbershop_profile/barbershop_profile_cubit.dart';
 import 'package:barberly/features/barber/barbershop_profile/presentation/bloc/booking/booking_cubit.dart';
 import 'package:barberly/features/barber/barbershop_profile/presentation/screens/perfil_barberia_screen.dart';
+
+// Features: Barber (Dashboard)
 import 'package:barberly/features/barber/dashboard/data/datasources/dashboard_mock_datasource.dart';
 import 'package:barberly/features/barber/dashboard/data/repositories/dashboard_repository_impl.dart';
 import 'package:barberly/features/barber/dashboard/domain/usecases/get_dashboard_data.dart';
 import 'package:barberly/features/barber/dashboard/presentation/bloc/dashboard_cubit.dart';
 import 'package:barberly/features/barber/dashboard/presentation/screens/dashboard_screen.dart';
+
+// Features: Welcome
 import 'package:barberly/features/welcome/presentation/bloc/welcome_bloc.dart';
 import 'package:barberly/features/welcome/presentation/screens/welcome_screen.dart';
-import 'package:barberly/shared/widgets/main_shell.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
+
 class AppRouter {
   AppRouter._();
 
@@ -46,6 +62,9 @@ class AppRouter {
   static const String citas = '/citas';
   static const String panel = '/panel';
   static const String perfil = '/perfil';
+  static const String forgot_password = '/forgot_password';
+  static const String verify_token = '/verify_token';
+  static const String reset_password = '/reset_password';
 
   // Ruta completa si luego la usas desde navegación anidada.
   static const String perfilBarberiaFull = '/perfil/perfil-barberia';
@@ -115,10 +134,39 @@ class AppRouter {
         path: '/verify-email',
         name: 'verify-email',
         builder: (context, state) => BlocProvider(
-          create: (_) => _buildAuthBloc()..add(const AuthLoadCurrentUserRequested()),
+          create: (_) =>
+              _buildAuthBloc()..add(const AuthLoadCurrentUserRequested()),
           child: const VerifyEmailScreen(),
         ),
       ),
+
+      ShellRoute(
+        builder: (context, state, child) {
+          // Este provider envuelve a los 3 hijos y mantiene los datos (email, token)
+          return BlocProvider(
+            create: (context) => PasswordRecoveryBloc(),
+            child: child,
+          );
+        },
+        routes: [
+          GoRoute(
+            path: forgot_password,
+            name: 'forgot_password',
+            builder: (context, state) => const ForgotPasswordScreen(),
+          ),
+          GoRoute(
+            path: verify_token,
+            name: 'verify_token',
+            builder: (context, state) => const VerifyTokenScreen(),
+          ),
+          GoRoute(
+            path: reset_password,
+            name: 'reset_password',
+            builder: (context, state) => const ResetPasswordScreen(),
+          ),
+        ],
+      ),
+
       // ── Shell con bottom nav ─────────────────────────────
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) =>
