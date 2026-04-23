@@ -18,7 +18,7 @@ class Barbershop {
     this.heroImageUrl,
     required this.services,
     required this.barbers,
-    required this.slotsByDay,
+    required this.slotsByDay, required String ownerId,
   });
 
   List<DateTime> get availableDays =>

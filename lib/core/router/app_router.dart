@@ -30,6 +30,16 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import '../../features/welcome/presentation/screens/welcome_screen.dart';
+import '../../features/welcome/presentation/bloc/welcome_bloc.dart';
+import '../../features/auth/presentation/screens/login_screen.dart';
+import '../../features/barber/barbershop_profile/presentation/screens/perfil_barberia_screen.dart';
+import '../../shared/widgets/main_shell.dart';
+import '../../features/barber/barbershop_profile/data/repositories/barbershop_repository_impl.dart';
+import '../../features/barber/barbershop_profile/domain/usecases/confirm_booking.dart';
+import '../../features/barber/barbershop_profile/domain/usecases/get_barbershop.dart';
+import '../../features/barber/barbershop_profile/presentation/bloc/barbershop_profile/barbershop_profile_cubit.dart';
+import '../../features/barber/barbershop_profile/presentation/bloc/booking/booking_cubit.dart';
 
 class AppRouter {
   AppRouter._();
