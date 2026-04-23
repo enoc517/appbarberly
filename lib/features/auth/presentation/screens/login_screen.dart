@@ -28,10 +28,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
     FocusScope.of(context).unfocus();
 
-    // TODO: Conectar con AuthBloc / use case de login.
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Login pendiente de integración')),
-    );
+    GoRouter.of(context).go('/explorar');
   }
 
   @override
@@ -216,8 +213,8 @@ class _LoginCard extends StatelessWidget {
             Align(
               alignment: Alignment.centerRight,
               child: TextButton(
-                onPressed: () {
-                  // TODO: Recuperación de contraseña.
+                onPressed: () async {
+                  GoRouter.of(context).go('/forgot_password');
                 },
                 style: TextButton.styleFrom(
                   foregroundColor: AppColors.secondary,
