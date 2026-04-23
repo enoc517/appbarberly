@@ -9,8 +9,8 @@ import 'package:barberly/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:barberly/features/auth/presentation/bloc/auth_event.dart';
 import 'package:barberly/features/auth/presentation/screens/login_screen.dart';
 import 'package:barberly/features/auth/presentation/screens/register_screen.dart';
-import 'package:barberly/features/barber/barbershop_profile/data/datasources/barbershop_firestore_datasource.dart';
 import 'package:barberly/features/auth/presentation/screens/verify_email_screen.dart';
+import 'package:barberly/features/barber/barbershop_profile/data/datasources/barbershop_mock_datasource.dart';
 import 'package:barberly/features/barber/barbershop_profile/data/repositories/barbershop_repository_impl.dart';
 import 'package:barberly/features/barber/barbershop_profile/domain/usecases/confirm_booking.dart';
 import 'package:barberly/features/barber/barbershop_profile/domain/usecases/get_barbershop.dart';
@@ -186,9 +186,8 @@ class AppRouter {
                 path: perfil,
                 name: 'perfil',
                 builder: (context, state) {
-                  // Service locator "pobre" — cuando integres get_it, se mueve allá.
-                  final dataSource = BarbershopFirestoreDataSource();
-                  final repository = BarbershopRepositoryImpl(dataSource: dataSource);
+                  final dataSource = BarbershopMockDataSource();
+                  final repository = BarbershopRepositoryImpl(dataSource);
                   final getBarbershop = GetBarbershop(repository);
                   final confirmBooking = ConfirmBooking(repository);
 
