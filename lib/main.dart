@@ -5,11 +5,12 @@ import 'package:firebase_core/firebase_core.dart';
 import 'core/router/app_router.dart';
 import 'firebase_options.dart';
 
+import 'package:flutter/foundation.dart' show kDebugMode;
+import 'package:barberly/features/explore/data/seeds/explore_seed.dart';
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   // 🔍 TEST TEMPORAL
   try {
@@ -21,7 +22,11 @@ Future<void> main() async {
   } catch (e) {
     debugPrint('❌ Error: $e');
   }
-
+/*
+  if (kDebugMode) {
+    await seedBarbershopsAndServices();
+  }
+*/
   runApp(const MyApp());
 }
 

@@ -1,3 +1,6 @@
+// lib/core/router/app_router.dart
+// ===========================================================================
+
 // Flutter & External Packages
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -42,6 +45,12 @@ import 'package:barberly/features/barber/dashboard/domain/usecases/get_dashboard
 import 'package:barberly/features/barber/dashboard/presentation/bloc/dashboard_cubit.dart';
 import 'package:barberly/features/barber/dashboard/presentation/screens/dashboard_screen.dart';
 
+// Features: Explore — Clean Architecture (interfaz en domain/, impl en data/)
+import 'package:barberly/features/explore/data/repositories/explore_repository_impl.dart';
+import 'package:barberly/features/explore/domain/repositories/explore_repository.dart';
+import 'package:barberly/features/explore/presentation/bloc/explore_bloc.dart';
+import 'package:barberly/features/explore/presentation/screens/explore_screen.dart';
+
 // Features: Welcome
 import 'package:barberly/features/welcome/presentation/bloc/welcome_bloc.dart';
 import 'package:barberly/features/welcome/presentation/screens/welcome_screen.dart';
@@ -49,7 +58,7 @@ import 'package:barberly/features/welcome/presentation/screens/welcome_screen.da
 class AppRouter {
   AppRouter._();
 
-  // ── Route paths ────────────────────────────────────────
+  // ── Route paths ─────────────────────────────────────────────────────────────
   static const String welcome = '/';
   static const String login = '/login';
   static const String register = '/register';
@@ -57,19 +66,20 @@ class AppRouter {
   static const String home = '/home';
   static const String perfilBarberia = '/perfil-barberia';
 
-  // ── Rutas dentro del shell (con bottom nav) ────────────
+  // ── Rutas dentro del shell (con bottom nav) ──────────────────────────────────
   static const String explorar = '/explorar';
   static const String citas = '/citas';
   static const String panel = '/panel';
   static const String perfil = '/perfil';
-  static const String forgot_password = '/forgot_password';
-  static const String verify_token = '/verify_token';
-  static const String reset_password = '/reset_password';
 
-  // Ruta completa si luego la usas desde navegación anidada.
+  // FIX: los nombres de constantes deben ser lowerCamelCase (linter dart)
+  static const String forgotPassword = '/forgot_password';
+  static const String verifyToken = '/verify_token';
+  static const String resetPassword = '/reset_password';
+
   static const String perfilBarberiaFull = '/perfil/perfil-barberia';
 
-  // ── Firebase / Auth stack ──────────────────────────────
+  // ── Firebase / Auth stack ────────────────────────────────────────────────────
   static final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
   static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
@@ -101,6 +111,7 @@ class AppRouter {
   static final SendEmailVerificationUseCase _sendEmailVerificationUseCase =
       SendEmailVerificationUseCase(_authRepository);
 
+  // ── Router ───────────────────────────────────────────────────────────────────
   static final GoRouter router = GoRouter(
     initialLocation: welcome,
     debugLogDiagnostics: true,
@@ -140,34 +151,33 @@ class AppRouter {
         ),
       ),
 
+      // ── Password recovery shell ──────────────────────────────────────────────
       ShellRoute(
-        builder: (context, state, child) {
-          // Este provider envuelve a los 3 hijos y mantiene los datos (email, token)
-          return BlocProvider(
-            create: (context) => PasswordRecoveryBloc(),
-            child: child,
-          );
-        },
+        builder: (context, state, child) => BlocProvider(
+          create: (_) => PasswordRecoveryBloc(),
+          child: child,
+        ),
         routes: [
           GoRoute(
-            path: forgot_password,
-            name: 'forgot_password',
+            // FIX: usar la constante renombrada a lowerCamelCase
+            path: forgotPassword,
+            name: 'forgotPassword',
             builder: (context, state) => const ForgotPasswordScreen(),
           ),
           GoRoute(
-            path: verify_token,
-            name: 'verify_token',
+            path: verifyToken,
+            name: 'verifyToken',
             builder: (context, state) => const VerifyTokenScreen(),
           ),
           GoRoute(
-            path: reset_password,
-            name: 'reset_password',
+            path: resetPassword,
+            name: 'resetPassword',
             builder: (context, state) => const ResetPasswordScreen(),
           ),
         ],
       ),
 
-      // ── Shell con bottom nav ─────────────────────────────
+      // ── Shell con bottom nav ─────────────────────────────────────────────────
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) =>
             MainShell(navigationShell: navigationShell),
@@ -178,8 +188,26 @@ class AppRouter {
               GoRoute(
                 path: explorar,
                 name: 'explorar',
-                builder: (context, state) =>
-                    const _PlaceholderScreen(title: 'Explorar'),
+                builder: (context, state) {
+                  // FIX: DI correcta según Clean Architecture generada.
+                  //
+                  // ExploreRepositoryImpl recibe un FirebaseFirestore opcional
+                  // (usa FirebaseFirestore.instance como default si no se pasa).
+                  // ExploreBloc recibe el repositorio via parámetro 'repository'.
+                  // El primer evento es ExploreInitialized, no LoadExploreData.
+                  // Tipado como la interfaz de dominio — el compilador
+                  // confirma la relación `implements` y el BLoC recibe
+                  // ExploreRepository (no la clase concreta).
+                  final ExploreRepository repo = ExploreRepositoryImpl(
+                    firestore: _firestore,
+                  );
+
+                  return BlocProvider(
+                    create: (_) => ExploreBloc(repository: repo)
+                      ..add(const ExploreInitialized()),
+                    child: const ExploreScreen(),
+                  );
+                },
               ),
             ],
           ),
