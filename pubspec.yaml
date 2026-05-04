@@ -23,13 +23,19 @@ dependencies:
   # Navigation
   go_router: ^17.2.0
   cupertino_icons: ^1.0.8
-
+  
+  # Geolocalización y Mapas
+    # Consultas por radio en Firestore usando geohashes
+  geoflutterfire_plus: ^0.0.34
+  # Acceso al GPS del dispositivo con gestión de permisos
+  geolocator: ^13.0.2
+  # Mapa interactivo
+  google_maps_flutter: ^2.9.0
+ 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
-
-
 
 
 flutter:

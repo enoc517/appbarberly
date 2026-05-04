@@ -43,3 +43,11 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# iOS API Keys and Secrets
+**/ios/Flutter/Maps.xcconfig
+**/ios/Flutter/Generated.xcconfig
+**/ios/Flutter/flutter_export_environment.sh
+
+# Android Secrets (por si acaso no estaba)
+**/android/local.properties

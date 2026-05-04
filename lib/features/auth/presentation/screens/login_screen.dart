@@ -265,8 +265,8 @@ class _LoginCard extends StatelessWidget {
             Align(
               alignment: Alignment.centerRight,
               child: TextButton(
-                onPressed: () {
-                  // TODO: Recuperación de contraseña.
+                onPressed: () async {
+                  GoRouter.of(context).go('/forgot_password');
                 },
                 style: TextButton.styleFrom(
                   foregroundColor: AppColors.secondary,

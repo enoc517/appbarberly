@@ -1,15 +1,23 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
-    // START: FlutterFire Configuration
-    id("com.google.gms.google-services")
-    // END: FlutterFire Configuration
     id("kotlin-android")
-    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
+    // El plugin de Flutter Gradle debe ir DESPUÉS de los plugins de Android y Kotlin.
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+// ── Carga MAPS_API_KEY desde local.properties (no se commitea) ──────────────
+val localProperties = Properties()
+val localPropertiesFile = rootProject.file("local.properties")
+if (localPropertiesFile.exists()) {
+    localPropertiesFile.inputStream().use { localProperties.load(it) }
+}
+val mapsApiKey: String = localProperties.getProperty("MAPS_API_KEY") ?: ""
+
 android {
-    namespace = "com.example.barberly"
+    namespace = "com.proyectomoviles.barberly"
+
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -23,20 +31,20 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.example.barberly"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
+        applicationId = "com.proyectomoviles.barberly"
+
+        minSdk = flutter.minSdkVersion                  // ← requerido por google_maps_flutter
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+
+        // ← inyecta la key al AndroidManifest como ${MAPS_API_KEY}
+        manifestPlaceholders["MAPS_API_KEY"] = mapsApiKey
     }
 
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
+            // TODO: configurar firma de release antes de publicar.
             signingConfig = signingConfigs.getByName("debug")
         }
     }

@@ -54,7 +54,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '566264148896',
     projectId: 'barberly-dev-6aef2',
     storageBucket: 'barberly-dev-6aef2.firebasestorage.app',
-    iosBundleId: 'com.example.barberly',
+    iosBundleId: 'com.proyectomoviles.barberly',
   );
 
   static const FirebaseOptions web = FirebaseOptions(
@@ -72,7 +72,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '566264148896',
     projectId: 'barberly-dev-6aef2',
     storageBucket: 'barberly-dev-6aef2.firebasestorage.app',
-    iosBundleId: 'com.example.barberly',
+    iosBundleId: 'com.proyectomoviles.barberly',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
@@ -83,5 +83,4 @@ class DefaultFirebaseOptions {
     authDomain: 'barberly-dev-6aef2.firebaseapp.com',
     storageBucket: 'barberly-dev-6aef2.firebasestorage.app',
   );
-
 }
