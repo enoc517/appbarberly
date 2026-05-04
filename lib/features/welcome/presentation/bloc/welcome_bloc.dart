@@ -30,11 +30,17 @@ class WelcomeBloc extends Bloc<WelcomeEvent, WelcomeState> {
 
       debugPrint('WELCOME END: ${DateTime.now()}');
 
-      if (user != null) {
-        emit(state.copyWith(status: WelcomeStatus.goToHome));
-      } else {
+      if (user == null) {
         emit(state.copyWith(status: WelcomeStatus.goToLogin));
+        return;
       }
+
+      if (!user.emailVerified) {
+        emit(state.copyWith(status: WelcomeStatus.goToVerifyEmail));
+        return;
+      }
+
+      emit(state.copyWith(status: WelcomeStatus.goToHome));
     } catch (e) {
       debugPrint('WELCOME ERROR: $e');
       emit(state.copyWith(status: WelcomeStatus.goToLogin));

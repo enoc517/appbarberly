@@ -1,6 +1,5 @@
 import 'package:equatable/equatable.dart';
-
-enum WelcomeStatus { initial, loading, goToLogin, goToHome }
+enum WelcomeStatus { initial, loading, goToLogin, goToHome, goToVerifyEmail }
 
 class WelcomeState extends Equatable {
   final WelcomeStatus status;

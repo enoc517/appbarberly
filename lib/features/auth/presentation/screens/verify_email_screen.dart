@@ -35,10 +35,11 @@ class VerifyEmailScreen extends StatelessWidget {
           });
         }
 
-        if (state.status == AuthStatus.failure && state.errorMessage != null) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text(state.errorMessage!)));
+        if (state.status == AuthStatus.failure &&
+            state.errorMessage != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(state.errorMessage!)),
+          );
         }
       },
       child: Scaffold(
@@ -99,36 +100,51 @@ class VerifyEmailScreen extends StatelessWidget {
                               ? null
                               : () {
                                   context.read<AuthBloc>().add(
-                                    const AuthResendVerificationEmailRequested(),
+                                    const AuthLoadCurrentUserRequested(),
                                   );
                                 },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.primaryContainer,
                             foregroundColor: AppColors.onPrimary,
                             elevation: 0,
-                            shadowColor: AppColors.primaryContainer.withValues(
-                              alpha: 0.18,
-                            ),
+                            shadowColor: AppColors.primaryContainer
+                                .withValues(alpha: 0.18),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(AppRadius.xl),
+                              borderRadius:
+                                  BorderRadius.circular(AppRadius.xl),
                             ),
                           ),
-                          child: const Text(
-                            'Ya verifiqué',
-                            style: TextStyle(
-                              fontSize: 17,
-                              fontWeight: FontWeight.w800,
-                            ),
+                          child: AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 200),
+                            child: isLoading
+                                ? const Text(
+                                    'Comprobando...',
+                                    key: ValueKey('loading'),
+                                    style: TextStyle(
+                                      fontSize: 17,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  )
+                                : const Text(
+                                    'Ya verifiqué',
+                                    key: ValueKey('idle'),
+                                    style: TextStyle(
+                                      fontSize: 17,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
                           ),
                         ),
                       ),
                       const SizedBox(height: 12),
                       TextButton(
-                        onPressed: () {
-                          context.read<AuthBloc>().add(
-                            const AuthResendVerificationEmailRequested(),
-                          );
-                        },
+                        onPressed: isLoading
+                            ? null
+                            : () {
+                                context.read<AuthBloc>().add(
+                                  const AuthResendVerificationEmailRequested(),
+                                );
+                              },
                         child: const Text('Reenviar correo'),
                       ),
                       const SizedBox(height: 8),

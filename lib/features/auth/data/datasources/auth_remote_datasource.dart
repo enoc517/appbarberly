@@ -29,8 +29,8 @@ class AuthRemoteDatasourceImpl implements AuthRemoteDatasource {
   AuthRemoteDatasourceImpl({
     FirebaseAuth? firebaseAuth,
     FirebaseFirestore? firestore,
-  })  : _auth = firebaseAuth ?? FirebaseAuth.instance,
-        _firestore = firestore ?? FirebaseFirestore.instance;
+  }) : _auth = firebaseAuth ?? FirebaseAuth.instance,
+       _firestore = firestore ?? FirebaseFirestore.instance;
 
   final FirebaseAuth _auth;
   final FirebaseFirestore _firestore;
@@ -61,21 +61,40 @@ class AuthRemoteDatasourceImpl implements AuthRemoteDatasource {
 
     await user.reload();
     final currentUser = _auth.currentUser ?? user;
+    final verified = currentUser.emailVerified;
 
     final profile = await _readUserProfile(currentUser.uid);
-    if (profile != null) return profile;
+    if (profile != null) {
+      final updatedProfile = AppUserModel(
+        id: profile.id,
+        email: profile.email,
+        fullName: profile.fullName,
+        phone: profile.phone,
+        role: profile.role,
+        isProfessional: profile.isProfessional,
+        emailVerified: verified,
+      );
+
+      if (profile.emailVerified != verified) {
+        await _userDoc(currentUser.uid).set({
+          'emailVerified': verified,
+          'updatedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
+      }
+
+      return updatedProfile;
+    }
 
     final fallback = AppUserModel.fromFirebaseUser(
       currentUser,
       role: UserRole.client,
       isProfessional: false,
-      emailVerified: currentUser.emailVerified,
+      emailVerified: verified,
     );
 
-    await _userDoc(currentUser.uid).set(
-      fallback.toMap(includeCreatedAt: true),
-      SetOptions(merge: true),
-    );
+    await _userDoc(
+      currentUser.uid,
+    ).set(fallback.toMap(includeCreatedAt: true), SetOptions(merge: true));
 
     return fallback;
   }
@@ -115,10 +134,9 @@ class AuthRemoteDatasourceImpl implements AuthRemoteDatasource {
       emailVerified: user.emailVerified,
     );
 
-    await _userDoc(user.uid).set(
-      model.toMap(includeCreatedAt: true),
-      SetOptions(merge: true),
-    );
+    await _userDoc(
+      user.uid,
+    ).set(model.toMap(includeCreatedAt: true), SetOptions(merge: true));
 
     await user.sendEmailVerification();
 
@@ -132,21 +150,40 @@ class AuthRemoteDatasourceImpl implements AuthRemoteDatasource {
 
     await user.reload();
     final currentUser = _auth.currentUser ?? user;
+    final verified = currentUser.emailVerified;
 
     final profile = await _readUserProfile(currentUser.uid);
-    if (profile != null) return profile;
+    if (profile != null) {
+      final updatedProfile = AppUserModel(
+        id: profile.id,
+        email: profile.email,
+        fullName: profile.fullName,
+        phone: profile.phone,
+        role: profile.role,
+        isProfessional: profile.isProfessional,
+        emailVerified: verified,
+      );
+
+      if (profile.emailVerified != verified) {
+        await _userDoc(currentUser.uid).set({
+          'emailVerified': verified,
+          'updatedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
+      }
+
+      return updatedProfile;
+    }
 
     final fallback = AppUserModel.fromFirebaseUser(
       currentUser,
       role: UserRole.client,
       isProfessional: false,
-      emailVerified: currentUser.emailVerified,
+      emailVerified: verified,
     );
 
-    await _userDoc(currentUser.uid).set(
-      fallback.toMap(includeCreatedAt: true),
-      SetOptions(merge: true),
-    );
+    await _userDoc(
+      currentUser.uid,
+    ).set(fallback.toMap(includeCreatedAt: true), SetOptions(merge: true));
 
     return fallback;
   }

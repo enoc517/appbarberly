@@ -116,7 +116,7 @@ class AppRouter {
         path: '/verify-email',
         name: 'verify-email',
         builder: (context, state) => BlocProvider(
-          create: (_) => _buildAuthBloc()..add(const AuthLoadCurrentUserRequested()),
+          create: (_) => _buildAuthBloc(),
           child: const VerifyEmailScreen(),
         ),
       ),
