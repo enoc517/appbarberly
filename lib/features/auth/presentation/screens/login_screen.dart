@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../shared/theme/app_theme.dart';
+import '../bloc/auth_bloc.dart';
+import '../bloc/auth_event.dart';
+import '../bloc/auth_state.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -28,53 +32,119 @@ class _LoginScreenState extends State<LoginScreen> {
 
     FocusScope.of(context).unfocus();
 
-    GoRouter.of(context).go('/explorar');
+    context.read<AuthBloc>().add(
+      AuthSignInRequested(
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.sizeOf(context).width;
     final isWide = width >= 900;
-    final scheme = Theme.of(context).colorScheme;
+    final isLoading = context.select(
+      (AuthBloc bloc) => bloc.state.status == AuthStatus.loading,
+    );
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: Stack(
-          children: [
-            Positioned(
-              top: -90,
-              right: -80,
-              child: _GlowCircle(
-                size: 240,
-                color: AppColors.primaryContainer.withValues(alpha: 0.04),
-              ),
+    return BlocListener<AuthBloc, AuthState>(
+      listenWhen: (prev, curr) => prev.status != curr.status,
+      listener: (context, state) {
+        if (state.status == AuthStatus.emailVerificationPending) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Debes verificar tu correo antes de continuar'),
             ),
-            Positioned(
-              bottom: -120,
-              left: -100,
-              child: _GlowCircle(
-                size: 280,
-                color: AppColors.secondaryContainer.withValues(alpha: 0.03),
-              ),
-            ),
-            Center(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 28,
+          );
+
+          Future.delayed(const Duration(milliseconds: 700), () {
+            if (context.mounted) {
+              context.go('/verify-email');
+            }
+          });
+          return;
+        }
+
+        if (state.status == AuthStatus.authenticated) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Sesión iniciada correctamente')),
+          );
+
+          Future.delayed(const Duration(milliseconds: 700), () {
+            if (context.mounted) {
+              context.go('/explorar');
+            }
+          });
+        }
+
+        if (state.status == AuthStatus.failure && state.errorMessage != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(state.errorMessage!)),
+          );
+        }
+      },
+      child: Scaffold(
+        backgroundColor: AppColors.background,
+        body: SafeArea(
+          child: Stack(
+            children: [
+              Positioned(
+                top: -90,
+                right: -80,
+                child: _GlowCircle(
+                  size: 240,
+                  color: AppColors.primaryContainer.withValues(alpha: 0.04),
                 ),
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 1120),
-                  child: isWide
-                      ? Row(
-                          children: [
-                            Expanded(
-                              child: _BrandPanel(theme: Theme.of(context)),
-                            ),
-                            const SizedBox(width: 32),
-                            Expanded(
-                              child: _LoginCard(
+              ),
+              Positioned(
+                bottom: -120,
+                left: -100,
+                child: _GlowCircle(
+                  size: 280,
+                  color: AppColors.secondaryContainer.withValues(alpha: 0.03),
+                ),
+              ),
+              Center(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 28,
+                  ),
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 1120),
+                    child: isWide
+                        ? Row(
+                            children: [
+                              Expanded(
+                                child: _BrandPanel(theme: Theme.of(context)),
+                              ),
+                              const SizedBox(width: 32),
+                              Expanded(
+                                child: _LoginCard(
+                                  isLoading: isLoading,
+                                  formKey: _formKey,
+                                  emailController: _emailController,
+                                  passwordController: _passwordController,
+                                  obscurePassword: _obscurePassword,
+                                  onTogglePassword: () {
+                                    setState(() {
+                                      _obscurePassword = !_obscurePassword;
+                                    });
+                                  },
+                                  onSubmit: _submit,
+                                  onGoRegister: () => context.go('/register'),
+                                ),
+                              ),
+                            ],
+                          )
+                        : Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const _BrandHeader(),
+                              const SizedBox(height: 28),
+                              _LoginCard(
+                                isLoading: isLoading,
                                 formKey: _formKey,
                                 emailController: _emailController,
                                 passwordController: _passwordController,
@@ -87,33 +157,13 @@ class _LoginScreenState extends State<LoginScreen> {
                                 onSubmit: _submit,
                                 onGoRegister: () => context.go('/register'),
                               ),
-                            ),
-                          ],
-                        )
-                      : Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const _BrandHeader(),
-                            const SizedBox(height: 28),
-                            _LoginCard(
-                              formKey: _formKey,
-                              emailController: _emailController,
-                              passwordController: _passwordController,
-                              obscurePassword: _obscurePassword,
-                              onTogglePassword: () {
-                                setState(() {
-                                  _obscurePassword = !_obscurePassword;
-                                });
-                              },
-                              onSubmit: _submit,
-                              onGoRegister: () => context.go('/register'),
-                            ),
-                          ],
-                        ),
+                            ],
+                          ),
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -122,6 +172,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
 class _LoginCard extends StatelessWidget {
   const _LoginCard({
+    required this.isLoading,
     required this.formKey,
     required this.emailController,
     required this.passwordController,
@@ -131,6 +182,7 @@ class _LoginCard extends StatelessWidget {
     required this.onGoRegister,
   });
 
+  final bool isLoading;
   final GlobalKey<FormState> formKey;
   final TextEditingController emailController;
   final TextEditingController passwordController;
@@ -235,32 +287,58 @@ class _LoginCard extends StatelessWidget {
               width: double.infinity,
               height: 56,
               child: ElevatedButton(
-                onPressed: onSubmit,
+                onPressed: isLoading ? null : onSubmit,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primaryContainer, // #0F1C2C
+                  backgroundColor: AppColors.primaryContainer,
                   foregroundColor: AppColors.onPrimary,
                   elevation: 0,
-                  shadowColor: AppColors.primaryContainer.withValues(
-                    alpha: 0.18,
-                  ),
+                  shadowColor: AppColors.primaryContainer.withValues(alpha: 0.18),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(AppRadius.xl),
                   ),
                 ),
-                child: const Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'Entrar',
-                      style: TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    SizedBox(width: 10),
-                    Icon(Icons.login_rounded, size: 22),
-                  ],
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 200),
+                  child: isLoading
+                      ? Row(
+                          key: const ValueKey('loading'),
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: AppColors.onPrimary,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            const Text(
+                              'Ingresando...',
+                              style: TextStyle(
+                                fontSize: 17,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ],
+                        )
+                      : const Row(
+                          key: ValueKey('idle'),
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'Entrar',
+                              style: TextStyle(
+                                fontSize: 17,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                            SizedBox(width: 10),
+                            Icon(Icons.login_rounded, size: 22),
+                          ],
+                        ),
                 ),
               ),
             ),
@@ -301,7 +379,7 @@ class _LoginCard extends StatelessWidget {
                       'assets/icons/google.png',
                       width: 22,
                       height: 22,
-                      errorBuilder: (_, __, ___) => Icon(
+                      errorBuilder: (_, _, _) => Icon(
                         Icons.g_mobiledata_rounded,
                         size: 28,
                         color: AppColors.onSurface,
@@ -369,8 +447,11 @@ class _BrandHeader extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Image.asset('assets/logos/logo4.png', height: 110, fit: BoxFit.contain),
-
+        Image.asset(
+          'assets/logos/logo4.png',
+          height: 110,
+          fit: BoxFit.contain,
+        ),
         const SizedBox(height: 8),
         Text(
           'Una experiencia única',

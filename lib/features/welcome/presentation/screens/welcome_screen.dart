@@ -32,7 +32,10 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
             context.go('/login');
             break;
           case WelcomeStatus.goToHome:
-            context.go('/home');
+            context.go('/explorar');
+            break;
+          case WelcomeStatus.goToVerifyEmail:
+            context.go('/verify-email');
             break;
           default:
             break;
@@ -51,7 +54,6 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // Logo
                 Image.asset(
                   'assets/logos/logo2.png',
                   width: MediaQuery.of(context).size.width * 0.6,
@@ -59,10 +61,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                     return const Text('ERROR CARGANDO IMAGEN');
                   },
                 ),
-
                 const SizedBox(height: 40),
-
-                // Loader
                 const CircularProgressIndicator(color: Colors.white),
               ],
             ),
