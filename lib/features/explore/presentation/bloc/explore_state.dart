@@ -44,6 +44,7 @@ class ExploreLoaded extends ExploreState {
     required this.currentSort,
     required this.userLat,
     required this.userLng,
+    required this.userName,
     this.searchQuery = '',
     this.categoryFilter,
     this.cameraTarget,
@@ -64,6 +65,7 @@ class ExploreLoaded extends ExploreState {
   final ExploreSort currentSort;
   final double userLat;
   final double userLng;
+  final String userName;
   final String searchQuery;
 
   /// null = todas las categorías; string = filtro activo.
@@ -91,6 +93,7 @@ class ExploreLoaded extends ExploreState {
     ExploreSort? currentSort,
     double? userLat,
     double? userLng,
+    String? userName,
     String? searchQuery,
     String? Function()? categoryFilter,
     LatLng? Function()? cameraTarget,
@@ -103,31 +106,33 @@ class ExploreLoaded extends ExploreState {
       currentSort: currentSort ?? this.currentSort,
       userLat: userLat ?? this.userLat,
       userLng: userLng ?? this.userLng,
+      userName: userName ?? this.userName,
       searchQuery: searchQuery ?? this.searchQuery,
-      categoryFilter:
-          categoryFilter != null ? categoryFilter() : this.categoryFilter,
-      cameraTarget:
-          cameraTarget != null ? cameraTarget() : this.cameraTarget,
+      categoryFilter: categoryFilter != null
+          ? categoryFilter()
+          : this.categoryFilter,
+      cameraTarget: cameraTarget != null ? cameraTarget() : this.cameraTarget,
     );
   }
 
   @override
   List<Object?> get props => [
-        barbershops,
-        services,
-        markers,
-        favoriteIds,
-        currentSort,
-        userLat,
-        userLng,
-        searchQuery,
-        categoryFilter,
-        cameraTarget,
-      ];
+    barbershops,
+    services,
+    markers,
+    favoriteIds,
+    currentSort,
+    userLat,
+    userLng,
+    userName,
+    searchQuery,
+    categoryFilter,
+    cameraTarget,
+  ];
 }
 
-/// No hay barberías favoritas.
-/// La UI captura este estado y muestra: '¡Aún no tienes barberías favoritas!'
+/// Estado legado. La pantalla principal debe mantenerse en [ExploreLoaded]
+/// aunque el usuario no tenga favoritos.
 class ExploreFavoritesEmpty extends ExploreState {
   const ExploreFavoritesEmpty();
 }

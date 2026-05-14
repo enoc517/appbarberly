@@ -18,7 +18,7 @@ class PromoBanner extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primaryContainer.withOpacity(0.35),
+            color: AppColors.primaryContainer.withValues(alpha: 0.35),
             blurRadius: 24,
             offset: const Offset(0, 8),
           ),
@@ -36,7 +36,7 @@ class PromoBanner extends StatelessWidget {
               height: 120,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.white.withOpacity(0.04),
+                color: Colors.white.withValues(alpha: 0.04),
               ),
             ),
           ),
@@ -48,7 +48,7 @@ class PromoBanner extends StatelessWidget {
               height: 80,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.white.withOpacity(0.06),
+                color: Colors.white.withValues(alpha: 0.06),
               ),
             ),
           ),
@@ -64,7 +64,7 @@ class PromoBanner extends StatelessWidget {
                     vertical: 4,
                   ),
                   decoration: BoxDecoration(
-                    color: AppColors.secondary.withOpacity(0.85),
+                    color: AppColors.secondary.withValues(alpha: 0.85),
                     borderRadius: BorderRadius.circular(AppRadius.sm),
                   ),
                   child: Text(
@@ -90,14 +90,14 @@ class PromoBanner extends StatelessWidget {
                     Text(
                       'Reservar ahora',
                       style: AppTypography.labelMedium.copyWith(
-                        color: AppColors.onPrimary.withOpacity(0.85),
+                        color: AppColors.onPrimary.withValues(alpha: 0.85),
                         fontWeight: FontWeight.w600,
                       ),
                     ),
                     const SizedBox(width: 4),
                     Icon(
                       Icons.arrow_forward_rounded,
-                      color: AppColors.onPrimary.withOpacity(0.85),
+                      color: AppColors.onPrimary.withValues(alpha: 0.85),
                       size: 16,
                     ),
                   ],

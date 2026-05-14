@@ -42,7 +42,7 @@ class _Avatar extends StatelessWidget {
         // Ghost border fallback (15% opacity outline_variant)
         boxShadow: [
           BoxShadow(
-            color: AppColors.outlineVariant.withOpacity(0.15),
+            color: AppColors.outlineVariant.withValues(alpha: 0.15),
             blurRadius: 0,
             spreadRadius: 1.5,
           ),
@@ -78,6 +78,8 @@ class _Greeting extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final displayName = userName.trim().isEmpty ? 'Usuario' : userName.trim();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
@@ -89,7 +91,7 @@ class _Greeting extends StatelessWidget {
           ),
         ),
         Text(
-          userName,
+          displayName,
           style: AppTypography.titleMedium.copyWith(
             color: AppColors.onSurface,
             fontWeight: FontWeight.w700,

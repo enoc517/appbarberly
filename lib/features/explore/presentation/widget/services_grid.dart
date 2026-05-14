@@ -63,7 +63,9 @@ class _SectionHeader extends StatelessWidget {
       children: [
         Text(
           category == 'Todos' ? 'Servicios Premium' : category,
-          style: AppTypography.headlineSmall.copyWith(color: AppColors.onSurface),
+          style: AppTypography.headlineSmall.copyWith(
+            color: AppColors.onSurface,
+          ),
         ),
         Text(
           '$count resultados',
@@ -87,7 +89,7 @@ class _EmptyState extends StatelessWidget {
             Icon(
               Icons.search_off_rounded,
               size: 56,
-              color: AppColors.onSurfaceVariant.withOpacity(0.4),
+              color: AppColors.onSurfaceVariant.withValues(alpha: 0.4),
             ),
             const SizedBox(height: 16),
             Text(
@@ -100,7 +102,7 @@ class _EmptyState extends StatelessWidget {
             Text(
               'Prueba con otra categoría o término',
               style: AppTypography.bodyMedium.copyWith(
-                color: AppColors.onSurfaceVariant.withOpacity(0.7),
+                color: AppColors.onSurfaceVariant.withValues(alpha: 0.7),
               ),
             ),
           ],

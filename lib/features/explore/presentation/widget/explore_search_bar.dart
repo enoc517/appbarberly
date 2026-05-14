@@ -33,7 +33,7 @@ class _ExploreSearchBarState extends State<ExploreSearchBar> {
         // Ambient shadow – diffused, no harsh border
         boxShadow: [
           BoxShadow(
-            color: AppColors.onSurface.withOpacity(0.04),
+            color: AppColors.onSurface.withValues(alpha: 0.04),
             blurRadius: 16,
             offset: const Offset(0, 4),
           ),

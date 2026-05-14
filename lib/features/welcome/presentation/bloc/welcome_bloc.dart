@@ -6,10 +6,9 @@ import 'welcome_event.dart';
 import 'welcome_state.dart';
 
 class WelcomeBloc extends Bloc<WelcomeEvent, WelcomeState> {
-  WelcomeBloc({
-    required GetCurrentUserUseCase getCurrentUserUseCase,
-  })  : _getCurrentUserUseCase = getCurrentUserUseCase,
-        super(const WelcomeState()) {
+  WelcomeBloc({required GetCurrentUserUseCase getCurrentUserUseCase})
+    : _getCurrentUserUseCase = getCurrentUserUseCase,
+      super(const WelcomeState()) {
     on<WelcomeStarted>(_onStarted);
   }
 
@@ -36,11 +35,11 @@ class WelcomeBloc extends Bloc<WelcomeEvent, WelcomeState> {
       }
 
       if (!user.emailVerified) {
-        emit(state.copyWith(status: WelcomeStatus.goToVerifyEmail));
+        emit(state.copyWith(status: WelcomeStatus.goToVerifyEmail, user: user));
         return;
       }
 
-      emit(state.copyWith(status: WelcomeStatus.goToHome));
+      emit(state.copyWith(status: WelcomeStatus.goToHome, user: user));
     } catch (e) {
       debugPrint('WELCOME ERROR: $e');
       emit(state.copyWith(status: WelcomeStatus.goToLogin));

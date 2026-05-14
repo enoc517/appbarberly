@@ -1,10 +1,7 @@
 import 'package:barberly/features/auth/presentation/widget/forgot_password_form.dart';
 import 'package:barberly/shared/theme/app_theme.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-
-import '../bloc/password_recovery_bloc.dart'; // Reutilizamos el bloc de auth o creas uno específico
 
 class ForgotPasswordScreen extends StatelessWidget {
   const ForgotPasswordScreen({super.key});
@@ -14,7 +11,6 @@ class ForgotPasswordScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Nota: Aquí podrías usar un ForgotPasswordBloc si prefieres separar lógica de token/reset
     return Scaffold(
       backgroundColor: AppColors.surface,
       appBar: AppBar(

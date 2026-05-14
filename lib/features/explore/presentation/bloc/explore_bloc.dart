@@ -35,6 +35,7 @@ import 'package:barberly/features/explore/data/repositories/explore_repository_i
         LocationPermissionDeniedException,
         LocationPermissionPermanentlyDeniedException;
 import 'package:barberly/features/explore/presentation/utils/marker_utils.dart';
+import 'package:barberly/features/auth/domain/usecases/get_current_user.dart';
 
 part 'explore_event.dart';
 part 'explore_state.dart';
@@ -44,9 +45,12 @@ part 'explore_state.dart';
 // ════════════════════════════════════════════════════════════════════════════
 
 class ExploreBloc extends Bloc<ExploreEvent, ExploreState> {
-  ExploreBloc({required ExploreRepository repository})
-    : _repo = repository,
-      super(const ExploreInitial()) {
+  ExploreBloc({
+    required ExploreRepository repository,
+    required GetCurrentUserUseCase getCurrentUserUseCase,
+  }) : _repo = repository,
+       _getCurrentUserUseCase = getCurrentUserUseCase,
+       super(const ExploreInitial()) {
     on<ExploreInitialized>(_onInitialized);
     on<_BarbershopsUpdated>(_onBarbershopsUpdated);
     on<_ServicesUpdated>(_onServicesUpdated);
@@ -60,6 +64,7 @@ class ExploreBloc extends Bloc<ExploreEvent, ExploreState> {
   }
 
   final ExploreRepository _repo;
+  final GetCurrentUserUseCase _getCurrentUserUseCase;
 
   // Coordenadas de Ciudad Neily — fallback si GPS no disponible
   static const _kNeilyLat = 8.6131;
@@ -87,6 +92,16 @@ class ExploreBloc extends Bloc<ExploreEvent, ExploreState> {
 
     double lat = _kNeilyLat;
     double lng = _kNeilyLng;
+    String userName = 'Usuario';
+    String? userId = event.userId;
+
+    try {
+      final user = await _getCurrentUserUseCase();
+      userId ??= user?.id;
+      userName = _displayNameFor(user?.fullName, user?.email);
+    } catch (_) {
+      userName = 'Usuario';
+    }
 
     // Intentar obtener GPS real; si falla, usar Ciudad Neily
     try {
@@ -144,11 +159,9 @@ class ExploreBloc extends Bloc<ExploreEvent, ExploreState> {
           },
         );
 
-    if (event.userId != null) {
-      print('🔵 [ExploreBloc] Suscribiendo favoritos para ${event.userId}');
-      _favoritesSubscription = _repo.getUserFavoriteIds(event.userId!).listen((
-        ids,
-      ) {
+    if (userId != null) {
+      print('🔵 [ExploreBloc] Suscribiendo favoritos para $userId');
+      _favoritesSubscription = _repo.getUserFavoriteIds(userId).listen((ids) {
         print('🟢 [ExploreBloc] Stream favoritos: ${ids.length} IDs');
         add(_FavoritesUpdated(ids));
       }, onError: (_) => add(const _FavoritesUpdated([])));
@@ -172,6 +185,7 @@ class ExploreBloc extends Bloc<ExploreEvent, ExploreState> {
         currentSort: ExploreSort.cercania,
         userLat: lat,
         userLng: lng,
+        userName: userName,
       ),
     );
   }
@@ -206,16 +220,6 @@ class ExploreBloc extends Bloc<ExploreEvent, ExploreState> {
       '🔵 [ExploreBloc] _onFavoritesUpdated: ${event.favoriteIds.length} IDs',
     );
     _favoriteIds = event.favoriteIds;
-
-    // Si el usuario no tiene favoritos, emitir estado dedicado para el mensaje
-    if (_favoriteIds.isEmpty) {
-      print(
-        '🟡 [ExploreBloc] Favoritos vacíos — emitiendo ExploreFavoritesEmpty',
-      );
-      print('🟡 [ExploreBloc] ⚠️ ESTO PUEDE PISAR ExploreLoaded ⚠️');
-      emit(const ExploreFavoritesEmpty());
-      return;
-    }
 
     await _rebuildAndEmit(emit);
   }
@@ -455,6 +459,16 @@ class ExploreBloc extends Bloc<ExploreEvent, ExploreState> {
           return b.rating.compareTo(a.rating);
         });
     }
+  }
+
+  String _displayNameFor(String? fullName, String? email) {
+    final name = fullName?.trim();
+    if (name != null && name.isNotEmpty) return name.split(' ').first;
+
+    final mail = email?.trim();
+    if (mail != null && mail.isNotEmpty) return mail.split('@').first;
+
+    return 'Usuario';
   }
 
   /// Cancela todas las suscripciones activas.

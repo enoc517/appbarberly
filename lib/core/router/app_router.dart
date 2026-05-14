@@ -13,21 +13,21 @@ import 'package:barberly/shared/widgets/main_shell.dart';
 
 // Features: Auth
 import 'package:barberly/features/auth/data/datasources/auth_remote_datasource.dart';
+import 'package:barberly/features/auth/data/datasources/password_recovery_remote_datasource.dart';
 import 'package:barberly/features/auth/data/repositories/auth_repository_impl.dart';
+import 'package:barberly/features/auth/data/repositories/password_recovery_repository_impl.dart';
 import 'package:barberly/features/auth/domain/usecases/get_current_user.dart';
 import 'package:barberly/features/auth/domain/usecases/send_email_verification.dart';
+import 'package:barberly/features/auth/domain/usecases/send_password_reset_email.dart';
 import 'package:barberly/features/auth/domain/usecases/sign_in.dart';
 import 'package:barberly/features/auth/domain/usecases/sign_out.dart';
 import 'package:barberly/features/auth/domain/usecases/sign_up.dart';
 import 'package:barberly/features/auth/presentation/bloc/auth_bloc.dart';
-import 'package:barberly/features/auth/presentation/bloc/auth_event.dart';
 import 'package:barberly/features/auth/presentation/bloc/password_recovery_bloc.dart';
 import 'package:barberly/features/auth/presentation/screens/forgot_password_screen.dart';
 import 'package:barberly/features/auth/presentation/screens/login_screen.dart';
 import 'package:barberly/features/auth/presentation/screens/register_screen.dart';
-import 'package:barberly/features/auth/presentation/screens/reset_password_screen.dart';
 import 'package:barberly/features/auth/presentation/screens/verify_email_screen.dart';
-import 'package:barberly/features/auth/presentation/screens/verify_token_screen.dart';
 
 // Features: Barber (Barbershop Profile)
 import 'package:barberly/features/barber/barbershop_profile/data/datasources/barbershop_mock_datasource.dart';
@@ -74,8 +74,6 @@ class AppRouter {
 
   // FIX: los nombres de constantes deben ser lowerCamelCase (linter dart)
   static const String forgotPassword = '/forgot_password';
-  static const String verifyToken = '/verify_token';
-  static const String resetPassword = '/reset_password';
 
   static const String perfilBarberiaFull = '/perfil/perfil-barberia';
 
@@ -91,6 +89,12 @@ class AppRouter {
   static final AuthRepositoryImpl _authRepository = AuthRepositoryImpl(
     _authDatasource,
   );
+
+  static final PasswordRecoveryRemoteDatasource _passwordRecoveryDatasource =
+      PasswordRecoveryRemoteDatasourceImpl(firebaseAuth: _firebaseAuth);
+
+  static final PasswordRecoveryRepositoryImpl _passwordRecoveryRepository =
+      PasswordRecoveryRepositoryImpl(_passwordRecoveryDatasource);
 
   static final GetCurrentUserUseCase _getCurrentUserUseCase =
       GetCurrentUserUseCase(_authRepository);
@@ -110,6 +114,8 @@ class AppRouter {
   static final SignOutUseCase _signOutUseCase = SignOutUseCase(_authRepository);
   static final SendEmailVerificationUseCase _sendEmailVerificationUseCase =
       SendEmailVerificationUseCase(_authRepository);
+  static final SendPasswordResetEmailUseCase _sendPasswordResetEmailUseCase =
+      SendPasswordResetEmailUseCase(_passwordRecoveryRepository);
 
   // ── Router ───────────────────────────────────────────────────────────────────
   static final GoRouter router = GoRouter(
@@ -153,7 +159,9 @@ class AppRouter {
       // ── Password recovery shell ──────────────────────────────────────────────
       ShellRoute(
         builder: (context, state, child) => BlocProvider(
-          create: (_) => PasswordRecoveryBloc(),
+          create: (_) => PasswordRecoveryBloc(
+            sendPasswordResetEmailUseCase: _sendPasswordResetEmailUseCase,
+          ),
           child: child,
         ),
         routes: [
@@ -162,16 +170,6 @@ class AppRouter {
             path: forgotPassword,
             name: 'forgotPassword',
             builder: (context, state) => const ForgotPasswordScreen(),
-          ),
-          GoRoute(
-            path: verifyToken,
-            name: 'verifyToken',
-            builder: (context, state) => const VerifyTokenScreen(),
-          ),
-          GoRoute(
-            path: resetPassword,
-            name: 'resetPassword',
-            builder: (context, state) => const ResetPasswordScreen(),
           ),
         ],
       ),
@@ -202,8 +200,10 @@ class AppRouter {
                   );
 
                   return BlocProvider(
-                    create: (_) => ExploreBloc(repository: repo)
-                      ..add(const ExploreInitialized()),
+                    create: (_) => ExploreBloc(
+                      repository: repo,
+                      getCurrentUserUseCase: _getCurrentUserUseCase,
+                    ),
                     child: const ExploreScreen(),
                   );
                 },

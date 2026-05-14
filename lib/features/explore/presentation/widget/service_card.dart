@@ -19,7 +19,7 @@ class ServiceCard extends StatelessWidget {
           // Tonal layering ambient shadow
           boxShadow: [
             BoxShadow(
-              color: AppColors.onSurface.withOpacity(0.06),
+              color: AppColors.onSurface.withValues(alpha: 0.06),
               blurRadius: 16,
               offset: const Offset(0, 4),
             ),
@@ -95,7 +95,7 @@ class _ServiceImage extends StatelessWidget {
             Positioned.fill(
               child: Container(
                 decoration: BoxDecoration(
-                  color: AppColors.onSurface.withOpacity(0.55),
+                  color: AppColors.onSurface.withValues(alpha: 0.55),
                 ),
                 child: Center(
                   child: Container(
@@ -204,7 +204,7 @@ class _ServiceInfo extends StatelessWidget {
                     vertical: 3,
                   ),
                   decoration: BoxDecoration(
-                    color: AppColors.primaryContainer.withOpacity(0.10),
+                    color: AppColors.primaryContainer.withValues(alpha: 0.10),
                     borderRadius: BorderRadius.circular(AppRadius.sm),
                   ),
                   child: Text(

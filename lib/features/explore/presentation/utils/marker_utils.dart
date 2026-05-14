@@ -98,8 +98,10 @@ class MarkerUtils {
 
     // Intentar cargar desde assets; si falla, pintar programáticamente
     try {
-      _cachedPinBlue ??= await _loadFromAsset('assets/icons/pin_space_blue.png');
-      _cachedPinRed  ??= await _loadFromAsset('assets/icons/pin_lilo_red.png');
+      _cachedPinBlue ??= await _loadFromAsset(
+        'assets/icons/pin_space_blue.png',
+      );
+      _cachedPinRed ??= await _loadFromAsset('assets/icons/pin_lilo_red.png');
     } catch (_) {
       // Fallback: generar el bitmap en canvas si los assets no existen
       _cachedPinBlue ??= await _buildPinBitmap(
@@ -141,7 +143,7 @@ class MarkerUtils {
       ..style = PaintingStyle.fill;
 
     final shadowPaint = Paint()
-      ..color = Colors.black.withAlpha(50)
+      ..color = Colors.black.withValues(alpha: 50 / 255)
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
 
     // Sombra difusa (16–24px blur acorde al design system)
@@ -154,7 +156,7 @@ class MarkerUtils {
 
     // ── Círculo interior blanco ───────────────────────────────────────────
     final circlePaint = Paint()
-      ..color = Colors.white.withAlpha(230)
+      ..color = Colors.white.withValues(alpha: 230 / 255)
       ..style = PaintingStyle.fill;
     canvas.drawCircle(Offset(w / 2, h * 0.37), 22, circlePaint);
 
@@ -198,10 +200,18 @@ class MarkerUtils {
 
     return Path()
       ..addOval(
-        Rect.fromCircle(center: Offset(cx, topRadius + offsetY), radius: topRadius),
+        Rect.fromCircle(
+          center: Offset(cx, topRadius + offsetY),
+          radius: topRadius,
+        ),
       )
       ..moveTo(cx - topRadius * 0.38, topRadius * 1.45 + offsetY)
-      ..quadraticBezierTo(cx, tipY, cx + topRadius * 0.38, topRadius * 1.45 + offsetY)
+      ..quadraticBezierTo(
+        cx,
+        tipY,
+        cx + topRadius * 0.38,
+        topRadius * 1.45 + offsetY,
+      )
       ..close();
   }
 

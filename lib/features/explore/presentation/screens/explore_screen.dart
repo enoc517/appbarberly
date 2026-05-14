@@ -41,6 +41,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
           return switch (state) {
             ExploreLoading() => const _LoadingView(),
             ExploreLoaded() => _LoadedView(state: state),
+            ExploreFavoritesEmpty() => const _LoadingView(),
             ExploreError(:final message) => _ErrorView(message: message),
             _ => const SizedBox.shrink(),
           };
@@ -86,16 +87,16 @@ class _LoadedView extends StatelessWidget {
                 children: [
                   // 1. Header
                   ExploreHeader(
-                    userName: 'Jonathan',
+                    userName: state.userName,
                     onNotificationTap: () {},
                   ),
                   const SizedBox(height: 20),
                   // 2. Search bar
                   ExploreSearchBar(
                     onChanged: (query) {
-                      context
-                          .read<ExploreBloc>()
-                          .add(ExploreSearchQueryChanged(query));
+                      context.read<ExploreBloc>().add(
+                        ExploreSearchQueryChanged(query),
+                      );
                     },
                   ),
                   const SizedBox(height: 20),
@@ -110,10 +111,10 @@ class _LoadedView extends StatelessWidget {
                       // 'Todos' se normaliza a null para que el BLoC
                       // elimine el filtro y devuelva todos los servicios.
                       context.read<ExploreBloc>().add(
-                            ExploreCategoryFilterChanged(
-                              cat == 'Todos' ? null : cat.toLowerCase(),
-                            ),
-                          );
+                        ExploreCategoryFilterChanged(
+                          cat == 'Todos' ? null : cat.toLowerCase(),
+                        ),
+                      );
                     },
                   ),
                   const SizedBox(height: 20),
@@ -127,7 +128,7 @@ class _LoadedView extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(20, 0, 20, 120),
           sliver: SliverToBoxAdapter(
             child: ServicesGrid(
-              services: serviceModels,       // List<ServiceModel> ✓
+              services: serviceModels, // List<ServiceModel> ✓
               selectedCategory: selectedCategory, // String ✓
             ),
           ),
@@ -170,7 +171,7 @@ class _ErrorView extends StatelessWidget {
             Icon(
               Icons.wifi_off_rounded,
               size: 48,
-              color: AppColors.onSurfaceVariant.withOpacity(0.45),
+              color: AppColors.onSurfaceVariant.withValues(alpha: 0.45),
             ),
             const SizedBox(height: 16),
             Text(
@@ -197,9 +198,7 @@ class _ErrorView extends StatelessWidget {
                 ),
               ),
               onPressed: () {
-                context
-                    .read<ExploreBloc>()
-                    .add(const ExploreInitialized());
+                context.read<ExploreBloc>().add(const ExploreInitialized());
               },
               child: Text(
                 'Reintentar',

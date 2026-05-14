@@ -1,7 +1,6 @@
 import 'package:barberly/features/auth/presentation/widget/verify_token_form.dart';
 import 'package:barberly/shared/theme/app_theme.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 class VerifyTokenScreen extends StatelessWidget {
@@ -24,7 +23,7 @@ class VerifyTokenScreen extends StatelessWidget {
             size: 20,
           ),
           onPressed: () => GoRouter.of(context).go('/login'),
-        ),        
+        ),
         centerTitle: true,
       ),
       body: const SingleChildScrollView(
