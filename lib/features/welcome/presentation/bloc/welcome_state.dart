@@ -1,18 +1,19 @@
 import 'package:equatable/equatable.dart';
 
-enum WelcomeStatus { initial, loading, goToLogin, goToHome }
+import '../../../auth/domain/entities/app_user.dart';
+
+enum WelcomeStatus { initial, loading, goToLogin, goToHome, goToVerifyEmail }
 
 class WelcomeState extends Equatable {
   final WelcomeStatus status;
+  final AppUser? user;
 
-  const WelcomeState({this.status = WelcomeStatus.initial});
+  const WelcomeState({this.status = WelcomeStatus.initial, this.user});
 
-  WelcomeState copyWith({WelcomeStatus? status}) {
-    return WelcomeState(
-      status: status ?? this.status,
-    );
+  WelcomeState copyWith({WelcomeStatus? status, AppUser? user}) {
+    return WelcomeState(status: status ?? this.status, user: user ?? this.user);
   }
 
   @override
-  List<Object?> get props => [status];
+  List<Object?> get props => [status, user];
 }

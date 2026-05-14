@@ -15,30 +15,3 @@ final class RecoveryEmailSubmitted extends PasswordRecoveryEvent {
   @override
   List<Object?> get props => [email];
 }
-
-/// Paso 2: Verificación del token recibido
-final class RecoveryTokenSubmitted extends PasswordRecoveryEvent {
-  final String token;
-  const RecoveryTokenSubmitted(this.token);
-
-  @override
-  List<Object?> get props => [token];
-}
-
-/// Paso 3: Envío de la nueva contraseña (Adaptado de Claude)
-final class NewPasswordSubmitted extends PasswordRecoveryEvent {
-  final String newPassword;
-  final String confirmPassword;
-  
-  const NewPasswordSubmitted({
-    required this.newPassword, 
-    required this.confirmPassword
-  });
-
-  @override
-  List<Object?> get props => [newPassword, confirmPassword];
-}
-
-/// Eventos de UI para la visibilidad (Adaptados de Claude)
-final class PasswordVisibilityToggled extends PasswordRecoveryEvent {}
-final class ConfirmPasswordVisibilityToggled extends PasswordRecoveryEvent {}

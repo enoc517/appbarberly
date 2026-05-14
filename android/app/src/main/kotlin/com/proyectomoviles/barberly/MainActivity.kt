@@ -1,4 +1,4 @@
-package com.example.barberly
+package com.proyectomoviles.barberly
 
 import io.flutter.embedding.android.FlutterActivity
 
