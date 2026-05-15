@@ -7,12 +7,25 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:566264148896:android:a3fa41b4dfef10f4992ac5",
+        "mobilesdk_app_id": "1:566264148896:android:f24d9fa5512b53ba992ac5",
         "android_client_info": {
           "package_name": "com.proyectomoviles.barberly"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "566264148896-dok4ovgkbigumbem9ecphl64pqfbeign.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.proyectomoviles.barberly",
+            "certificate_hash": "93454742ada12f5e8a406f21c99e791d2eae0916"
+          }
+        },
+        {
+          "client_id": "566264148896-k5hgua9hp94hlscfsnkvuldrlvj8m7c9.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyBsPo5WL5uNqHSF44BiMfy-9e6vXEWG510"
@@ -20,7 +33,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "566264148896-k5hgua9hp94hlscfsnkvuldrlvj8m7c9.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "566264148896-o7425vo82745ciarobtuq97pk3p61llu.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.barberly"
+              }
+            }
+          ]
         }
       }
     }

@@ -42,8 +42,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final width = MediaQuery.sizeOf(context).width;
+    final size = MediaQuery.sizeOf(context);
+    final width = size.width;
     final isWide = width >= 900;
+    final isCompact = width < 390 || size.height < 720;
     final isLoading = context.select(
       (AuthBloc bloc) => bloc.state.status == AuthStatus.loading,
     );
@@ -78,10 +80,15 @@ class _LoginScreenState extends State<LoginScreen> {
           });
         }
 
+        if (state.status == AuthStatus.googleRoleSelection) {
+          context.go('/google-role');
+          return;
+        }
+
         if (state.status == AuthStatus.failure && state.errorMessage != null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.errorMessage!)),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(state.errorMessage!)));
         }
       },
       child: Scaffold(
@@ -105,61 +112,93 @@ class _LoginScreenState extends State<LoginScreen> {
                   color: AppColors.secondaryContainer.withValues(alpha: 0.03),
                 ),
               ),
-              Center(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 28,
-                  ),
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 1120),
-                    child: isWide
-                        ? Row(
-                            children: [
-                              Expanded(
-                                child: _BrandPanel(theme: Theme.of(context)),
-                              ),
-                              const SizedBox(width: 32),
-                              Expanded(
-                                child: _LoginCard(
-                                  isLoading: isLoading,
-                                  formKey: _formKey,
-                                  emailController: _emailController,
-                                  passwordController: _passwordController,
-                                  obscurePassword: _obscurePassword,
-                                  onTogglePassword: () {
-                                    setState(() {
-                                      _obscurePassword = !_obscurePassword;
-                                    });
-                                  },
-                                  onSubmit: _submit,
-                                  onGoRegister: () => context.go('/register'),
-                                ),
-                              ),
-                            ],
-                          )
-                        : Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const _BrandHeader(),
-                              const SizedBox(height: 28),
-                              _LoginCard(
-                                isLoading: isLoading,
-                                formKey: _formKey,
-                                emailController: _emailController,
-                                passwordController: _passwordController,
-                                obscurePassword: _obscurePassword,
-                                onTogglePassword: () {
-                                  setState(() {
-                                    _obscurePassword = !_obscurePassword;
-                                  });
-                                },
-                                onSubmit: _submit,
-                                onGoRegister: () => context.go('/register'),
-                              ),
-                            ],
+              Positioned.fill(
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final horizontalPadding = isCompact ? 16.0 : 24.0;
+                    final verticalPadding = isCompact ? 16.0 : 28.0;
+                    final minContentHeight =
+                        constraints.maxHeight - (verticalPadding * 2);
+
+                    return SingleChildScrollView(
+                      keyboardDismissBehavior:
+                          ScrollViewKeyboardDismissBehavior.onDrag,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: horizontalPadding,
+                        vertical: verticalPadding,
+                      ),
+                      child: Center(
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                            maxWidth: 1120,
+                            minHeight: minContentHeight > 0
+                                ? minContentHeight
+                                : 0,
                           ),
-                  ),
+                          child: Align(
+                            alignment: isWide
+                                ? Alignment.center
+                                : Alignment.topCenter,
+                            child: isWide
+                                ? Row(
+                                    children: [
+                                      Expanded(
+                                        child: _BrandPanel(
+                                          theme: Theme.of(context),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 32),
+                                      Expanded(
+                                        child: _LoginCard(
+                                          isLoading: isLoading,
+                                          isCompact: isCompact,
+                                          formKey: _formKey,
+                                          emailController: _emailController,
+                                          passwordController:
+                                              _passwordController,
+                                          obscurePassword: _obscurePassword,
+                                          onTogglePassword: () {
+                                            setState(() {
+                                              _obscurePassword =
+                                                  !_obscurePassword;
+                                            });
+                                          },
+                                          onSubmit: _submit,
+                                          onGoRegister: () =>
+                                              context.go('/register'),
+                                        ),
+                                      ),
+                                    ],
+                                  )
+                                : Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      _BrandHeader(isCompact: isCompact),
+                                      SizedBox(height: isCompact ? 18 : 28),
+                                      _LoginCard(
+                                        isLoading: isLoading,
+                                        isCompact: isCompact,
+                                        formKey: _formKey,
+                                        emailController: _emailController,
+                                        passwordController: _passwordController,
+                                        obscurePassword: _obscurePassword,
+                                        onTogglePassword: () {
+                                          setState(() {
+                                            _obscurePassword =
+                                                !_obscurePassword;
+                                          });
+                                        },
+                                        onSubmit: _submit,
+                                        onGoRegister: () =>
+                                            context.go('/register'),
+                                      ),
+                                    ],
+                                  ),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
                 ),
               ),
             ],
@@ -173,6 +212,7 @@ class _LoginScreenState extends State<LoginScreen> {
 class _LoginCard extends StatelessWidget {
   const _LoginCard({
     required this.isLoading,
+    required this.isCompact,
     required this.formKey,
     required this.emailController,
     required this.passwordController,
@@ -183,6 +223,7 @@ class _LoginCard extends StatelessWidget {
   });
 
   final bool isLoading;
+  final bool isCompact;
   final GlobalKey<FormState> formKey;
   final TextEditingController emailController;
   final TextEditingController passwordController;
@@ -193,13 +234,18 @@ class _LoginCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cardPadding = isCompact ? 20.0 : 28.0;
+    final titleGap = isCompact ? 26.0 : 36.0;
+    final fieldGap = isCompact ? 20.0 : 24.0;
+    final socialGap = isCompact ? 18.0 : 24.0;
+
     return Container(
       width: double.infinity,
       constraints: const BoxConstraints(maxWidth: 560),
-      padding: const EdgeInsets.all(28),
+      padding: EdgeInsets.all(cardPadding),
       decoration: BoxDecoration(
         color: AppColors.surfaceContainerLowest,
-        borderRadius: BorderRadius.circular(32),
+        borderRadius: BorderRadius.circular(isCompact ? 26 : 32),
         boxShadow: [
           BoxShadow(
             color: AppColors.ambientShadow,
@@ -216,12 +262,13 @@ class _LoginCard extends StatelessWidget {
             Text(
               'Bienvenido de nuevo',
               style: AppTypography.headlineMedium.copyWith(
+                fontSize: isCompact ? 25 : null,
                 color: AppColors.onSurface,
                 fontWeight: FontWeight.w800,
                 height: 1.1,
               ),
             ),
-            const SizedBox(height: 36),
+            SizedBox(height: titleGap),
             const _FieldLabel(text: 'Correo electrónico'),
             const SizedBox(height: 10),
             _TextField(
@@ -236,7 +283,7 @@ class _LoginCard extends StatelessWidget {
                 return null;
               },
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: fieldGap),
             const _FieldLabel(text: 'Contraseña'),
             const SizedBox(height: 10),
             _TextField(
@@ -292,7 +339,9 @@ class _LoginCard extends StatelessWidget {
                   backgroundColor: AppColors.primaryContainer,
                   foregroundColor: AppColors.onPrimary,
                   elevation: 0,
-                  shadowColor: AppColors.primaryContainer.withValues(alpha: 0.18),
+                  shadowColor: AppColors.primaryContainer.withValues(
+                    alpha: 0.18,
+                  ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(AppRadius.xl),
                   ),
@@ -342,71 +391,11 @@ class _LoginCard extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(height: 28),
-            Row(
-              children: [
-                Expanded(
-                  child: Divider(
-                    height: 1,
-                    color: AppColors.outlineVariant.withValues(alpha: 0.35),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  child: Text(
-                    'O inicia sesión con',
-                    style: AppTypography.labelLarge.copyWith(
-                      color: AppColors.onSurfaceVariant,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-                Expanded(
-                  child: Divider(
-                    height: 1,
-                    color: AppColors.outlineVariant.withValues(alpha: 0.35),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-            Row(
-              children: [
-                Expanded(
-                  child: _SocialButton(
-                    label: 'Google',
-                    icon: Image.asset(
-                      'assets/icons/google.png',
-                      width: 22,
-                      height: 22,
-                      errorBuilder: (_, _, _) => Icon(
-                        Icons.g_mobiledata_rounded,
-                        size: 28,
-                        color: AppColors.onSurface,
-                      ),
-                    ),
-                    onPressed: () {
-                      // TODO: Google sign-in.
-                    },
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: _SocialButton(
-                    label: 'Apple',
-                    icon: Icon(
-                      Icons.apple_rounded,
-                      size: 24,
-                      color: AppColors.onSurface,
-                    ),
-                    onPressed: () {
-                      // TODO: Apple sign-in.
-                    },
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 22),
+            SizedBox(height: isCompact ? 22 : 28),
+            _SocialDivider(isCompact: isCompact),
+            SizedBox(height: socialGap),
+            _SocialButtons(isCompact: isCompact),
+            SizedBox(height: isCompact ? 18 : 22),
             Center(
               child: Wrap(
                 crossAxisAlignment: WrapCrossAlignment.center,
@@ -440,7 +429,9 @@ class _LoginCard extends StatelessWidget {
 }
 
 class _BrandHeader extends StatelessWidget {
-  const _BrandHeader();
+  const _BrandHeader({required this.isCompact});
+
+  final bool isCompact;
 
   @override
   Widget build(BuildContext context) {
@@ -449,17 +440,19 @@ class _BrandHeader extends StatelessWidget {
       children: [
         Image.asset(
           'assets/logos/logo4.png',
-          height: 110,
+          height: isCompact ? 86 : 110,
           fit: BoxFit.contain,
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: isCompact ? 6 : 8),
         Text(
           'Una experiencia única',
           textAlign: TextAlign.center,
-          style: AppTypography.bodyLarge.copyWith(
-            color: AppColors.onSurfaceVariant,
-            fontWeight: FontWeight.w500,
-          ),
+          style:
+              (isCompact ? AppTypography.bodyMedium : AppTypography.bodyLarge)
+                  .copyWith(
+                    color: AppColors.onSurfaceVariant,
+                    fontWeight: FontWeight.w500,
+                  ),
         ),
       ],
     );
@@ -529,6 +522,94 @@ class _BrandPanel extends StatelessWidget {
               ),
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SocialDivider extends StatelessWidget {
+  const _SocialDivider({required this.isCompact});
+
+  final bool isCompact;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: Divider(
+            height: 1,
+            color: AppColors.outlineVariant.withValues(alpha: 0.35),
+          ),
+        ),
+        Flexible(
+          flex: 0,
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: isCompact ? 8 : 12),
+            child: Text(
+              isCompact ? 'O continúa con' : 'O inicia sesión con',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppTypography.labelLarge.copyWith(
+                fontSize: isCompact ? 13 : null,
+                color: AppColors.onSurfaceVariant,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ),
+        Expanded(
+          child: Divider(
+            height: 1,
+            color: AppColors.outlineVariant.withValues(alpha: 0.35),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _SocialButtons extends StatelessWidget {
+  const _SocialButtons({required this.isCompact});
+
+  final bool isCompact;
+
+  @override
+  Widget build(BuildContext context) {
+    final googleButton = _SocialButton(
+      label: 'Google',
+      icon: Image.asset(
+        'assets/icons/google.png',
+        width: 24,
+        height: 24,
+        errorBuilder: (_, _, _) => Icon(
+          Icons.g_mobiledata_rounded,
+          size: 30,
+          color: AppColors.onSurface,
+        ),
+      ),
+      onPressed: () {
+        context.read<AuthBloc>().add(const AuthSignInWithGoogleRequested());
+      },
+    );
+
+    final appleButton = _SocialButton(
+      label: 'Apple',
+      icon: Icon(Icons.apple_rounded, size: 28, color: AppColors.onSurface),
+      onPressed: () {
+        // TODO: Apple sign-in.
+      },
+    );
+
+    return SizedBox(
+      width: double.infinity,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          googleButton,
+          SizedBox(width: isCompact ? 14 : 18),
+          appleButton,
         ],
       ),
     );
@@ -634,32 +715,25 @@ class _SocialButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 56,
-      child: OutlinedButton(
-        onPressed: onPressed,
-        style: OutlinedButton.styleFrom(
-          backgroundColor: AppColors.surfaceContainer,
-          side: BorderSide(
-            color: AppColors.outlineVariant.withValues(alpha: 0.45),
-          ),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(18),
-          ),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            icon,
-            const SizedBox(width: 12),
-            Text(
-              label,
-              style: AppTypography.labelLarge.copyWith(
-                color: AppColors.onSurface,
-                fontWeight: FontWeight.w700,
+    return Tooltip(
+      message: label,
+      child: Semantics(
+        button: true,
+        label: 'Continuar con $label',
+        child: SizedBox.square(
+          dimension: 56,
+          child: OutlinedButton(
+            onPressed: onPressed,
+            style: OutlinedButton.styleFrom(
+              backgroundColor: AppColors.surfaceContainer,
+              padding: EdgeInsets.zero,
+              side: BorderSide(
+                color: AppColors.outlineVariant.withValues(alpha: 0.45),
               ),
+              shape: const CircleBorder(),
             ),
-          ],
+            child: Center(child: icon),
+          ),
         ),
       ),
     );

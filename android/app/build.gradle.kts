@@ -3,6 +3,7 @@ import java.util.Properties
 plugins {
     id("com.android.application")
     id("kotlin-android")
+    id("com.google.gms.google-services")
     // El plugin de Flutter Gradle debe ir DESPUÉS de los plugins de Android y Kotlin.
     id("dev.flutter.flutter-gradle-plugin")
 }

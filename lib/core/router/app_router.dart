@@ -7,6 +7,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 // Shared
 import 'package:barberly/shared/widgets/main_shell.dart';
@@ -16,15 +17,17 @@ import 'package:barberly/features/auth/data/datasources/auth_remote_datasource.d
 import 'package:barberly/features/auth/data/datasources/password_recovery_remote_datasource.dart';
 import 'package:barberly/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:barberly/features/auth/data/repositories/password_recovery_repository_impl.dart';
+import 'package:barberly/features/auth/domain/usecases/finalize_google_sign_up.dart';
 import 'package:barberly/features/auth/domain/usecases/get_current_user.dart';
-import 'package:barberly/features/auth/domain/usecases/send_email_verification.dart';
 import 'package:barberly/features/auth/domain/usecases/send_password_reset_email.dart';
 import 'package:barberly/features/auth/domain/usecases/sign_in.dart';
+import 'package:barberly/features/auth/domain/usecases/sign_in_with_google.dart';
 import 'package:barberly/features/auth/domain/usecases/sign_out.dart';
 import 'package:barberly/features/auth/domain/usecases/sign_up.dart';
 import 'package:barberly/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:barberly/features/auth/presentation/bloc/password_recovery_bloc.dart';
 import 'package:barberly/features/auth/presentation/screens/forgot_password_screen.dart';
+import 'package:barberly/features/auth/presentation/screens/google_role_screen.dart';
 import 'package:barberly/features/auth/presentation/screens/login_screen.dart';
 import 'package:barberly/features/auth/presentation/screens/register_screen.dart';
 import 'package:barberly/features/auth/presentation/screens/verify_email_screen.dart';
@@ -80,10 +83,14 @@ class AppRouter {
   // ── Firebase / Auth stack ────────────────────────────────────────────────────
   static final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
   static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  static final GoogleSignIn _googleSignIn = GoogleSignIn(
+    scopes: const ['email'],
+  );
 
   static final AuthRemoteDatasource _authDatasource = AuthRemoteDatasourceImpl(
     firebaseAuth: _firebaseAuth,
     firestore: _firestore,
+    googleSignIn: _googleSignIn,
   );
 
   static final AuthRepositoryImpl _authRepository = AuthRepositoryImpl(
@@ -103,17 +110,20 @@ class AppRouter {
     return AuthBloc(
       signInUseCase: _signInUseCase,
       signUpUseCase: _signUpUseCase,
+      signInWithGoogleUseCase: _signInWithGoogleUseCase,
+      finalizeGoogleSignUpUseCase: _finalizeGoogleSignUpUseCase,
       signOutUseCase: _signOutUseCase,
       getCurrentUserUseCase: _getCurrentUserUseCase,
-      sendEmailVerificationUseCase: _sendEmailVerificationUseCase,
     );
   }
 
   static final SignInUseCase _signInUseCase = SignInUseCase(_authRepository);
+  static final SignInWithGoogleUseCase _signInWithGoogleUseCase =
+      SignInWithGoogleUseCase(_authRepository);
+  static final FinalizeGoogleSignUpUseCase _finalizeGoogleSignUpUseCase =
+      FinalizeGoogleSignUpUseCase(_authRepository);
   static final SignUpUseCase _signUpUseCase = SignUpUseCase(_authRepository);
   static final SignOutUseCase _signOutUseCase = SignOutUseCase(_authRepository);
-  static final SendEmailVerificationUseCase _sendEmailVerificationUseCase =
-      SendEmailVerificationUseCase(_authRepository);
   static final SendPasswordResetEmailUseCase _sendPasswordResetEmailUseCase =
       SendPasswordResetEmailUseCase(_passwordRecoveryRepository);
 
@@ -153,6 +163,14 @@ class AppRouter {
         builder: (context, state) => BlocProvider(
           create: (_) => _buildAuthBloc(),
           child: const VerifyEmailScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/google-role',
+        name: 'google-role',
+        builder: (context, state) => BlocProvider(
+          create: (_) => _buildAuthBloc(),
+          child: const GoogleRoleScreen(),
         ),
       ),
 

@@ -13,13 +13,19 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<AppUser> signIn({
-    required String email,
-    required String password,
-  }) {
-    return remoteDatasource.signIn(
-      email: email,
-      password: password,
+  Future<AppUser> signIn({required String email, required String password}) {
+    return remoteDatasource.signIn(email: email, password: password);
+  }
+
+  @override
+  Future<AppUser?> signInWithGoogle() {
+    return remoteDatasource.signInWithGoogle();
+  }
+
+  @override
+  Future<AppUser> finalizeGoogleSignUp({required bool isProfessional}) {
+    return remoteDatasource.finalizeGoogleSignUp(
+      isProfessional: isProfessional,
     );
   }
 

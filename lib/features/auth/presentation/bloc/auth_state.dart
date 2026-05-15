@@ -5,6 +5,7 @@ enum AuthStatus {
   initial,
   loading,
   authenticated,
+  googleRoleSelection,
   emailVerificationPending,
   unauthenticated,
   failure,

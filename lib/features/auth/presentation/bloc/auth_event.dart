@@ -15,13 +15,23 @@ class AuthSignInRequested extends AuthEvent {
   final String email;
   final String password;
 
-  const AuthSignInRequested({
-    required this.email,
-    required this.password,
-  });
+  const AuthSignInRequested({required this.email, required this.password});
 
   @override
   List<Object?> get props => [email, password];
+}
+
+class AuthSignInWithGoogleRequested extends AuthEvent {
+  const AuthSignInWithGoogleRequested();
+}
+
+class AuthFinalizeGoogleSignUpRequested extends AuthEvent {
+  final bool isProfessional;
+
+  const AuthFinalizeGoogleSignUpRequested({required this.isProfessional});
+
+  @override
+  List<Object?> get props => [isProfessional];
 }
 
 class AuthSignUpRequested extends AuthEvent {
@@ -40,19 +50,9 @@ class AuthSignUpRequested extends AuthEvent {
   });
 
   @override
-  List<Object?> get props => [
-        fullName,
-        phone,
-        email,
-        password,
-        isProfessional,
-      ];
+  List<Object?> get props => [fullName, phone, email, password, isProfessional];
 }
 
 class AuthSignOutRequested extends AuthEvent {
   const AuthSignOutRequested();
-}
-
-class AuthResendVerificationEmailRequested extends AuthEvent {
-  const AuthResendVerificationEmailRequested();
 }

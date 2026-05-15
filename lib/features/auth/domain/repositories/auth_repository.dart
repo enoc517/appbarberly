@@ -5,6 +5,10 @@ abstract class AuthRepository {
 
   Future<AppUser> signIn({required String email, required String password});
 
+  Future<AppUser?> signInWithGoogle();
+
+  Future<AppUser> finalizeGoogleSignUp({required bool isProfessional});
+
   Future<AppUser> signUp({
     required String fullName,
     required String phone,

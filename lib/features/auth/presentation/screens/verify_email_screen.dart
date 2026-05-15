@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -7,8 +9,52 @@ import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
 
-class VerifyEmailScreen extends StatelessWidget {
+class VerifyEmailScreen extends StatefulWidget {
   const VerifyEmailScreen({super.key});
+
+  @override
+  State<VerifyEmailScreen> createState() => _VerifyEmailScreenState();
+}
+
+class _VerifyEmailScreenState extends State<VerifyEmailScreen>
+    with WidgetsBindingObserver {
+  Timer? _verificationTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _checkVerification();
+      _verificationTimer = Timer.periodic(const Duration(seconds: 4), (_) {
+        if (mounted) _checkVerification();
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _verificationTimer?.cancel();
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _checkVerification();
+    }
+  }
+
+  void _checkVerification() {
+    final status = context.read<AuthBloc>().state.status;
+    if (status == AuthStatus.loading || status == AuthStatus.authenticated) {
+      return;
+    }
+
+    context.read<AuthBloc>().add(const AuthLoadCurrentUserRequested());
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -24,6 +70,7 @@ class VerifyEmailScreen extends StatelessWidget {
       listenWhen: (prev, curr) => prev.status != curr.status,
       listener: (context, state) {
         if (state.status == AuthStatus.authenticated) {
+          _verificationTimer?.cancel();
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Correo verificado correctamente')),
           );
@@ -35,11 +82,10 @@ class VerifyEmailScreen extends StatelessWidget {
           });
         }
 
-        if (state.status == AuthStatus.failure &&
-            state.errorMessage != null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.errorMessage!)),
-          );
+        if (state.status == AuthStatus.failure && state.errorMessage != null) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(state.errorMessage!)));
         }
       },
       child: Scaffold(
@@ -92,62 +138,44 @@ class VerifyEmailScreen extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 28),
-                      SizedBox(
+                      Container(
                         width: double.infinity,
-                        height: 56,
-                        child: ElevatedButton(
-                          onPressed: isLoading
-                              ? null
-                              : () {
-                                  context.read<AuthBloc>().add(
-                                    const AuthLoadCurrentUserRequested(),
-                                  );
-                                },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primaryContainer,
-                            foregroundColor: AppColors.onPrimary,
-                            elevation: 0,
-                            shadowColor: AppColors.primaryContainer
-                                .withValues(alpha: 0.18),
-                            shape: RoundedRectangleBorder(
-                              borderRadius:
-                                  BorderRadius.circular(AppRadius.xl),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 18,
+                          vertical: 16,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.surfaceContainer,
+                          borderRadius: BorderRadius.circular(AppRadius.xl),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: AppColors.primaryContainer,
+                              ),
                             ),
-                          ),
-                          child: AnimatedSwitcher(
-                            duration: const Duration(milliseconds: 200),
-                            child: isLoading
-                                ? const Text(
-                                    'Comprobando...',
-                                    key: ValueKey('loading'),
-                                    style: TextStyle(
-                                      fontSize: 17,
-                                      fontWeight: FontWeight.w800,
-                                    ),
-                                  )
-                                : const Text(
-                                    'Ya verifiqué',
-                                    key: ValueKey('idle'),
-                                    style: TextStyle(
-                                      fontSize: 17,
-                                      fontWeight: FontWeight.w800,
-                                    ),
-                                  ),
-                          ),
+                            const SizedBox(width: 12),
+                            Flexible(
+                              child: Text(
+                                isLoading
+                                    ? 'Comprobando verificación...'
+                                    : 'Esperando verificación automática...',
+                                textAlign: TextAlign.center,
+                                style: AppTypography.labelLarge.copyWith(
+                                  color: AppColors.onSurface,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                      const SizedBox(height: 12),
-                      TextButton(
-                        onPressed: isLoading
-                            ? null
-                            : () {
-                                context.read<AuthBloc>().add(
-                                  const AuthResendVerificationEmailRequested(),
-                                );
-                              },
-                        child: const Text('Reenviar correo'),
-                      ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 20),
                       TextButton(
                         onPressed: () => context.go('/login'),
                         child: const Text('Volver al inicio de sesión'),
