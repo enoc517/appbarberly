@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '/../../../shared/motion/app_motion.dart';
 import '/../../../shared/theme/app_theme.dart';
 
 class CompletedCard extends StatelessWidget {
@@ -13,6 +14,7 @@ class CompletedCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final reduced = AppMotion.reduceMotion(context);
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -35,21 +37,31 @@ class CompletedCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 4),
-                RichText(
-                  text: TextSpan(
-                    style: AppTypography.displaySmall.copyWith(
-                      color: AppColors.onSurface,
-                      fontWeight: FontWeight.w800,
-                    ),
-                    children: [
-                      TextSpan(text: completed.toString().padLeft(2, '0')),
-                      TextSpan(
-                        text: ' / $total',
-                        style: AppTypography.titleMedium.copyWith(
-                          color: AppColors.onSurfaceVariant,
-                        ),
+                TweenAnimationBuilder<double>(
+                  tween: Tween<double>(
+                    begin: reduced ? completed.toDouble() : 0,
+                    end: completed.toDouble(),
+                  ),
+                  duration: reduced ? Duration.zero : AppMotion.entrance,
+                  curve: AppMotion.standard,
+                  builder: (context, value, child) => RichText(
+                    text: TextSpan(
+                      style: AppTypography.displaySmall.copyWith(
+                        color: AppColors.onSurface,
+                        fontWeight: FontWeight.w800,
                       ),
-                    ],
+                      children: [
+                        TextSpan(
+                          text: value.round().toString().padLeft(2, '0'),
+                        ),
+                        TextSpan(
+                          text: ' / $total',
+                          style: AppTypography.titleMedium.copyWith(
+                            color: AppColors.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ],

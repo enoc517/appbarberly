@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/router/auth_route_resolver.dart';
 import '../../../../shared/theme/app_theme.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
@@ -77,7 +78,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen>
 
           Future.delayed(const Duration(milliseconds: 700), () {
             if (context.mounted) {
-              context.go('/explorar');
+              context.go(routeForAuthenticatedUser(state.user));
             }
           });
         }

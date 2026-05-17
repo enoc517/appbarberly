@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/router/auth_route_resolver.dart';
 import '../../../../shared/theme/app_theme.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
@@ -24,7 +25,7 @@ class GoogleRoleScreen extends StatelessWidget {
       listenWhen: (prev, curr) => prev.status != curr.status,
       listener: (context, state) {
         if (state.status == AuthStatus.authenticated) {
-          context.go('/explorar');
+          context.go(routeForAuthenticatedUser(state.user));
           return;
         }
 

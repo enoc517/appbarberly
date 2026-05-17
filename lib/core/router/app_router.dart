@@ -2,35 +2,32 @@
 // ===========================================================================
 
 // Flutter & External Packages
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 
 // Shared
 import 'package:barberly/shared/widgets/main_shell.dart';
 
+// Core DI
+import 'package:barberly/core/di/app_dependencies.dart';
+
 // Features: Auth
-import 'package:barberly/features/auth/data/datasources/auth_remote_datasource.dart';
-import 'package:barberly/features/auth/data/datasources/password_recovery_remote_datasource.dart';
-import 'package:barberly/features/auth/data/repositories/auth_repository_impl.dart';
-import 'package:barberly/features/auth/data/repositories/password_recovery_repository_impl.dart';
-import 'package:barberly/features/auth/domain/usecases/finalize_google_sign_up.dart';
-import 'package:barberly/features/auth/domain/usecases/get_current_user.dart';
-import 'package:barberly/features/auth/domain/usecases/send_password_reset_email.dart';
-import 'package:barberly/features/auth/domain/usecases/sign_in.dart';
-import 'package:barberly/features/auth/domain/usecases/sign_in_with_google.dart';
-import 'package:barberly/features/auth/domain/usecases/sign_out.dart';
-import 'package:barberly/features/auth/domain/usecases/sign_up.dart';
-import 'package:barberly/features/auth/presentation/bloc/auth_bloc.dart';
-import 'package:barberly/features/auth/presentation/bloc/password_recovery_bloc.dart';
 import 'package:barberly/features/auth/presentation/screens/forgot_password_screen.dart';
 import 'package:barberly/features/auth/presentation/screens/google_role_screen.dart';
 import 'package:barberly/features/auth/presentation/screens/login_screen.dart';
+import 'package:barberly/features/auth/presentation/screens/professional_status_screen.dart';
 import 'package:barberly/features/auth/presentation/screens/register_screen.dart';
 import 'package:barberly/features/auth/presentation/screens/verify_email_screen.dart';
+
+// Features: Client
+import 'package:barberly/features/client/bookings/presentation/screens/client_bookings_screen.dart';
+import 'package:barberly/features/client/favorites/presentation/screens/favorites_screen.dart';
+import 'package:barberly/features/client/profile/presentation/screens/client_profile_screen.dart';
+
+// Features: Barber (Account / Agenda)
+import 'package:barberly/features/barber/account/presentation/screens/barber_account_screen.dart';
+import 'package:barberly/features/barber/agenda/presentation/screens/barber_agenda_screen.dart';
 
 // Features: Barber (Barbershop Profile)
 import 'package:barberly/features/barber/barbershop_profile/data/datasources/barbershop_mock_datasource.dart';
@@ -41,21 +38,26 @@ import 'package:barberly/features/barber/barbershop_profile/presentation/bloc/ba
 import 'package:barberly/features/barber/barbershop_profile/presentation/bloc/booking/booking_cubit.dart';
 import 'package:barberly/features/barber/barbershop_profile/presentation/screens/perfil_barberia_screen.dart';
 
+// Features: Barber (Barbershop Management)
+import 'package:barberly/features/barber/barbershop_management/presentation/screens/create_barbershop_screen.dart';
+
 // Features: Barber (Dashboard)
-import 'package:barberly/features/barber/dashboard/data/datasources/dashboard_mock_datasource.dart';
-import 'package:barberly/features/barber/dashboard/data/repositories/dashboard_repository_impl.dart';
-import 'package:barberly/features/barber/dashboard/domain/usecases/get_dashboard_data.dart';
-import 'package:barberly/features/barber/dashboard/presentation/bloc/dashboard_cubit.dart';
 import 'package:barberly/features/barber/dashboard/presentation/screens/dashboard_screen.dart';
 
-// Features: Explore — Clean Architecture (interfaz en domain/, impl en data/)
-import 'package:barberly/features/explore/data/repositories/explore_repository_impl.dart';
-import 'package:barberly/features/explore/domain/repositories/explore_repository.dart';
-import 'package:barberly/features/explore/presentation/bloc/explore_bloc.dart';
+// Features: Barber (Membership)
+import 'package:barberly/features/barber/membership/presentation/screens/search_barbershops_screen.dart';
+import 'package:barberly/features/barber/membership/presentation/screens/membership_requests_screen.dart';
+
+// Features: Barber (Services & Schedule)
+import 'package:barberly/features/barber/services/presentation/screens/manage_services_screen.dart';
+import 'package:barberly/features/barber/services/presentation/screens/manage_schedule_screen.dart';
+
+// Features: Explore
 import 'package:barberly/features/explore/presentation/screens/explore_screen.dart';
+import 'package:barberly/features/explore/presentation/screens/barbershop_detail_screen.dart';
+import 'package:barberly/features/explore/presentation/screens/barber_booking_screen.dart';
 
 // Features: Welcome
-import 'package:barberly/features/welcome/presentation/bloc/welcome_bloc.dart';
 import 'package:barberly/features/welcome/presentation/screens/welcome_screen.dart';
 
 class AppRouter {
@@ -65,67 +67,19 @@ class AppRouter {
   static const String welcome = '/';
   static const String login = '/login';
   static const String register = '/register';
-  static const String dashboard = '/dashboard';
-  static const String home = '/home';
-  static const String perfilBarberia = '/perfil-barberia';
-
-  // ── Rutas dentro del shell (con bottom nav) ──────────────────────────────────
+  static const String verifyEmail = '/verify-email';
+  static const String googleRole = '/google-role';
+  static const String professionalStatus = '/professional-status';
   static const String explorar = '/explorar';
   static const String citas = '/citas';
-  static const String panel = '/panel';
+  static const String favoritos = '/favoritos';
   static const String perfil = '/perfil';
-
-  // FIX: los nombres de constantes deben ser lowerCamelCase (linter dart)
+  static const String panel = '/panel';
+  static const String agenda = '/agenda';
+  static const String barberia = '/barberia';
+  static const String cuentaBarbero = '/cuenta-barbero';
+  static const String crearBarberia = '/crear-barberia';
   static const String forgotPassword = '/forgot_password';
-
-  static const String perfilBarberiaFull = '/perfil/perfil-barberia';
-
-  // ── Firebase / Auth stack ────────────────────────────────────────────────────
-  static final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
-  static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  static final GoogleSignIn _googleSignIn = GoogleSignIn(
-    scopes: const ['email'],
-  );
-
-  static final AuthRemoteDatasource _authDatasource = AuthRemoteDatasourceImpl(
-    firebaseAuth: _firebaseAuth,
-    firestore: _firestore,
-    googleSignIn: _googleSignIn,
-  );
-
-  static final AuthRepositoryImpl _authRepository = AuthRepositoryImpl(
-    _authDatasource,
-  );
-
-  static final PasswordRecoveryRemoteDatasource _passwordRecoveryDatasource =
-      PasswordRecoveryRemoteDatasourceImpl(firebaseAuth: _firebaseAuth);
-
-  static final PasswordRecoveryRepositoryImpl _passwordRecoveryRepository =
-      PasswordRecoveryRepositoryImpl(_passwordRecoveryDatasource);
-
-  static final GetCurrentUserUseCase _getCurrentUserUseCase =
-      GetCurrentUserUseCase(_authRepository);
-
-  static AuthBloc _buildAuthBloc() {
-    return AuthBloc(
-      signInUseCase: _signInUseCase,
-      signUpUseCase: _signUpUseCase,
-      signInWithGoogleUseCase: _signInWithGoogleUseCase,
-      finalizeGoogleSignUpUseCase: _finalizeGoogleSignUpUseCase,
-      signOutUseCase: _signOutUseCase,
-      getCurrentUserUseCase: _getCurrentUserUseCase,
-    );
-  }
-
-  static final SignInUseCase _signInUseCase = SignInUseCase(_authRepository);
-  static final SignInWithGoogleUseCase _signInWithGoogleUseCase =
-      SignInWithGoogleUseCase(_authRepository);
-  static final FinalizeGoogleSignUpUseCase _finalizeGoogleSignUpUseCase =
-      FinalizeGoogleSignUpUseCase(_authRepository);
-  static final SignUpUseCase _signUpUseCase = SignUpUseCase(_authRepository);
-  static final SignOutUseCase _signOutUseCase = SignOutUseCase(_authRepository);
-  static final SendPasswordResetEmailUseCase _sendPasswordResetEmailUseCase =
-      SendPasswordResetEmailUseCase(_passwordRecoveryRepository);
 
   // ── Router ───────────────────────────────────────────────────────────────────
   static final GoRouter router = GoRouter(
@@ -136,8 +90,7 @@ class AppRouter {
         path: welcome,
         name: 'welcome',
         builder: (context, state) => BlocProvider(
-          create: (_) =>
-              WelcomeBloc(getCurrentUserUseCase: _getCurrentUserUseCase),
+          create: (_) => AppDependencies.buildWelcomeBloc(),
           child: const WelcomeScreen(),
         ),
       ),
@@ -145,7 +98,7 @@ class AppRouter {
         path: login,
         name: 'login',
         builder: (context, state) => BlocProvider(
-          create: (_) => _buildAuthBloc(),
+          create: (_) => AppDependencies.buildAuthBloc(),
           child: const LoginScreen(),
         ),
       ),
@@ -153,38 +106,43 @@ class AppRouter {
         path: register,
         name: 'register',
         builder: (context, state) => BlocProvider(
-          create: (_) => _buildAuthBloc(),
+          create: (_) => AppDependencies.buildAuthBloc(),
           child: const RegisterScreen(),
         ),
       ),
       GoRoute(
-        path: '/verify-email',
+        path: verifyEmail,
         name: 'verify-email',
         builder: (context, state) => BlocProvider(
-          create: (_) => _buildAuthBloc(),
+          create: (_) => AppDependencies.buildAuthBloc(),
           child: const VerifyEmailScreen(),
         ),
       ),
       GoRoute(
-        path: '/google-role',
+        path: googleRole,
         name: 'google-role',
         builder: (context, state) => BlocProvider(
-          create: (_) => _buildAuthBloc(),
+          create: (_) => AppDependencies.buildAuthBloc(),
           child: const GoogleRoleScreen(),
+        ),
+      ),
+      GoRoute(
+        path: professionalStatus,
+        name: 'professional-status',
+        builder: (context, state) => BlocProvider(
+          create: (_) => AppDependencies.buildAuthBloc(),
+          child: const ProfessionalStatusScreen(),
         ),
       ),
 
       // ── Password recovery shell ──────────────────────────────────────────────
       ShellRoute(
         builder: (context, state, child) => BlocProvider(
-          create: (_) => PasswordRecoveryBloc(
-            sendPasswordResetEmailUseCase: _sendPasswordResetEmailUseCase,
-          ),
+          create: (_) => AppDependencies.buildPasswordRecoveryBloc(),
           child: child,
         ),
         routes: [
           GoRoute(
-            // FIX: usar la constante renombrada a lowerCamelCase
             path: forgotPassword,
             name: 'forgotPassword',
             builder: (context, state) => const ForgotPasswordScreen(),
@@ -192,67 +150,106 @@ class AppRouter {
         ],
       ),
 
-      // ── Shell con bottom nav ─────────────────────────────────────────────────
+      // ── Client-facing barbershop routes ────────────────────────────────────────
+      GoRoute(
+        path: '/barberia/:shopId',
+        name: 'barbershopDetail',
+        builder: (context, state) {
+          final shopId = state.pathParameters['shopId'] ?? '';
+          return BarbershopDetailScreen(shopId: shopId);
+        },
+        routes: [
+          GoRoute(
+            path: 'barbero/:barberId',
+            name: 'barberBooking',
+            builder: (context, state) {
+              final shopId = state.pathParameters['shopId'] ?? '';
+              final barberId = state.pathParameters['barberId'] ?? '';
+              final clientId = AppDependencies.getCurrentUserId();
+              return BarberBookingScreen(
+                shopId: shopId,
+                barberId: barberId,
+                clientId: clientId,
+              );
+            },
+          ),
+        ],
+      ),
+
+      // ── Shell con bottom nav por rol ─────────────────────────────────────────
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) =>
             MainShell(navigationShell: navigationShell),
         branches: [
-          // Branch 0: EXPLORAR
+          // Branch 0: CLIENTE / EXPLORAR
           StatefulShellBranch(
             routes: [
               GoRoute(
                 path: explorar,
                 name: 'explorar',
-                builder: (context, state) {
-                  // FIX: DI correcta según Clean Architecture generada.
-                  //
-                  // ExploreRepositoryImpl recibe un FirebaseFirestore opcional
-                  // (usa FirebaseFirestore.instance como default si no se pasa).
-                  // ExploreBloc recibe el repositorio via parámetro 'repository'.
-                  // El primer evento es ExploreInitialized, no LoadExploreData.
-                  // Tipado como la interfaz de dominio — el compilador
-                  // confirma la relación `implements` y el BLoC recibe
-                  // ExploreRepository (no la clase concreta).
-                  final ExploreRepository repo = ExploreRepositoryImpl(
-                    firestore: _firestore,
-                  );
+                builder: (context, state) => BlocProvider(
+                  create: (_) => AppDependencies.buildExploreBloc(),
+                  child: const ExploreScreen(),
+                ),
+              ),
+            ],
+          ),
 
+          // Branch 1: CLIENTE / CITAS
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: citas,
+                name: 'citas',
+                builder: (context, state) {
+                  final userId = AppDependencies.getCurrentUserId() ?? '';
                   return BlocProvider(
-                    create: (_) => ExploreBloc(
-                      repository: repo,
-                      getCurrentUserUseCase: _getCurrentUserUseCase,
-                    ),
-                    child: const ExploreScreen(),
+                    create: (_) => AppDependencies.buildClientBookingsCubit(userId),
+                    child: const ClientBookingsScreen(),
                   );
                 },
               ),
             ],
           ),
 
-          // Branch 1: CITAS
+          // Branch 2: CLIENTE / FAVORITOS
           StatefulShellBranch(
             routes: [
               GoRoute(
-                path: citas,
-                name: 'citas',
-                builder: (context, state) =>
-                    const _PlaceholderScreen(title: 'Citas'),
+                path: favoritos,
+                name: 'favoritos',
+                builder: (context, state) {
+                  final userId = AppDependencies.getCurrentUserId() ?? '';
+                  return BlocProvider(
+                    create: (_) => AppDependencies.buildFavoritesCubit(userId),
+                    child: const FavoritesScreen(),
+                  );
+                },
               ),
             ],
           ),
 
-          // Branch 2: PANEL
+          // Branch 3: CLIENTE / PERFIL
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: perfil,
+                name: 'perfil',
+                builder: (context, state) => const ClientProfileScreen(),
+              ),
+            ],
+          ),
+
+          // Branch 4: BARBERO / PANEL
           StatefulShellBranch(
             routes: [
               GoRoute(
                 path: panel,
                 name: 'panel',
                 builder: (context, state) {
-                  final ds = DashboardMockDataSource();
-                  final repo = DashboardRepositoryImpl(ds);
-                  final useCase = GetDashboardData(repo);
+                  final userId = AppDependencies.getCurrentUserId() ?? '';
                   return BlocProvider(
-                    create: (_) => DashboardCubit(useCase)..load('barber-1'),
+                    create: (_) => AppDependencies.buildDashboardCubit(userId),
                     child: const DashboardScreen(),
                   );
                 },
@@ -260,12 +257,29 @@ class AppRouter {
             ],
           ),
 
-          // Branch 3: PERFIL
+          // Branch 5: BARBERO / AGENDA
           StatefulShellBranch(
             routes: [
               GoRoute(
-                path: perfil,
-                name: 'perfil',
+                path: agenda,
+                name: 'agenda',
+                builder: (context, state) {
+                  final userId = AppDependencies.getCurrentUserId() ?? '';
+                  return BlocProvider(
+                    create: (_) => AppDependencies.buildBarberAgendaCubit(userId),
+                    child: const BarberAgendaScreen(),
+                  );
+                },
+              ),
+            ],
+          ),
+
+          // Branch 6: BARBERO / BARBERIA
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: barberia,
+                name: 'barberia',
                 builder: (context, state) {
                   final dataSource = BarbershopMockDataSource();
                   final repository = BarbershopRepositoryImpl(dataSource);
@@ -273,18 +287,12 @@ class AppRouter {
                   final confirmBooking = ConfirmBooking(repository);
 
                   final today = DateTime.now();
-                  final startOfToday = DateTime(
-                    today.year,
-                    today.month,
-                    today.day,
-                  );
+                  final startOfToday = DateTime(today.year, today.month, today.day);
 
                   return MultiBlocProvider(
                     providers: [
                       BlocProvider(
-                        create: (_) =>
-                            BarbershopProfileCubit(getBarbershop)
-                              ..load('shop-1'),
+                        create: (_) => BarbershopProfileCubit(getBarbershop)..load('shop-1'),
                       ),
                       BlocProvider(
                         create: (_) => BookingCubit(
@@ -300,26 +308,113 @@ class AppRouter {
               ),
             ],
           ),
+
+          // Branch 7: BARBERO / PERFIL
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: cuentaBarbero,
+                name: 'cuentaBarbero',
+                builder: (context, state) => const BarberAccountScreen(),
+                routes: [
+                  GoRoute(
+                    path: 'crear-barberia',
+                    name: 'crearBarberia',
+                    builder: (context, state) {
+                      final userId = AppDependencies.getCurrentUserId() ?? '';
+                      final userName = AppDependencies.getCurrentUserName() ?? '';
+                      return BlocProvider(
+                        create: (_) => AppDependencies.buildBarbershopManagementCubit(),
+                        child: CreateBarbershopScreen(
+                          userId: userId,
+                          userName: userName,
+                        ),
+                      );
+                    },
+                  ),
+                  GoRoute(
+                    path: 'buscar-barberias',
+                    name: 'buscarBarberias',
+                    builder: (context, state) {
+                      final userId = AppDependencies.getCurrentUserId() ?? '';
+                      final userName = AppDependencies.getCurrentUserName() ?? '';
+                      final userEmail = AppDependencies.getCurrentUserEmail() ?? '';
+                      return BlocProvider(
+                        create: (_) => AppDependencies.buildSearchBarbershopsCubit(),
+                        child: SearchBarbershopsScreen(
+                          barberId: userId,
+                          barberName: userName,
+                          barberEmail: userEmail,
+                        ),
+                      );
+                    },
+                  ),
+                  GoRoute(
+                    path: 'solicitudes',
+                    name: 'solicitudes',
+                    builder: (context, state) {
+                      final userId = AppDependencies.getCurrentUserId() ?? '';
+                      return FutureBuilder<String>(
+                        future: AppDependencies.getCurrentBarbershopId(userId),
+                        builder: (context, snapshot) {
+                          final barbershopId = snapshot.data ?? '';
+                          return BlocProvider(
+                            create: (_) => AppDependencies.buildMembershipRequestsCubit(),
+                            child: MembershipRequestsScreen(
+                              barbershopId: barbershopId,
+                              reviewerId: userId,
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  ),
+                  GoRoute(
+                    path: 'mis-servicios',
+                    name: 'misServicios',
+                    builder: (context, state) {
+                      final userId = AppDependencies.getCurrentUserId() ?? '';
+                      return FutureBuilder<String>(
+                        future: AppDependencies.getCurrentBarbershopId(userId),
+                        builder: (context, snapshot) {
+                          final barbershopId = snapshot.data ?? '';
+                          return BlocProvider(
+                            create: (_) => AppDependencies.buildBarberServicesCubit(),
+                            child: ManageServicesScreen(
+                              barbershopId: barbershopId,
+                              barberId: userId,
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  ),
+                  GoRoute(
+                    path: 'mi-horario',
+                    name: 'miHorario',
+                    builder: (context, state) {
+                      final userId = AppDependencies.getCurrentUserId() ?? '';
+                      return FutureBuilder<String>(
+                        future: AppDependencies.getCurrentBarbershopId(userId),
+                        builder: (context, snapshot) {
+                          final barbershopId = snapshot.data ?? '';
+                          return BlocProvider(
+                            create: (_) => AppDependencies.buildBarberScheduleCubit(),
+                            child: ManageScheduleScreen(
+                              barbershopId: barbershopId,
+                              barberId: userId,
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ],
+          ),
         ],
       ),
     ],
   );
-}
-
-class _PlaceholderScreen extends StatelessWidget {
-  const _PlaceholderScreen({required this.title});
-
-  final String title;
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Center(
-        child: Text(
-          '$title — Próximamente',
-          style: Theme.of(context).textTheme.headlineMedium,
-        ),
-      ),
-    );
-  }
 }

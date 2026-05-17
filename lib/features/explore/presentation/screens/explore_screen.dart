@@ -4,6 +4,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import 'package:barberly/shared/motion/app_motion.dart';
 import 'package:barberly/shared/theme/app_theme.dart';
 import 'package:barberly/features/explore/presentation/bloc/explore_bloc.dart';
 import 'package:barberly/features/explore/presentation/extensions/service_explore_extensions.dart';
@@ -86,36 +87,47 @@ class _LoadedView extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // 1. Header
-                  ExploreHeader(
-                    userName: state.userName,
-                    onNotificationTap: () {},
+                  AppFadeSlideIn(
+                    child: ExploreHeader(
+                      userName: state.userName,
+                      onNotificationTap: () {},
+                    ),
                   ),
                   const SizedBox(height: 20),
                   // 2. Search bar
-                  ExploreSearchBar(
-                    onChanged: (query) {
-                      context.read<ExploreBloc>().add(
-                        ExploreSearchQueryChanged(query),
-                      );
-                    },
+                  AppFadeSlideIn(
+                    delay: AppMotion.delay(1),
+                    child: ExploreSearchBar(
+                      onChanged: (query) {
+                        context.read<ExploreBloc>().add(
+                          ExploreSearchQueryChanged(query),
+                        );
+                      },
+                    ),
                   ),
                   const SizedBox(height: 20),
                   // 3. Promo banner
-                  const PromoBanner(),
+                  const AppFadeSlideIn(
+                    delay: Duration(milliseconds: 140),
+                    child: PromoBanner(),
+                  ),
                   const SizedBox(height: 24),
                   // 4. Category chips
-                  CategoryChips(
-                    categories: kCategories,
-                    selectedCategory: selectedCategory, // String ✓
-                    onSelected: (cat) {
-                      // 'Todos' se normaliza a null para que el BLoC
-                      // elimine el filtro y devuelva todos los servicios.
-                      context.read<ExploreBloc>().add(
-                        ExploreCategoryFilterChanged(
-                          cat == 'Todos' ? null : cat.toLowerCase(),
-                        ),
-                      );
-                    },
+                  AppFadeSlideIn(
+                    delay: AppMotion.delay(3),
+                    child: CategoryChips(
+                      categories: kCategories,
+                      selectedCategory: selectedCategory, // String ✓
+                      onSelected: (cat) {
+                        // 'Todos' se normaliza a null para que el BLoC
+                        // elimine el filtro y devuelva todos los servicios.
+                        context.read<ExploreBloc>().add(
+                          ExploreCategoryFilterChanged(
+                            cat == 'Todos' ? null : cat.toLowerCase(),
+                          ),
+                        );
+                      },
+                    ),
                   ),
                   const SizedBox(height: 20),
                 ],
@@ -127,9 +139,12 @@ class _LoadedView extends StatelessWidget {
         SliverPadding(
           padding: const EdgeInsets.fromLTRB(20, 0, 20, 120),
           sliver: SliverToBoxAdapter(
-            child: ServicesGrid(
-              services: serviceModels, // List<ServiceModel> ✓
-              selectedCategory: selectedCategory, // String ✓
+            child: AppFadeSlideIn(
+              delay: AppMotion.delay(4),
+              child: ServicesGrid(
+                services: serviceModels, // List<ServiceModel> ✓
+                selectedCategory: selectedCategory, // String ✓
+              ),
             ),
           ),
         ),

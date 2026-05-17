@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:barberly/shared/motion/app_motion.dart';
 import 'package:barberly/shared/theme/app_theme.dart';
 
 class CategoryChips extends StatelessWidget {
@@ -21,10 +22,11 @@ class CategoryChips extends StatelessWidget {
         scrollDirection: Axis.horizontal,
         padding: EdgeInsets.zero,
         itemCount: categories.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        separatorBuilder: (context, index) => const SizedBox(width: 8),
         itemBuilder: (context, index) {
           final category = categories[index];
-          final isSelected = category == selectedCategory;
+          final isSelected =
+              category.toLowerCase() == selectedCategory.toLowerCase();
           return _CategoryChip(
             label: category,
             isSelected: isSelected,
@@ -49,7 +51,7 @@ class _CategoryChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return AppPressable(
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),

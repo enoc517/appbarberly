@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '/../../../shared/motion/app_motion.dart';
 import '/../../../shared/theme/app_theme.dart';
 
 class IncomeCard extends StatelessWidget {
@@ -15,6 +16,7 @@ class IncomeCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isPositive = deltaPercent >= 0;
     final sign = isPositive ? '+' : '';
+    final reduced = AppMotion.reduceMotion(context);
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -26,12 +28,17 @@ class IncomeCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(Icons.payments_outlined,
-                  color: AppColors.secondary, size: 24),
+              Icon(
+                Icons.payments_outlined,
+                color: AppColors.secondary,
+                size: 24,
+              ),
               const Spacer(),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: AppColors.onPrimary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(AppRadius.full),
@@ -54,11 +61,16 @@ class IncomeCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 4),
-          Text(
-            '\$${income.toStringAsFixed(2)}',
-            style: AppTypography.displaySmall.copyWith(
-              color: AppColors.onPrimary,
-              fontWeight: FontWeight.w800,
+          TweenAnimationBuilder<double>(
+            tween: Tween<double>(begin: reduced ? income : 0, end: income),
+            duration: reduced ? Duration.zero : AppMotion.entrance,
+            curve: AppMotion.standard,
+            builder: (context, value, child) => Text(
+              '\$${value.toStringAsFixed(2)}',
+              style: AppTypography.displaySmall.copyWith(
+                color: AppColors.onPrimary,
+                fontWeight: FontWeight.w800,
+              ),
             ),
           ),
         ],

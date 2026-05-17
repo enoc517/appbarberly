@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:barberly/shared/motion/app_motion.dart';
+import 'package:barberly/core/router/auth_route_resolver.dart';
+
 import '../bloc/welcome_bloc.dart';
 import '../bloc/welcome_event.dart';
 import '../bloc/welcome_state.dart';
@@ -32,7 +35,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
             context.go('/login');
             break;
           case WelcomeStatus.goToHome:
-            context.go('/explorar');
+            context.go(routeForAuthenticatedUser(state.user));
             break;
           case WelcomeStatus.goToVerifyEmail:
             context.go('/verify-email');
@@ -54,15 +57,22 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Image.asset(
-                  'assets/logos/logo2.png',
-                  width: MediaQuery.of(context).size.width * 0.6,
-                  errorBuilder: (context, error, stackTrace) {
-                    return const Text('ERROR CARGANDO IMAGEN');
-                  },
+                AppFadeSlideIn(
+                  offset: const Offset(0, 0.04),
+                  child: Image.asset(
+                    'assets/logos/logo2.png',
+                    width: MediaQuery.of(context).size.width * 0.6,
+                    errorBuilder: (context, error, stackTrace) {
+                      return const Text('ERROR CARGANDO IMAGEN');
+                    },
+                  ),
                 ),
                 const SizedBox(height: 40),
-                const CircularProgressIndicator(color: Colors.white),
+                const AppFadeSlideIn(
+                  delay: Duration(milliseconds: 120),
+                  offset: Offset(0, 0.03),
+                  child: CircularProgressIndicator(color: Colors.white),
+                ),
               ],
             ),
           ),

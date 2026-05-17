@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '/../../../shared/motion/app_motion.dart';
 import '/../../../shared/theme/app_theme.dart';
 import '../../domain/entities/weekly_performance.dart';
 
@@ -10,6 +11,7 @@ class WeeklyChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final reduced = AppMotion.reduceMotion(context);
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -29,8 +31,11 @@ class WeeklyChart extends StatelessWidget {
                 ),
               ),
               const Spacer(),
-              const Icon(Icons.trending_up,
-                  size: 18, color: AppColors.onSurfaceVariant),
+              const Icon(
+                Icons.trending_up,
+                size: 18,
+                color: AppColors.onSurfaceVariant,
+              ),
             ],
           ),
           const SizedBox(height: 20),
@@ -40,7 +45,8 @@ class WeeklyChart extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: List.generate(7, (i) {
                 final isToday = i == data.todayIndex;
-                final isMax = data.dailyValues[i] ==
+                final isMax =
+                    data.dailyValues[i] ==
                     data.dailyValues.reduce((a, b) => a > b ? a : b);
                 Color color;
                 if (isToday) {
@@ -56,12 +62,21 @@ class WeeklyChart extends StatelessWidget {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
-                        Container(
-                          height: 110 * data.dailyValues[i],
-                          decoration: BoxDecoration(
-                            color: color,
-                            borderRadius:
-                                BorderRadius.circular(AppRadius.md),
+                        TweenAnimationBuilder<double>(
+                          tween: Tween<double>(
+                            begin: reduced ? data.dailyValues[i] : 0,
+                            end: data.dailyValues[i],
+                          ),
+                          duration: reduced
+                              ? Duration.zero
+                              : Duration(milliseconds: 320 + (i * 45)),
+                          curve: AppMotion.standard,
+                          builder: (context, value, child) => Container(
+                            height: 110 * value,
+                            decoration: BoxDecoration(
+                              color: color,
+                              borderRadius: BorderRadius.circular(AppRadius.md),
+                            ),
                           ),
                         ),
                         const SizedBox(height: 8),

@@ -62,19 +62,13 @@ class _TimelineRow extends StatelessWidget {
               Container(width: 2, height: 12, color: AppColors.outlineVariant),
               if (!isLast)
                 Expanded(
-                  child: Container(
-                    width: 2,
-                    color: AppColors.outlineVariant,
-                  ),
+                  child: Container(width: 2, color: AppColors.outlineVariant),
                 ),
             ],
           ),
           const SizedBox(width: 12),
           Expanded(
-            child: AppointmentTile(
-              appointment: appointment,
-              onMessage: () {},
-            ),
+            child: AppointmentTile(appointment: appointment, onMessage: () {}),
           ),
         ],
       ),

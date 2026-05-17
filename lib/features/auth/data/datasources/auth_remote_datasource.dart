@@ -46,6 +46,10 @@ class AuthRemoteDatasourceImpl implements AuthRemoteDatasource {
   CollectionReference<Map<String, dynamic>> get _usersCollection =>
       _firestore.collection('users');
 
+  CollectionReference<Map<String, dynamic>>
+  get _professionalRequestsCollection =>
+      _firestore.collection('professional_requests');
+
   DocumentReference<Map<String, dynamic>> _userDoc(String uid) =>
       _usersCollection.doc(uid);
 
@@ -80,7 +84,11 @@ class AuthRemoteDatasourceImpl implements AuthRemoteDatasource {
         phone: profile.phone,
         role: profile.role,
         isProfessional: profile.isProfessional,
+        professionalStatus: profile.professionalStatus,
         emailVerified: verified,
+        barbershopId: profile.barbershopId,
+        activeBookingId: profile.activeBookingId,
+        activeBookingStatus: profile.activeBookingStatus,
       );
 
       if (profile.emailVerified != verified) {
@@ -97,6 +105,7 @@ class AuthRemoteDatasourceImpl implements AuthRemoteDatasource {
       currentUser,
       role: UserRole.client,
       isProfessional: false,
+      professionalStatus: ProfessionalStatus.none,
       emailVerified: verified,
     );
 
@@ -149,7 +158,11 @@ class AuthRemoteDatasourceImpl implements AuthRemoteDatasource {
       phone: profile.phone,
       role: profile.role,
       isProfessional: profile.isProfessional,
+      professionalStatus: profile.professionalStatus,
       emailVerified: true,
+      barbershopId: profile.barbershopId,
+      activeBookingId: profile.activeBookingId,
+      activeBookingStatus: profile.activeBookingStatus,
     );
   }
 
@@ -165,17 +178,23 @@ class AuthRemoteDatasourceImpl implements AuthRemoteDatasource {
       );
     }
 
-    final role = isProfessional ? UserRole.barber : UserRole.client;
     final model = AppUserModel.fromFirebaseUser(
       user,
-      role: role,
+      role: UserRole.client,
       isProfessional: isProfessional,
+      professionalStatus: isProfessional
+          ? ProfessionalStatus.pending
+          : ProfessionalStatus.none,
       emailVerified: true,
     );
 
     await _userDoc(
       user.uid,
     ).set(model.toMap(includeCreatedAt: true), SetOptions(merge: true));
+
+    if (isProfessional) {
+      await _createProfessionalRequest(model);
+    }
 
     return model;
   }
@@ -201,8 +220,6 @@ class AuthRemoteDatasourceImpl implements AuthRemoteDatasource {
       );
     }
 
-    final role = isProfessional ? UserRole.barber : UserRole.client;
-
     await user.updateDisplayName(fullName.trim());
 
     final model = AppUserModel(
@@ -210,14 +227,21 @@ class AuthRemoteDatasourceImpl implements AuthRemoteDatasource {
       email: email.trim(),
       fullName: fullName.trim(),
       phone: phone.trim(),
-      role: role,
+      role: UserRole.client,
       isProfessional: isProfessional,
+      professionalStatus: isProfessional
+          ? ProfessionalStatus.pending
+          : ProfessionalStatus.none,
       emailVerified: user.emailVerified,
     );
 
     await _userDoc(
       user.uid,
     ).set(model.toMap(includeCreatedAt: true), SetOptions(merge: true));
+
+    if (isProfessional) {
+      await _createProfessionalRequest(model);
+    }
 
     await user.sendEmailVerification();
 
@@ -242,7 +266,11 @@ class AuthRemoteDatasourceImpl implements AuthRemoteDatasource {
         phone: profile.phone,
         role: profile.role,
         isProfessional: profile.isProfessional,
+        professionalStatus: profile.professionalStatus,
         emailVerified: verified,
+        barbershopId: profile.barbershopId,
+        activeBookingId: profile.activeBookingId,
+        activeBookingStatus: profile.activeBookingStatus,
       );
 
       if (profile.emailVerified != verified) {
@@ -259,6 +287,7 @@ class AuthRemoteDatasourceImpl implements AuthRemoteDatasource {
       currentUser,
       role: UserRole.client,
       isProfessional: false,
+      professionalStatus: ProfessionalStatus.none,
       emailVerified: verified,
     );
 
@@ -296,5 +325,20 @@ class AuthRemoteDatasourceImpl implements AuthRemoteDatasource {
       snapshot.id,
       snapshot.data() ?? <String, dynamic>{},
     );
+  }
+
+  Future<void> _createProfessionalRequest(AppUserModel user) async {
+    await _professionalRequestsCollection.add({
+      'userId': user.id,
+      'email': user.email,
+      'fullName': user.fullName,
+      'phone': user.phone,
+      'status': ProfessionalStatus.pending.name,
+      'createdAt': FieldValue.serverTimestamp(),
+      'updatedAt': FieldValue.serverTimestamp(),
+      'reviewedAt': null,
+      'reviewedBy': null,
+      'reviewNote': null,
+    });
   }
 }

@@ -1,16 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:barberly/shared/motion/app_motion.dart';
 import 'package:barberly/shared/theme/app_theme.dart';
 import 'package:barberly/features/explore/presentation/bloc/service_model.dart';
 
 class ServiceCard extends StatelessWidget {
   final ServiceModel service;
+  final bool isCompact;
   final VoidCallback? onTap;
 
-  const ServiceCard({super.key, required this.service, this.onTap});
+  const ServiceCard({
+    super.key,
+    required this.service,
+    this.isCompact = false,
+    this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return AppPressable(
       onTap: onTap,
       child: Container(
         decoration: BoxDecoration(
@@ -31,8 +38,8 @@ class ServiceCard extends StatelessWidget {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _ServiceImage(service: service),
-                _ServiceInfo(service: service),
+                _ServiceImage(service: service, isCompact: isCompact),
+                _ServiceInfo(service: service, isCompact: isCompact),
               ],
             ),
             // "Ear silhouette" notch for NEW status (top-right)
@@ -47,7 +54,8 @@ class ServiceCard extends StatelessWidget {
 
 class _ServiceImage extends StatelessWidget {
   final ServiceModel service;
-  const _ServiceImage({required this.service});
+  final bool isCompact;
+  const _ServiceImage({required this.service, required this.isCompact});
 
   @override
   Widget build(BuildContext context) {
@@ -59,7 +67,7 @@ class _ServiceImage extends StatelessWidget {
       child: Stack(
         children: [
           SizedBox(
-            height: 120,
+            height: isCompact ? 96 : 120,
             width: double.infinity,
             child: Image.network(
               service.imageUrl,
@@ -80,7 +88,7 @@ class _ServiceImage extends StatelessWidget {
                   ),
                 );
               },
-              errorBuilder: (_, __, ___) => Container(
+              errorBuilder: (context, error, stackTrace) => Container(
                 color: AppColors.surfaceContainerHighest,
                 child: Icon(
                   Icons.content_cut_rounded,
@@ -126,12 +134,13 @@ class _ServiceImage extends StatelessWidget {
 
 class _ServiceInfo extends StatelessWidget {
   final ServiceModel service;
-  const _ServiceInfo({required this.service});
+  final bool isCompact;
+  const _ServiceInfo({required this.service, required this.isCompact});
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(12),
+      padding: EdgeInsets.all(isCompact ? 8 : 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -144,7 +153,7 @@ class _ServiceInfo extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
-          const SizedBox(height: 2),
+          SizedBox(height: isCompact ? 2 : 2),
           Text(
             service.shopName,
             style: AppTypography.bodyMedium.copyWith(
@@ -153,7 +162,7 @@ class _ServiceInfo extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: isCompact ? 4 : 8),
           Row(
             children: [
               Icon(Icons.star_rounded, size: 14, color: AppColors.tertiary),
@@ -186,22 +195,27 @@ class _ServiceInfo extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: isCompact ? 4 : 8),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                service.price,
-                style: AppTypography.titleSmall.copyWith(
-                  color: AppColors.primaryContainer,
-                  fontWeight: FontWeight.w800,
+              Flexible(
+                child: Text(
+                  service.price,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTypography.titleSmall.copyWith(
+                    color: AppColors.primaryContainer,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
               ),
+              if (service.isAvailable) const SizedBox(width: 6),
               if (service.isAvailable)
                 Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 3,
+                    horizontal: 6,
+                    vertical: 2,
                   ),
                   decoration: BoxDecoration(
                     color: AppColors.primaryContainer.withValues(alpha: 0.10),

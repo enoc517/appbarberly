@@ -1,0 +1,221 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+
+import '../../features/auth/data/datasources/auth_remote_datasource.dart';
+import '../../features/auth/data/datasources/password_recovery_remote_datasource.dart';
+import '../../features/auth/data/repositories/auth_repository_impl.dart';
+import '../../features/auth/data/repositories/password_recovery_repository_impl.dart';
+import '../../features/auth/domain/usecases/finalize_google_sign_up.dart';
+import '../../features/auth/domain/usecases/get_current_user.dart';
+import '../../features/auth/domain/usecases/send_password_reset_email.dart';
+import '../../features/auth/domain/usecases/sign_in.dart';
+import '../../features/auth/domain/usecases/sign_in_with_google.dart';
+import '../../features/auth/domain/usecases/sign_out.dart';
+import '../../features/auth/domain/usecases/sign_up.dart';
+import '../../features/auth/presentation/bloc/auth_bloc.dart';
+import '../../features/auth/presentation/bloc/password_recovery_bloc.dart';
+import '../../features/barber/barbershop_management/data/datasources/barbershop_management_remote_datasource.dart';
+import '../../features/barber/barbershop_management/data/repositories/barbershop_management_repository_impl.dart';
+import '../../features/barber/barbershop_management/domain/usecases/create_barbershop.dart';
+import '../../features/barber/barbershop_management/domain/usecases/get_barbershop_by_owner.dart';
+import '../../features/barber/barbershop_management/domain/usecases/update_barbershop.dart';
+import '../../features/barber/barbershop_management/presentation/cubit/barbershop_management_cubit.dart';
+import '../../features/barber/membership/data/datasources/membership_remote_datasource.dart';
+import '../../features/barber/membership/data/repositories/membership_repository_impl.dart';
+import '../../features/barber/membership/domain/usecases/get_barbershop_members.dart';
+import '../../features/barber/membership/domain/usecases/get_pending_requests.dart';
+import '../../features/barber/membership/domain/usecases/leave_barbershop.dart';
+import '../../features/barber/membership/domain/usecases/review_membership_request.dart';
+import '../../features/barber/membership/domain/usecases/search_barbershops.dart';
+import '../../features/barber/membership/domain/usecases/send_membership_request.dart';
+import '../../features/barber/membership/presentation/cubit/membership_requests_cubit.dart';
+import '../../features/barber/membership/presentation/cubit/search_barbershops_cubit.dart';
+import '../../features/barber/services/data/datasources/barber_services_remote_datasource.dart';
+import '../../features/barber/services/data/repositories/barber_services_repository_impl.dart';
+import '../../features/barber/services/domain/usecases/add_service.dart';
+import '../../features/barber/services/domain/usecases/delete_service.dart';
+import '../../features/barber/services/domain/usecases/get_barber_schedule.dart';
+import '../../features/barber/services/domain/usecases/get_barber_services.dart';
+import '../../features/barber/services/domain/usecases/set_schedule.dart';
+import '../../features/barber/services/domain/usecases/update_service.dart';
+import '../../features/barber/services/presentation/cubit/barber_schedule_cubit.dart';
+import '../../features/barber/services/presentation/cubit/barber_services_cubit.dart';
+import '../../features/bookings/data/repositories/firestore_bookings_repository.dart';
+import '../../features/client/bookings/presentation/bloc/client_bookings_cubit.dart';
+import '../../features/client/favorites/data/repositories/firestore_favorites_repository.dart';
+import '../../features/client/favorites/presentation/bloc/favorites_cubit.dart';
+import '../../features/explore/data/repositories/explore_repository_impl.dart';
+import '../../features/explore/domain/repositories/explore_repository.dart';
+import '../../features/explore/presentation/bloc/explore_bloc.dart';
+import '../../features/barber/dashboard/data/repositories/firestore_dashboard_repository.dart';
+import '../../features/barber/dashboard/domain/usecases/get_dashboard_data.dart';
+import '../../features/barber/dashboard/presentation/bloc/dashboard_cubit.dart';
+import '../../features/barber/agenda/presentation/bloc/barber_agenda_cubit.dart';
+import '../../features/welcome/presentation/bloc/welcome_bloc.dart';
+
+class AppDependencies {
+  AppDependencies._();
+
+  static final FirebaseAuth firebaseAuth = FirebaseAuth.instance;
+  static final FirebaseFirestore firestore = FirebaseFirestore.instance;
+  static final GoogleSignIn googleSignIn = GoogleSignIn(scopes: const ['email']);
+
+  // Auth
+  static final AuthRemoteDatasource authDatasource = AuthRemoteDatasourceImpl(
+    firebaseAuth: firebaseAuth,
+    firestore: firestore,
+    googleSignIn: googleSignIn,
+  );
+
+  static final AuthRepositoryImpl authRepository = AuthRepositoryImpl(authDatasource);
+  static final GetCurrentUserUseCase getCurrentUserUseCase = GetCurrentUserUseCase(authRepository);
+  static final SignInUseCase signInUseCase = SignInUseCase(authRepository);
+  static final SignInWithGoogleUseCase signInWithGoogleUseCase = SignInWithGoogleUseCase(authRepository);
+  static final FinalizeGoogleSignUpUseCase finalizeGoogleSignUpUseCase = FinalizeGoogleSignUpUseCase(authRepository);
+  static final SignUpUseCase signUpUseCase = SignUpUseCase(authRepository);
+  static final SignOutUseCase signOutUseCase = SignOutUseCase(authRepository);
+
+  // Password Recovery
+  static final PasswordRecoveryRemoteDatasource passwordRecoveryDatasource =
+      PasswordRecoveryRemoteDatasourceImpl(firebaseAuth: firebaseAuth);
+  static final PasswordRecoveryRepositoryImpl passwordRecoveryRepository =
+      PasswordRecoveryRepositoryImpl(passwordRecoveryDatasource);
+  static final SendPasswordResetEmailUseCase sendPasswordResetEmailUseCase =
+      SendPasswordResetEmailUseCase(passwordRecoveryRepository);
+
+  // Barbershop Management
+  static final BarbershopManagementRemoteDatasource barbershopManagementDatasource =
+      BarbershopManagementRemoteDatasourceImpl(firestore: firestore);
+  static final BarbershopManagementRepositoryImpl barbershopManagementRepository =
+      BarbershopManagementRepositoryImpl(barbershopManagementDatasource);
+  static final CreateBarbershop createBarbershopUseCase = CreateBarbershop(barbershopManagementRepository);
+  static final UpdateBarbershop updateBarbershopUseCase = UpdateBarbershop(barbershopManagementRepository);
+  static final GetBarbershopByOwner getBarbershopByOwnerUseCase =
+      GetBarbershopByOwner(barbershopManagementRepository);
+
+  // Membership
+  static final MembershipRemoteDatasource membershipDatasource =
+      MembershipRemoteDatasourceImpl(firestore: firestore);
+  static final MembershipRepositoryImpl membershipRepository = MembershipRepositoryImpl(membershipDatasource);
+  static final SearchBarbershops searchBarbershopsUseCase = SearchBarbershops(membershipRepository);
+  static final SendMembershipRequest sendMembershipRequestUseCase = SendMembershipRequest(membershipRepository);
+  static final GetPendingRequests getPendingRequestsUseCase = GetPendingRequests(membershipRepository);
+  static final ReviewMembershipRequest reviewMembershipRequestUseCase = ReviewMembershipRequest(membershipRepository);
+  static final GetBarbershopMembers getBarbershopMembersUseCase = GetBarbershopMembers(membershipRepository);
+  static final LeaveBarbershop leaveBarbershopUseCase = LeaveBarbershop(membershipRepository);
+
+  // Services & Schedule
+  static final BarberServicesRemoteDatasource barberServicesDatasource =
+      BarberServicesRemoteDatasourceImpl(firestore: firestore);
+  static final BarberServicesRepositoryImpl barberServicesRepository =
+      BarberServicesRepositoryImpl(barberServicesDatasource);
+  static final GetBarberServices getBarberServicesUseCase = GetBarberServices(barberServicesRepository);
+  static final AddService addServiceUseCase = AddService(barberServicesRepository);
+  static final UpdateService updateServiceUseCase = UpdateService(barberServicesRepository);
+  static final DeleteService deleteServiceUseCase = DeleteService(barberServicesRepository);
+  static final GetBarberSchedule getBarberScheduleUseCase = GetBarberSchedule(barberServicesRepository);
+  static final SetSchedule setScheduleUseCase = SetSchedule(barberServicesRepository);
+
+  // Factories
+  static AuthBloc buildAuthBloc() {
+    return AuthBloc(
+      signInUseCase: signInUseCase,
+      signUpUseCase: signUpUseCase,
+      signInWithGoogleUseCase: signInWithGoogleUseCase,
+      finalizeGoogleSignUpUseCase: finalizeGoogleSignUpUseCase,
+      signOutUseCase: signOutUseCase,
+      getCurrentUserUseCase: getCurrentUserUseCase,
+    );
+  }
+
+  static BarbershopManagementCubit buildBarbershopManagementCubit() {
+    return BarbershopManagementCubit(
+      createBarbershop: createBarbershopUseCase,
+      updateBarbershop: updateBarbershopUseCase,
+      getBarbershopByOwner: getBarbershopByOwnerUseCase,
+    );
+  }
+
+  static PasswordRecoveryBloc buildPasswordRecoveryBloc() {
+    return PasswordRecoveryBloc(sendPasswordResetEmailUseCase: sendPasswordResetEmailUseCase);
+  }
+
+  static WelcomeBloc buildWelcomeBloc() {
+    return WelcomeBloc(getCurrentUserUseCase: getCurrentUserUseCase);
+  }
+
+  static ExploreBloc buildExploreBloc() {
+    final ExploreRepository repo = ExploreRepositoryImpl(firestore: firestore);
+    return ExploreBloc(repository: repo, getCurrentUserUseCase: getCurrentUserUseCase);
+  }
+
+  static ClientBookingsCubit buildClientBookingsCubit(String userId) {
+    return ClientBookingsCubit(
+      repository: FirestoreBookingsRepository(firestore: firestore),
+      clientId: userId,
+    )..watch();
+  }
+
+  static FavoritesCubit buildFavoritesCubit(String userId) {
+    return FavoritesCubit(
+      repository: FirestoreFavoritesRepository(firestore: firestore),
+      userId: userId,
+    )..watch();
+  }
+
+  static DashboardCubit buildDashboardCubit(String userId) {
+    final repo = FirestoreDashboardRepository(firestore: firestore, userId: userId);
+    final useCase = GetDashboardData(repo);
+    return DashboardCubit(useCase)..load(userId);
+  }
+
+  static BarberAgendaCubit buildBarberAgendaCubit(String userId) {
+    return BarberAgendaCubit(
+      bookingsRepository: FirestoreBookingsRepository(firestore: firestore),
+      firestore: firestore,
+      userId: userId,
+    )..load();
+  }
+
+  static SearchBarbershopsCubit buildSearchBarbershopsCubit() {
+    return SearchBarbershopsCubit(
+      searchBarbershops: searchBarbershopsUseCase,
+      sendMembershipRequest: sendMembershipRequestUseCase,
+    );
+  }
+
+  static MembershipRequestsCubit buildMembershipRequestsCubit() {
+    return MembershipRequestsCubit(
+      getPendingRequests: getPendingRequestsUseCase,
+      reviewMembershipRequest: reviewMembershipRequestUseCase,
+    );
+  }
+
+  static BarberServicesCubit buildBarberServicesCubit() {
+    return BarberServicesCubit(
+      getBarberServices: getBarberServicesUseCase,
+      addService: addServiceUseCase,
+      updateService: updateServiceUseCase,
+      deleteService: deleteServiceUseCase,
+    );
+  }
+
+  static BarberScheduleCubit buildBarberScheduleCubit() {
+    return BarberScheduleCubit(
+      getBarberSchedule: getBarberScheduleUseCase,
+      setSchedule: setScheduleUseCase,
+    );
+  }
+
+  static Future<String> getCurrentBarbershopId(String userId) async {
+    if (userId.isEmpty) return '';
+    final doc = await firestore.collection('users').doc(userId).get();
+    final data = doc.data();
+    return data?['barbershopId'] as String? ?? '';
+  }
+
+  static String? getCurrentUserId() => firebaseAuth.currentUser?.uid;
+  static String? getCurrentUserName() => firebaseAuth.currentUser?.displayName;
+  static String? getCurrentUserEmail() => firebaseAuth.currentUser?.email;
+}

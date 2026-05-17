@@ -113,11 +113,7 @@ class _FeaturedBadge extends StatelessWidget {
             bottomLeft: Radius.circular(AppRadius.md),
           ),
         ),
-        child: const Icon(
-          Icons.star,
-          size: 16,
-          color: AppColors.secondary,
-        ),
+        child: const Icon(Icons.star, size: 16, color: AppColors.secondary),
       ),
     );
   }

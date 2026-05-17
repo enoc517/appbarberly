@@ -25,21 +25,41 @@ class ServicesGrid extends StatelessWidget {
       children: [
         _SectionHeader(category: selectedCategory, count: services.length),
         const SizedBox(height: 16),
-        GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            crossAxisSpacing: 12,
-            mainAxisSpacing: 12,
-            childAspectRatio: 0.72,
-          ),
-          itemCount: services.length,
-          itemBuilder: (context, index) {
-            return ServiceCard(
-              service: services[index],
-              onTap: () {
-                // Navigation to detail screen handled by router
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final width = constraints.maxWidth;
+            final crossAxisCount = width < 360
+                ? 1
+                : width < 720
+                ? 2
+                : 3;
+            final isCompact = width < 390;
+
+            return GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: isCompact
+                  ? SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: crossAxisCount,
+                      crossAxisSpacing: 12,
+                      mainAxisSpacing: 12,
+                      mainAxisExtent: 260,
+                    )
+                  : SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: crossAxisCount,
+                      crossAxisSpacing: 12,
+                      mainAxisSpacing: 12,
+                      childAspectRatio: 0.68,
+                    ),
+              itemCount: services.length,
+              itemBuilder: (context, index) {
+                return ServiceCard(
+                  service: services[index],
+                  isCompact: isCompact,
+                  onTap: () {
+                    // Navigation to detail screen handled by router
+                  },
+                );
               },
             );
           },

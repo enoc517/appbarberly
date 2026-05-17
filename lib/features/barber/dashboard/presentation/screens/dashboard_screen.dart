@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '/../../../shared/motion/app_motion.dart';
 import '/../../../shared/theme/app_theme.dart';
 import '../bloc/dashboard_cubit.dart';
 import '../bloc/dashboard_state.dart';
@@ -21,8 +22,9 @@ class DashboardScreen extends StatelessWidget {
         bottom: false,
         child: BlocBuilder<DashboardCubit, DashboardState>(
           builder: (context, state) => switch (state) {
-            DashboardLoading() =>
-              const Center(child: CircularProgressIndicator()),
+            DashboardLoading() => const Center(
+              child: CircularProgressIndicator(),
+            ),
             DashboardError(:final message) => Center(child: Text(message)),
             DashboardLoaded(:final data) => _Content(data: data),
           },
@@ -41,26 +43,35 @@ class _Content extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.only(bottom: 24),
       children: [
-        DashboardHeader(today: DateTime.now()),
+        AppFadeSlideIn(child: DashboardHeader(today: DateTime.now())),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: IncomeCard(
-            income: data.summary.incomeToday,
-            deltaPercent: data.summary.incomeDeltaPercent,
+          child: AppFadeSlideIn(
+            delay: AppMotion.delay(1),
+            child: IncomeCard(
+              income: data.summary.incomeToday,
+              deltaPercent: data.summary.incomeDeltaPercent,
+            ),
           ),
         ),
         const SizedBox(height: 12),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: CompletedCard(
-            completed: data.summary.completedAppointments,
-            total: data.summary.totalAppointments,
+          child: AppFadeSlideIn(
+            delay: AppMotion.delay(2),
+            child: CompletedCard(
+              completed: data.summary.completedAppointments,
+              total: data.summary.totalAppointments,
+            ),
           ),
         ),
         const SizedBox(height: 12),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: WeeklyChart(data: data.weekly),
+          child: AppFadeSlideIn(
+            delay: AppMotion.delay(3),
+            child: WeeklyChart(data: data.weekly),
+          ),
         ),
         const SizedBox(height: 24),
         Padding(
@@ -79,9 +90,12 @@ class _Content extends StatelessWidget {
             ],
           ),
         ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: AgendaTimeline(appointments: data.todayAppointments),
+        AppFadeSlideIn(
+          delay: AppMotion.delay(4),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: AgendaTimeline(appointments: data.todayAppointments),
+          ),
         ),
       ],
     );

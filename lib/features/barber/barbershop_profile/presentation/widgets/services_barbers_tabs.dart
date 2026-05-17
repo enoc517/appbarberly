@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../../shared/motion/app_motion.dart';
 import '../../../../../shared/theme/app_theme.dart';
 import '../bloc/booking/booking_cubit.dart';
 import '../bloc/booking/booking_state.dart';
@@ -55,14 +56,16 @@ class _TabButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Expanded(
-      child: GestureDetector(
+      child: AppPressable(
         onTap: onTap,
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
+          duration: AppMotion.fast,
+          curve: AppMotion.standard,
           padding: const EdgeInsets.symmetric(vertical: 12),
           decoration: BoxDecoration(
-            color:
-                selected ? AppColors.surfaceContainerLowest : Colors.transparent,
+            color: selected
+                ? AppColors.surfaceContainerLowest
+                : Colors.transparent,
             borderRadius: BorderRadius.circular(AppRadius.lg),
           ),
           alignment: Alignment.center,

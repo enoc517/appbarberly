@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../../shared/motion/app_motion.dart';
 import '../../../../../shared/theme/app_theme.dart';
 import '../../domain/entities/barbershop.dart';
 import '../bloc/barbershop_profile/barbershop_profile_cubit.dart';
@@ -29,11 +30,15 @@ class PerfilBarberiaScreen extends StatelessWidget {
           bottom: false,
           child: BlocBuilder<BarbershopProfileCubit, BarbershopProfileState>(
             builder: (context, state) => switch (state) {
-              BarbershopProfileLoading() =>
-                const Center(child: CircularProgressIndicator()),
-              BarbershopProfileError(:final message) => _ErrorView(message: message),
-              BarbershopProfileLoaded(:final barbershop) =>
-                _Content(barbershop: barbershop),
+              BarbershopProfileLoading() => const Center(
+                child: CircularProgressIndicator(),
+              ),
+              BarbershopProfileError(:final message) => _ErrorView(
+                message: message,
+              ),
+              BarbershopProfileLoaded(:final barbershop) => _Content(
+                barbershop: barbershop,
+              ),
             },
           ),
         ),
@@ -43,9 +48,9 @@ class PerfilBarberiaScreen extends StatelessWidget {
 
   void _onBookingStatus(BuildContext context, BookingState s) {
     if (s.status == BookingStatus.success) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Reserva confirmada ✓')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Reserva confirmada ✓')));
     } else if (s.status == BookingStatus.failure) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(s.errorMessage ?? 'Error al reservar')),
@@ -62,14 +67,21 @@ class _Content extends StatelessWidget {
   Widget build(BuildContext context) {
     return CustomScrollView(
       slivers: [
-        const SliverToBoxAdapter(child: BarbershopHeader()),
+        const SliverToBoxAdapter(
+          child: AppFadeSlideIn(child: BarbershopHeader()),
+        ),
         SliverToBoxAdapter(
-          child: BarbershopHero(
-            barbershop: barbershop,
-            onCheckIn: () {},
+          child: AppFadeSlideIn(
+            delay: AppMotion.stagger,
+            child: BarbershopHero(barbershop: barbershop, onCheckIn: () {}),
           ),
         ),
-        const SliverToBoxAdapter(child: ServicesBarbersTabs()),
+        const SliverToBoxAdapter(
+          child: AppFadeSlideIn(
+            delay: Duration(milliseconds: 140),
+            child: ServicesBarbersTabs(),
+          ),
+        ),
         SliverPadding(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
           sliver: BlocBuilder<BookingCubit, BookingState>(
@@ -80,27 +92,43 @@ class _Content extends StatelessWidget {
               if (state.activeTab == ProfileTab.services) {
                 return SliverList.separated(
                   itemCount: barbershop.services.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 12),
-                  itemBuilder: (_, i) => ServiceCard(
-                    service: barbershop.services[i],
-                    onReserve: () => context
-                        .read<BookingCubit>()
-                        .selectService(barbershop.services[i]),
-                  ),
+                  separatorBuilder: (context, index) =>
+                      const SizedBox(height: 12),
+                  itemBuilder: (_, i) {
+                    return ServiceCard(
+                      service: barbershop.services[i],
+                      onReserve: () => context
+                          .read<BookingCubit>()
+                          .selectService(barbershop.services[i]),
+                    );
+                  },
                 );
               }
               return SliverToBoxAdapter(
-                child: BarbersList(
-                  barbers: barbershop.barbers,
-                  selected: state.selectedBarber,
-                  onSelect: context.read<BookingCubit>().selectBarber,
+                child: AppFadeSlideIn(
+                  offset: const Offset(0, 0.04),
+                  child: BarbersList(
+                    barbers: barbershop.barbers,
+                    selected: state.selectedBarber,
+                    onSelect: context.read<BookingCubit>().selectBarber,
+                  ),
                 ),
               );
             },
           ),
         ),
-        SliverToBoxAdapter(child: AgendaCard(barbershop: barbershop)),
-        const SliverToBoxAdapter(child: BarbershopMap()),
+        SliverToBoxAdapter(
+          child: AppFadeSlideIn(
+            delay: AppMotion.delay(2),
+            child: AgendaCard(barbershop: barbershop),
+          ),
+        ),
+        const SliverToBoxAdapter(
+          child: AppFadeSlideIn(
+            delay: Duration(milliseconds: 210),
+            child: BarbershopMap(),
+          ),
+        ),
         const SliverToBoxAdapter(child: SizedBox(height: 24)),
       ],
     );

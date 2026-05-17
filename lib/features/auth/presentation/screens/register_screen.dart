@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/router/auth_route_resolver.dart';
+import '../../../../shared/motion/app_motion.dart';
 import '../../../../shared/theme/app_theme.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../bloc/auth_bloc.dart';
@@ -84,7 +86,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
           Future.delayed(const Duration(milliseconds: 700), () {
             if (context.mounted) {
-              context.go('/explorar'); // o /panel según rol después
+              context.go(routeForAuthenticatedUser(state.user));
             }
           });
         }
@@ -128,10 +130,45 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         ? Row(
                             children: [
                               Expanded(
-                                child: _BrandPanel(theme: Theme.of(context)),
+                                child: AppFadeSlideIn(
+                                  child: _BrandPanel(theme: Theme.of(context)),
+                                ),
                               ),
                               const SizedBox(width: 32),
                               Expanded(
+                                child: AppFadeSlideIn(
+                                  delay: AppMotion.delay(1),
+                                  child: _RegisterCard(
+                                    isLoading: isLoading,
+                                    formKey: _formKey,
+                                    fullNameController: _fullNameController,
+                                    phoneController: _phoneController,
+                                    emailController: _emailController,
+                                    passwordController: _passwordController,
+                                    obscurePassword: _obscurePassword,
+                                    isProfessional: _isProfessional,
+                                    onTogglePassword: () {
+                                      setState(() {
+                                        _obscurePassword = !_obscurePassword;
+                                      });
+                                    },
+                                    onToggleProfessional: (value) {
+                                      setState(() {
+                                        _isProfessional = value;
+                                      });
+                                    },
+                                    onSubmit: _submit,
+                                    onGoLogin: () => context.go('/login'),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          )
+                        : Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const SizedBox(height: 28),
+                              AppFadeSlideIn(
                                 child: _RegisterCard(
                                   isLoading: isLoading,
                                   formKey: _formKey,
@@ -154,34 +191,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   onSubmit: _submit,
                                   onGoLogin: () => context.go('/login'),
                                 ),
-                              ),
-                            ],
-                          )
-                        : Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const SizedBox(height: 28),
-                              _RegisterCard(
-                                isLoading: isLoading,
-                                formKey: _formKey,
-                                fullNameController: _fullNameController,
-                                phoneController: _phoneController,
-                                emailController: _emailController,
-                                passwordController: _passwordController,
-                                obscurePassword: _obscurePassword,
-                                isProfessional: _isProfessional,
-                                onTogglePassword: () {
-                                  setState(() {
-                                    _obscurePassword = !_obscurePassword;
-                                  });
-                                },
-                                onToggleProfessional: (value) {
-                                  setState(() {
-                                    _isProfessional = value;
-                                  });
-                                },
-                                onSubmit: _submit,
-                                onGoLogin: () => context.go('/login'),
                               ),
                             ],
                           ),
