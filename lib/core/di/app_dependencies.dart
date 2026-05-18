@@ -51,6 +51,7 @@ import '../../features/explore/presentation/bloc/explore_bloc.dart';
 import '../../features/barber/dashboard/data/repositories/firestore_dashboard_repository.dart';
 import '../../features/barber/dashboard/domain/usecases/get_dashboard_data.dart';
 import '../../features/barber/dashboard/presentation/bloc/dashboard_cubit.dart';
+import '../../features/barber/account/presentation/cubit/barber_profile_cubit.dart';
 import '../../features/barber/agenda/presentation/bloc/barber_agenda_cubit.dart';
 import '../../features/welcome/presentation/bloc/welcome_bloc.dart';
 
@@ -143,6 +144,10 @@ class AppDependencies {
 
   static WelcomeBloc buildWelcomeBloc() {
     return WelcomeBloc(getCurrentUserUseCase: getCurrentUserUseCase);
+  }
+
+  static BarberProfileCubit buildBarberProfileCubit() {
+    return BarberProfileCubit();
   }
 
   static ExploreBloc buildExploreBloc() {

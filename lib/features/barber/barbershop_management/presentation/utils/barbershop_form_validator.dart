@@ -18,22 +18,4 @@ class BarbershopFormValidator {
     if (text.isEmpty) return 'Ingresa la dirección';
     return null;
   }
-
-  static String? validateLat(String? value) {
-    final text = value?.trim() ?? '';
-    if (text.isEmpty) return 'Requerido';
-    final parsed = double.tryParse(text);
-    if (parsed == null) return 'Inválido';
-    if (parsed < -90 || parsed > 90) return 'Inválido';
-    return null;
-  }
-
-  static String? validateLng(String? value) {
-    final text = value?.trim() ?? '';
-    if (text.isEmpty) return 'Requerido';
-    final parsed = double.tryParse(text);
-    if (parsed == null) return 'Inválido';
-    if (parsed < -180 || parsed > 180) return 'Inválido';
-    return null;
-  }
 }

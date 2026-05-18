@@ -26,7 +26,8 @@ import 'dart:async';
 
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 
 import 'package:barberly/features/explore/domain/entities/explore_entities.dart';
 import 'package:barberly/features/explore/domain/repositories/explore_repository.dart';
@@ -79,7 +80,7 @@ class ExploreBloc extends Bloc<ExploreEvent, ExploreState> {
   List<BarbershopEntity> _allBarbershops = [];
   List<ServiceExploreEntity> _allServices = [];
   List<String> _favoriteIds = [];
-  GoogleMapController? _mapController;
+  MapController? _mapController;
 
   // ── ExploreInitialized ────────────────────────────────────────────────────
 
@@ -170,7 +171,7 @@ class ExploreBloc extends Bloc<ExploreEvent, ExploreState> {
     }
 
     // Emitir estado inicial vacío con la posición del usuario
-    final initialMarkers = await MarkerUtils.buildMarkers(
+    final initialMarkers = MarkerUtils.buildMarkers(
       barbershops: const [],
       onTap: (shop) => add(ExploreMapBarbershopSelected(shop)),
     );
@@ -239,7 +240,7 @@ class ExploreBloc extends Bloc<ExploreEvent, ExploreState> {
       sort: current.currentSort,
     );
 
-    final markers = await MarkerUtils.buildMarkers(
+    final markers = MarkerUtils.buildMarkers(
       barbershops: filtered,
       onTap: (shop) => add(ExploreMapBarbershopSelected(shop)),
     );
@@ -267,13 +268,8 @@ class ExploreBloc extends Bloc<ExploreEvent, ExploreState> {
     final current = state as ExploreLoaded;
     final target = LatLng(event.barbershop.lat, event.barbershop.lng);
 
-    // Mover la cámara directamente si el controlador ya está disponible
     if (_mapController != null) {
-      await _mapController!.animateCamera(
-        CameraUpdate.newCameraPosition(
-          CameraPosition(target: target, zoom: 15.5),
-        ),
-      );
+      _mapController!.move(target, 15.5);
     }
 
     // También propaga el target en el estado para que la vista pueda reaccionar
@@ -302,7 +298,7 @@ class ExploreBloc extends Bloc<ExploreEvent, ExploreState> {
       sort: event.sort,
     );
 
-    final markers = await MarkerUtils.buildMarkers(
+    final markers = MarkerUtils.buildMarkers(
       barbershops: sorted,
       onTap: (shop) => add(ExploreMapBarbershopSelected(shop)),
     );
@@ -367,11 +363,7 @@ class ExploreBloc extends Bloc<ExploreEvent, ExploreState> {
     if (state is ExploreLoaded) {
       final target = (state as ExploreLoaded).cameraTarget;
       if (target != null) {
-        await _mapController!.animateCamera(
-          CameraUpdate.newCameraPosition(
-            CameraPosition(target: target, zoom: 15.5),
-          ),
-        );
+        _mapController!.move(target, 15.5);
       }
     }
   }
@@ -397,7 +389,7 @@ class ExploreBloc extends Bloc<ExploreEvent, ExploreState> {
               .where((s) => s.category == current.categoryFilter)
               .toList();
 
-    final markers = await MarkerUtils.buildMarkers(
+    final markers = MarkerUtils.buildMarkers(
       barbershops: filtered,
       onTap: (shop) => add(ExploreMapBarbershopSelected(shop)),
     );

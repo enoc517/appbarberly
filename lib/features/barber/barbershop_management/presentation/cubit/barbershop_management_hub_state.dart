@@ -1,19 +1,15 @@
 import 'package:equatable/equatable.dart';
 
-class BarberAccountState extends Equatable {
+class BarbershopManagementHubState extends Equatable {
   final bool isLoading;
-  final String? userName;
-  final String? userEmail;
   final bool hasBarbershop;
   final String? barbershopId;
   final String? barbershopName;
   final bool isOwner;
   final String? errorMessage;
 
-  const BarberAccountState({
+  const BarbershopManagementHubState({
     this.isLoading = true,
-    this.userName,
-    this.userEmail,
     this.hasBarbershop = false,
     this.barbershopId,
     this.barbershopName,
@@ -21,20 +17,16 @@ class BarberAccountState extends Equatable {
     this.errorMessage,
   });
 
-  BarberAccountState copyWith({
+  BarbershopManagementHubState copyWith({
     bool? isLoading,
-    String? userName,
-    String? userEmail,
     bool? hasBarbershop,
     String? barbershopId,
     String? barbershopName,
     bool? isOwner,
     String? errorMessage,
   }) {
-    return BarberAccountState(
+    return BarbershopManagementHubState(
       isLoading: isLoading ?? this.isLoading,
-      userName: userName ?? this.userName,
-      userEmail: userEmail ?? this.userEmail,
       hasBarbershop: hasBarbershop ?? this.hasBarbershop,
       barbershopId: barbershopId ?? this.barbershopId,
       barbershopName: barbershopName ?? this.barbershopName,
@@ -46,8 +38,6 @@ class BarberAccountState extends Equatable {
   @override
   List<Object?> get props => [
         isLoading,
-        userName,
-        userEmail,
         hasBarbershop,
         barbershopId,
         barbershopName,

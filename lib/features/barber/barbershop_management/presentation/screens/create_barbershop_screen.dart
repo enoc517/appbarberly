@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:latlong2/latlong.dart';
 
 import '../../../../../shared/motion/app_motion.dart';
 import '../../../../../shared/theme/app_theme.dart';
@@ -8,6 +9,7 @@ import '../../domain/repositories/barbershop_management_repository.dart';
 import '../cubit/barbershop_management_cubit.dart';
 import '../cubit/barbershop_management_state.dart';
 import '../utils/barbershop_form_validator.dart';
+import '../widgets/location_picker.dart';
 
 class CreateBarbershopScreen extends StatefulWidget {
   final String userId;
@@ -29,8 +31,9 @@ class _CreateBarbershopScreenState extends State<CreateBarbershopScreen> {
   final _phoneController = TextEditingController();
   final _addressController = TextEditingController();
   final _imageUrlController = TextEditingController();
-  final _latController = TextEditingController();
-  final _lngController = TextEditingController();
+
+  double _selectedLat = 8.6135;
+  double _selectedLng = -82.9585;
 
   final List<String> _tags = [];
   String _currentTag = '';
@@ -41,8 +44,6 @@ class _CreateBarbershopScreenState extends State<CreateBarbershopScreen> {
     _phoneController.dispose();
     _addressController.dispose();
     _imageUrlController.dispose();
-    _latController.dispose();
-    _lngController.dispose();
     super.dispose();
   }
 
@@ -77,8 +78,8 @@ class _CreateBarbershopScreenState extends State<CreateBarbershopScreen> {
       name: _nameController.text.trim(),
       phone: _phoneController.text.trim(),
       address: _addressController.text.trim(),
-      lat: double.parse(_latController.text.trim()),
-      lng: double.parse(_lngController.text.trim()),
+      lat: _selectedLat,
+      lng: _selectedLng,
       imageUrl: _imageUrlController.text.trim(),
       tags: List<String>.from(_tags),
     );
@@ -130,8 +131,8 @@ class _CreateBarbershopScreenState extends State<CreateBarbershopScreen> {
                     phoneController: _phoneController,
                     addressController: _addressController,
                     imageUrlController: _imageUrlController,
-                    latController: _latController,
-                    lngController: _lngController,
+                    selectedLat: _selectedLat,
+                    selectedLng: _selectedLng,
                     tags: _tags,
                     currentTag: _currentTag,
                     onSubmit: _submit,
@@ -139,6 +140,12 @@ class _CreateBarbershopScreenState extends State<CreateBarbershopScreen> {
                     onRemoveTag: _removeTag,
                     onCurrentTagChanged: (value) {
                       setState(() => _currentTag = value);
+                    },
+                    onLocationSelected: (location) {
+                      setState(() {
+                        _selectedLat = location.latitude;
+                        _selectedLng = location.longitude;
+                      });
                     },
                   ),
                 ),
@@ -158,14 +165,15 @@ class _FormCard extends StatelessWidget {
     required this.phoneController,
     required this.addressController,
     required this.imageUrlController,
-    required this.latController,
-    required this.lngController,
+    required this.selectedLat,
+    required this.selectedLng,
     required this.tags,
     required this.currentTag,
     required this.onSubmit,
     required this.onAddTag,
     required this.onRemoveTag,
     required this.onCurrentTagChanged,
+    required this.onLocationSelected,
   });
 
   final GlobalKey<FormState> formKey;
@@ -173,14 +181,15 @@ class _FormCard extends StatelessWidget {
   final TextEditingController phoneController;
   final TextEditingController addressController;
   final TextEditingController imageUrlController;
-  final TextEditingController latController;
-  final TextEditingController lngController;
+  final double selectedLat;
+  final double selectedLng;
   final List<String> tags;
   final String currentTag;
   final VoidCallback onSubmit;
   final ValueChanged<String> onAddTag;
   final ValueChanged<String> onRemoveTag;
   final ValueChanged<String> onCurrentTagChanged;
+  final ValueChanged<LatLng> onLocationSelected;
 
   @override
   Widget build(BuildContext context) {
@@ -248,50 +257,9 @@ class _FormCard extends StatelessWidget {
                   keyboardType: TextInputType.url,
                 ),
                 const SizedBox(height: 28),
-                const _SectionTitle(text: 'Ubicación en el mapa'),
-                const SizedBox(height: 20),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const _FieldLabel(text: 'Latitud'),
-                          const SizedBox(height: 8),
-                          _TextField(
-                            controller: latController,
-                            hintText: '8.6135',
-                            prefixIcon: Icons.explore_rounded,
-                            keyboardType: const TextInputType.numberWithOptions(
-                              decimal: true,
-                              signed: true,
-                            ),
-                            validator: BarbershopFormValidator.validateLat,
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const _FieldLabel(text: 'Longitud'),
-                          const SizedBox(height: 8),
-                          _TextField(
-                            controller: lngController,
-                            hintText: '-82.9585',
-                            prefixIcon: Icons.explore_rounded,
-                            keyboardType: const TextInputType.numberWithOptions(
-                              decimal: true,
-                              signed: true,
-                            ),
-                            validator: BarbershopFormValidator.validateLng,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+                LocationPicker(
+                  initialLocation: LatLng(selectedLat, selectedLng),
+                  onLocationSelected: onLocationSelected,
                 ),
                 const SizedBox(height: 28),
                 const _SectionTitle(text: 'Etiquetas'),

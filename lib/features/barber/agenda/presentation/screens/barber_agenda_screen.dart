@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../../shared/motion/app_motion.dart';
 import '../../../../../shared/theme/app_theme.dart';
@@ -48,8 +49,9 @@ class _LoadedView extends StatelessWidget {
         ),
         const SizedBox(height: 22),
         if (bookings.isEmpty)
-          const _InlineEmpty(message: 'No hay citas para este día.'),
-        for (final booking in bookings) _AgendaBlock(booking: booking),
+          const _InlineEmpty(message: 'No hay citas para este día.')
+        else
+          for (final booking in bookings) _AgendaBlock(booking: booking),
       ],
     );
   }
@@ -256,24 +258,89 @@ class _LoadingView extends StatelessWidget {
 }
 
 class _EmptyView extends StatelessWidget {
-  const _EmptyView({required this.message});
-
   final String message;
+  const _EmptyView({required this.message});
 
   @override
   Widget build(BuildContext context) {
-    return Center(child: Text(message));
+    final isNoBarbershop = message.contains('barbería');
+
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              isNoBarbershop
+                  ? Icons.storefront_rounded
+                  : Icons.calendar_today_outlined,
+              size: 72,
+              color: AppColors.onSurfaceVariant.withValues(alpha: 0.3),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              isNoBarbershop ? 'Sin barbería asignada' : 'Sin citas',
+              style: AppTypography.titleLarge.copyWith(
+                color: AppColors.onSurface,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: AppTypography.bodyMedium.copyWith(
+                color: AppColors.onSurfaceVariant,
+              ),
+            ),
+            if (isNoBarbershop) ...[
+              const SizedBox(height: 32),
+              AppFadeSlideIn(
+                delay: AppMotion.delay(1),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.icon(
+                    onPressed: () => context.go('/barberia'),
+                    icon: const Icon(Icons.storefront_rounded),
+                    label: const Text('Ir a Barbería'),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: AppColors.primaryContainer,
+                      foregroundColor: AppColors.onPrimary,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.xl),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
   }
 }
 
 class _ErrorView extends StatelessWidget {
-  const _ErrorView({required this.message});
-
   final String message;
+  const _ErrorView({required this.message});
 
   @override
   Widget build(BuildContext context) {
-    return Center(child: Text(message));
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Text(
+          message,
+          textAlign: TextAlign.center,
+          style: AppTypography.bodyMedium.copyWith(
+            color: AppColors.onSurfaceVariant,
+          ),
+        ),
+      ),
+    );
   }
 }
 

@@ -29,17 +29,10 @@ import 'package:barberly/features/client/profile/presentation/screens/client_pro
 import 'package:barberly/features/barber/account/presentation/screens/barber_account_screen.dart';
 import 'package:barberly/features/barber/agenda/presentation/screens/barber_agenda_screen.dart';
 
-// Features: Barber (Barbershop Profile)
-import 'package:barberly/features/barber/barbershop_profile/data/datasources/barbershop_mock_datasource.dart';
-import 'package:barberly/features/barber/barbershop_profile/data/repositories/barbershop_repository_impl.dart';
-import 'package:barberly/features/barber/barbershop_profile/domain/usecases/confirm_booking.dart';
-import 'package:barberly/features/barber/barbershop_profile/domain/usecases/get_barbershop.dart';
-import 'package:barberly/features/barber/barbershop_profile/presentation/bloc/barbershop_profile/barbershop_profile_cubit.dart';
-import 'package:barberly/features/barber/barbershop_profile/presentation/bloc/booking/booking_cubit.dart';
-import 'package:barberly/features/barber/barbershop_profile/presentation/screens/perfil_barberia_screen.dart';
-
 // Features: Barber (Barbershop Management)
+import 'package:barberly/features/barber/barbershop_management/presentation/cubit/barbershop_management_hub_cubit.dart';
 import 'package:barberly/features/barber/barbershop_management/presentation/screens/create_barbershop_screen.dart';
+import 'package:barberly/features/barber/barbershop_management/presentation/screens/barbershop_management_screen.dart';
 
 // Features: Barber (Dashboard)
 import 'package:barberly/features/barber/dashboard/presentation/screens/dashboard_screen.dart';
@@ -274,35 +267,16 @@ class AppRouter {
             ],
           ),
 
-          // Branch 6: BARBERO / BARBERIA
+          // Branch 6: BARBERO / BARBERIA (Hub de gestión)
           StatefulShellBranch(
             routes: [
               GoRoute(
                 path: barberia,
                 name: 'barberia',
                 builder: (context, state) {
-                  final dataSource = BarbershopMockDataSource();
-                  final repository = BarbershopRepositoryImpl(dataSource);
-                  final getBarbershop = GetBarbershop(repository);
-                  final confirmBooking = ConfirmBooking(repository);
-
-                  final today = DateTime.now();
-                  final startOfToday = DateTime(today.year, today.month, today.day);
-
-                  return MultiBlocProvider(
-                    providers: [
-                      BlocProvider(
-                        create: (_) => BarbershopProfileCubit(getBarbershop)..load('shop-1'),
-                      ),
-                      BlocProvider(
-                        create: (_) => BookingCubit(
-                          confirmBooking: confirmBooking,
-                          barbershopId: 'shop-1',
-                          initialDay: startOfToday,
-                        ),
-                      ),
-                    ],
-                    child: const PerfilBarberiaScreen(),
+                  return BlocProvider(
+                    create: (_) => BarbershopManagementHubCubit(),
+                    child: const BarbershopManagementScreen(),
                   );
                 },
               ),

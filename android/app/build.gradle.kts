@@ -1,5 +1,3 @@
-import java.util.Properties
-
 plugins {
     id("com.android.application")
     id("kotlin-android")
@@ -7,14 +5,6 @@ plugins {
     // El plugin de Flutter Gradle debe ir DESPUÉS de los plugins de Android y Kotlin.
     id("dev.flutter.flutter-gradle-plugin")
 }
-
-// ── Carga MAPS_API_KEY desde local.properties (no se commitea) ──────────────
-val localProperties = Properties()
-val localPropertiesFile = rootProject.file("local.properties")
-if (localPropertiesFile.exists()) {
-    localPropertiesFile.inputStream().use { localProperties.load(it) }
-}
-val mapsApiKey: String = localProperties.getProperty("MAPS_API_KEY") ?: ""
 
 android {
     namespace = "com.proyectomoviles.barberly"
@@ -34,13 +24,10 @@ android {
     defaultConfig {
         applicationId = "com.proyectomoviles.barberly"
 
-        minSdk = flutter.minSdkVersion                  // ← requerido por google_maps_flutter
+        minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
-
-        // ← inyecta la key al AndroidManifest como ${MAPS_API_KEY}
-        manifestPlaceholders["MAPS_API_KEY"] = mapsApiKey
     }
 
     buildTypes {

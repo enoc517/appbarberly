@@ -56,8 +56,8 @@ class ExploreLoaded extends ExploreState {
   /// Lista filtrada de servicios (post-categoría).
   final List<ServiceExploreEntity> services;
 
-  /// Set de marcadores ya construidos — pasarlo directamente a GoogleMap.
-  final Set<Marker> markers;
+  /// Set de marcadores ya construidos — pasarlo directamente a FlutterMap.
+  final List<Marker> markers;
 
   /// IDs de favoritos del usuario actual.
   final List<String> favoriteIds;
@@ -88,7 +88,7 @@ class ExploreLoaded extends ExploreState {
   ExploreLoaded copyWith({
     List<BarbershopEntity>? barbershops,
     List<ServiceExploreEntity>? services,
-    Set<Marker>? markers,
+    List<Marker>? markers,
     List<String>? favoriteIds,
     ExploreSort? currentSort,
     double? userLat,

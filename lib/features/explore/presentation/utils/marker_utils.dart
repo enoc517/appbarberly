@@ -1,26 +1,17 @@
 // lib/features/explore/presentation/utils/marker_utils.dart
 //
-// Utilidades para crear marcadores de Google Maps personalizados.
+// Utilidades para crear marcadores de FlutterMap personalizados.
 //
 // Diseño "Celestial Tailor":
 //   · Barbería normal     → pin Space Blue  (#0F1C2C)
 //   · Barbería con promo  → pin Lilo Red    (#B7102A) + badge ⚡
-//
-// DEPENDENCIAS REQUERIDAS en pubspec.yaml:
-//   google_maps_flutter: ^2.9.0
-//
-// NOTA SOBRE BitmapDescriptor.fromAssetImage:
-//   Para íconos de alta calidad, coloca los archivos en:
-//     assets/icons/pin_space_blue.png   (tamaño 96×96 @3x)
-//     assets/icons/pin_lilo_red.png     (tamaño 96×96 @3x)
-//   y declara los assets en pubspec.yaml.
-//   Como fallback sin assets, se usa canvas programático.
 // ===========================================================================
 
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 
 import 'package:barberly/features/explore/domain/entities/explore_entities.dart';
 
@@ -29,14 +20,8 @@ import 'package:barberly/features/explore/domain/entities/explore_entities.dart'
 // ════════════════════════════════════════════════════════════════════════════
 
 class _DesignTokens {
-  /// Space Blue — pin estándar
   static const Color spaceBlue = Color(0xFF0F1C2C);
-
-  /// Lilo Red — pin con promoción activa ⚡
   static const Color liloRed = Color(0xFFB7102A);
-
-  /// Blanco puro para el ícono del pin
-  static const Color pinIconColor = Colors.white;
 }
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -44,161 +29,91 @@ class _DesignTokens {
 // ════════════════════════════════════════════════════════════════════════════
 
 class MarkerUtils {
-  MarkerUtils._(); // clase utilitaria, no instanciar
+  MarkerUtils._();
 
-  // ── Cache de BitmapDescriptors (evita regenerar en cada rebuild) ──────────
-
-  static BitmapDescriptor? _cachedPinBlue;
-  static BitmapDescriptor? _cachedPinRed;
-
-  // ── Punto de entrada principal ────────────────────────────────────────────
-
-  /// Convierte una lista de [BarbershopEntity] en un [Set<Marker>] listo para
-  /// pasarle a GoogleMap.
-  ///
-  /// [onTap] recibe la entidad seleccionada → el BLoC emite
-  /// [ExploreMapBarbershopSelected] para mover la cámara.
-  static Future<Set<Marker>> buildMarkers({
+  static List<Marker> buildMarkers({
     required List<BarbershopEntity> barbershops,
     required void Function(BarbershopEntity) onTap,
-  }) async {
-    // Pre-cargar los descriptores la primera vez
-    await _ensureDescriptorsLoaded();
+  }) {
+    return barbershops.map((shop) {
+      final color = shop.hasActivePromotion
+          ? _DesignTokens.liloRed
+          : _DesignTokens.spaceBlue;
 
-    final markers = <Marker>{};
-
-    for (final shop in barbershops) {
-      final icon = shop.hasActivePromotion ? _cachedPinRed! : _cachedPinBlue!;
-
-      final marker = Marker(
-        markerId: MarkerId(shop.id),
-        position: LatLng(shop.lat, shop.lng),
-        icon: icon,
-        // Ventana de información nativa de Google Maps (opcional — se puede
-        // reemplazar por un BottomSheet personalizado en el onTap del BLoC)
-        infoWindow: InfoWindow(
-          title: shop.name,
-          snippet: shop.hasActivePromotion
-              ? '⚡ Promoción activa — ¡Ver oferta!'
-              : '★ ${shop.rating.toStringAsFixed(1)}  ·  ${shop.reviewCount} reseñas',
+      return Marker(
+        point: LatLng(shop.lat, shop.lng),
+        width: 40,
+        height: 52,
+        child: GestureDetector(
+          onTap: () => onTap(shop),
+          child: _PinWidget(color: color, hasPromo: shop.hasActivePromotion),
         ),
-        onTap: () => onTap(shop),
       );
-
-      markers.add(marker);
-    }
-
-    return markers;
+    }).toList();
   }
+}
 
-  // ── Carga y cacheo de íconos ──────────────────────────────────────────────
+class _PinWidget extends StatelessWidget {
+  final Color color;
+  final bool hasPromo;
+  const _PinWidget({required this.color, required this.hasPromo});
 
-  static Future<void> _ensureDescriptorsLoaded() async {
-    if (_cachedPinBlue != null && _cachedPinRed != null) return;
-
-    // Intentar cargar desde assets; si falla, pintar programáticamente
-    try {
-      _cachedPinBlue ??= await _loadFromAsset(
-        'assets/icons/pin_space_blue.png',
-      );
-      _cachedPinRed ??= await _loadFromAsset('assets/icons/pin_lilo_red.png');
-    } catch (_) {
-      // Fallback: generar el bitmap en canvas si los assets no existen
-      _cachedPinBlue ??= await _buildPinBitmap(
-        color: _DesignTokens.spaceBlue,
-        hasPromo: false,
-      );
-      _cachedPinRed ??= await _buildPinBitmap(
-        color: _DesignTokens.liloRed,
-        hasPromo: true,
-      );
-    }
-  }
-
-  static Future<BitmapDescriptor> _loadFromAsset(String path) async {
-    return BitmapDescriptor.asset(
-      const ImageConfiguration(devicePixelRatio: 3.0, size: Size(32, 44)),
-      path,
+  @override
+  Widget build(BuildContext context) {
+    return CustomPaint(
+      size: const Size(40, 52),
+      painter: _PinPainter(color: color, hasPromo: hasPromo),
     );
   }
+}
 
-  // ── Generador de pins en canvas (sin assets) ──────────────────────────────
-  //
-  // Dibuja un pin estilo "lagrima" con la inicial de la barbería o ⚡.
-  // Se ejecuta una sola vez y el resultado se cachea.
+class _PinPainter extends CustomPainter {
+  final Color color;
+  final bool hasPromo;
+  const _PinPainter({required this.color, required this.hasPromo});
 
-  static Future<BitmapDescriptor> _buildPinBitmap({
-    required Color color,
-    required bool hasPromo,
-  }) async {
-    const double w = 96.0;
-    const double h = 120.0;
+  @override
+  void paint(Canvas canvas, Size size) {
+    final w = size.width;
+    final h = size.height;
 
-    final recorder = ui.PictureRecorder();
-    final canvas = Canvas(recorder, Rect.fromLTWH(0, 0, w, h));
-
-    // ── Cuerpo del pin (forma de lágrima) ─────────────────────────────────
-    final bodyPaint = Paint()
-      ..color = color
-      ..style = PaintingStyle.fill;
-
+    final bodyPaint = Paint()..color = color;
     final shadowPaint = Paint()
       ..color = Colors.black.withValues(alpha: 50 / 255)
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
 
-    // Sombra difusa (16–24px blur acorde al design system)
     final shadowPath = _pinPath(w, h, offsetY: 4);
     canvas.drawPath(shadowPath, shadowPaint);
 
-    // Cuerpo principal
     final pinPath = _pinPath(w, h);
     canvas.drawPath(pinPath, bodyPaint);
 
-    // ── Círculo interior blanco ───────────────────────────────────────────
     final circlePaint = Paint()
-      ..color = Colors.white.withValues(alpha: 230 / 255)
-      ..style = PaintingStyle.fill;
-    canvas.drawCircle(Offset(w / 2, h * 0.37), 22, circlePaint);
+      ..color = Colors.white.withValues(alpha: 230 / 255);
+    canvas.drawCircle(Offset(w / 2, h * 0.37), 10, circlePaint);
 
-    // ── Ícono dentro del círculo ──────────────────────────────────────────
-    if (hasPromo) {
-      // Rayo ⚡ usando TextPainter
-      _drawText(
-        canvas: canvas,
-        text: '⚡',
-        x: w / 2,
-        y: h * 0.37 - 12,
-        fontSize: 22,
-        color: _DesignTokens.liloRed,
-      );
-    } else {
-      // Ícono de tijeras ✂ Space Blue
-      _drawText(
-        canvas: canvas,
-        text: '✂',
-        x: w / 2,
-        y: h * 0.37 - 12,
-        fontSize: 20,
-        color: _DesignTokens.spaceBlue,
-      );
-    }
-
-    // ── Renderizar ────────────────────────────────────────────────────────
-    final picture = recorder.endRecording();
-    final image = await picture.toImage(w.toInt(), h.toInt());
-    final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
-    final bytes = byteData!.buffer.asUint8List();
-
-    return BitmapDescriptor.bytes(bytes, width: 32, height: 44);
+    final icon = hasPromo ? '⚡' : '✂';
+    _drawText(
+      canvas: canvas,
+      text: icon,
+      x: w / 2,
+      y: h * 0.37 - 6,
+      fontSize: 12,
+      color: hasPromo ? _DesignTokens.liloRed : _DesignTokens.spaceBlue,
+    );
   }
 
-  /// Construye el Path en forma de pin de mapa (lágrima invertida).
-  static Path _pinPath(double w, double h, {double offsetY = 0}) {
-    final cx = w / 2;
-    final topRadius = w * 0.42; // radio de la cabeza circular del pin
-    final tipY = h * 0.92 + offsetY; // punta inferior del pin
+  @override
+  bool shouldRepaint(covariant _PinPainter oldDelegate) {
+    return oldDelegate.color != color || oldDelegate.hasPromo != hasPromo;
+  }
 
-    return Path()
+  ui.Path _pinPath(double w, double h, {double offsetY = 0}) {
+    final cx = w / 2;
+    final topRadius = w * 0.42;
+    final tipY = h * 0.92 + offsetY;
+
+    return ui.Path()
       ..addOval(
         Rect.fromCircle(
           center: Offset(cx, topRadius + offsetY),
@@ -215,8 +130,7 @@ class MarkerUtils {
       ..close();
   }
 
-  /// Dibuja texto centrado en el canvas.
-  static void _drawText({
+  void _drawText({
     required Canvas canvas,
     required String text,
     required double x,
@@ -233,12 +147,5 @@ class MarkerUtils {
     )..layout();
 
     tp.paint(canvas, Offset(x - tp.width / 2, y));
-  }
-
-  // ── Invalidar caché (útil al cambiar de tema) ─────────────────────────────
-
-  static void clearCache() {
-    _cachedPinBlue = null;
-    _cachedPinRed = null;
   }
 }

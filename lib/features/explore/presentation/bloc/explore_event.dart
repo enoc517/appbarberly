@@ -96,10 +96,10 @@ class ExploreToggleFavorite extends ExploreEvent {
 class ExploreMapControllerReady extends ExploreEvent {
   const ExploreMapControllerReady(this.controller);
 
-  final GoogleMapController controller;
+  final MapController controller;
 
   @override
-  List<Object?> get props => [];
+  List<Object?> get props => [controller];
 }
 
 // ════════════════════════════════════════════════════════════════════════════
