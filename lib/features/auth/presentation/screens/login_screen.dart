@@ -263,22 +263,156 @@ class _LoginCard extends StatelessWidget {
               ),
             ),
             SizedBox(height: titleGap),
-            _EmailField(controller: emailController, isCompact: isCompact),
+            const _FieldLabel(text: 'Correo electrónico'),
+            const SizedBox(height: 10),
+            _TextField(
+              controller: emailController,
+              hintText: 'tu@ejemplo.com',
+              keyboardType: TextInputType.emailAddress,
+              prefixIcon: Icons.mail_outline_rounded,
+              validator: (value) {
+                final text = value?.trim() ?? '';
+                if (text.isEmpty) return 'Ingresa tu correo electrónico';
+                if (!text.contains('@')) return 'Ingresa un correo válido';
+                return null;
+              },
+            ),
             SizedBox(height: fieldGap),
-            _PasswordField(
+            const _FieldLabel(text: 'Contraseña'),
+            const SizedBox(height: 10),
+            _TextField(
               controller: passwordController,
-              obscurePassword: obscurePassword,
-              onTogglePassword: onTogglePassword,
-              isCompact: isCompact,
+              hintText: '••••••••',
+              obscureText: obscurePassword,
+              prefixIcon: Icons.lock_outline_rounded,
+              suffixIcon: IconButton(
+                onPressed: onTogglePassword,
+                icon: Icon(
+                  obscurePassword
+                      ? Icons.visibility_outlined
+                      : Icons.visibility_off_outlined,
+                ),
+              ),
+              validator: (value) {
+                final text = value?.trim() ?? '';
+                if (text.isEmpty) return 'Ingresa tu contraseña';
+                if (text.length < 6) {
+                  return 'La contraseña debe tener al menos 6 caracteres';
+                }
+                return null;
+              },
             ),
+            const SizedBox(height: 8),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                onPressed: () => context.go('/forgot_password'),
+                style: TextButton.styleFrom(
+                  foregroundColor: AppColors.secondary,
+                  padding: EdgeInsets.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                child: Text(
+                  '¿Olvidaste tu contraseña?',
+                  style: AppTypography.labelLarge.copyWith(
+                    color: AppColors.secondary,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              height: isCompact ? 52 : 56,
+              child: ElevatedButton(
+                onPressed: isLoading ? null : onSubmit,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primaryContainer,
+                  foregroundColor: AppColors.onPrimary,
+                  elevation: 0,
+                  shadowColor: AppColors.primaryContainer.withValues(
+                    alpha: 0.18,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppRadius.xl),
+                  ),
+                ),
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 200),
+                  child: isLoading
+                      ? Row(
+                          key: const ValueKey('loading'),
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: AppColors.onPrimary,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            const Text(
+                              'Ingresando...',
+                              style: TextStyle(
+                                fontSize: 17,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ],
+                        )
+                      : const Row(
+                          key: ValueKey('idle'),
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'Entrar',
+                              style: TextStyle(
+                                fontSize: 17,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                            SizedBox(width: 10),
+                            Icon(Icons.login_rounded, size: 22),
+                          ],
+                        ),
+                ),
+              ),
+            ),
+            SizedBox(height: isCompact ? 22 : 28),
+            _SocialDivider(isCompact: isCompact),
             SizedBox(height: socialGap),
-            _SubmitButton(
-              isLoading: isLoading,
-              onSubmit: onSubmit,
-              isCompact: isCompact,
+            _SocialButtons(isCompact: isCompact),
+            SizedBox(height: isCompact ? 18 : 22),
+            Center(
+              child: Wrap(
+                crossAxisAlignment: WrapCrossAlignment.center,
+                alignment: WrapAlignment.center,
+                children: [
+                  Text(
+                    '¿Aún no eres parte del equipo? ',
+                    style: AppTypography.bodyMedium.copyWith(
+                      color: AppColors.onSurfaceVariant,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: onGoRegister,
+                    child: Text(
+                      'Registrarse',
+                      style: AppTypography.bodyMedium.copyWith(
+                        color: AppColors.onSurface,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-            SizedBox(height: isCompact ? 14 : 20),
-            _RegisterLink(onGoRegister: onGoRegister, isCompact: isCompact),
           ],
         ),
       ),
@@ -286,128 +420,202 @@ class _LoginCard extends StatelessWidget {
   }
 }
 
-class _EmailField extends StatelessWidget {
-  final TextEditingController controller;
+class _SocialDivider extends StatelessWidget {
   final bool isCompact;
-  const _EmailField({required this.controller, required this.isCompact});
+  const _SocialDivider({required this.isCompact});
 
   @override
   Widget build(BuildContext context) {
-    return TextFormField(
-      controller: controller,
-      keyboardType: TextInputType.emailAddress,
-      decoration: InputDecoration(
-        labelText: 'Correo electrónico',
-        hintText: 'ejemplo@correo.com',
-        prefixIcon: const Icon(Icons.email_outlined),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(isCompact ? 18 : 20),
-        ),
-      ),
-      validator: (value) {
-        final text = value?.trim() ?? '';
-        if (text.isEmpty) return 'Por favor ingresa tu correo';
-        if (!RegExp(r'^[\w\-.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(text)) {
-          return 'Ingresa un correo válido';
-        }
-        return null;
-      },
-    );
-  }
-}
-
-class _PasswordField extends StatelessWidget {
-  final TextEditingController controller;
-  final bool obscurePassword;
-  final VoidCallback onTogglePassword;
-  final bool isCompact;
-  const _PasswordField({
-    required this.controller,
-    required this.obscurePassword,
-    required this.onTogglePassword,
-    required this.isCompact,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return TextFormField(
-      controller: controller,
-      obscureText: obscurePassword,
-      decoration: InputDecoration(
-        labelText: 'Contraseña',
-        hintText: '••••••••',
-        prefixIcon: const Icon(Icons.lock_outline_rounded),
-        suffixIcon: IconButton(
-          icon: Icon(obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined),
-          onPressed: onTogglePassword,
-        ),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(isCompact ? 18 : 20),
-        ),
-      ),
-      validator: (value) {
-        final text = value?.trim() ?? '';
-        if (text.isEmpty) return 'Por favor ingresa tu contraseña';
-        if (text.length < 6) return 'La contraseña debe tener al menos 6 caracteres';
-        return null;
-      },
-    );
-  }
-}
-
-class _SubmitButton extends StatelessWidget {
-  final bool isLoading;
-  final VoidCallback onSubmit;
-  final bool isCompact;
-  const _SubmitButton({
-    required this.isLoading,
-    required this.onSubmit,
-    required this.isCompact,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      height: isCompact ? 50 : 56,
-      child: FilledButton(
-        onPressed: isLoading ? null : onSubmit,
-        style: FilledButton.styleFrom(
-          backgroundColor: AppColors.primaryContainer,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(isCompact ? 18 : 20),
+    return Row(
+      children: [
+        Expanded(
+          child: Divider(
+            height: 1,
+            color: AppColors.outlineVariant.withValues(alpha: 0.35),
           ),
         ),
-        child: isLoading
-            ? const SizedBox(
-                width: 22,
-                height: 22,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              )
-            : const Text(
-                'Iniciar sesión',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: isCompact ? 12 : 16),
+          child: Text(
+            'o continúa con',
+            style: AppTypography.bodySmall.copyWith(
+              color: AppColors.onSurfaceVariant,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+        Expanded(
+          child: Divider(
+            height: 1,
+            color: AppColors.outlineVariant.withValues(alpha: 0.35),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _SocialButtons extends StatelessWidget {
+  const _SocialButtons({required this.isCompact});
+
+  final bool isCompact;
+
+  @override
+  Widget build(BuildContext context) {
+    final googleButton = _SocialButton(
+      label: 'Google',
+      icon: Image.asset(
+        'assets/icons/google.png',
+        width: 24,
+        height: 24,
+        errorBuilder: (_, _, _) => Icon(
+          Icons.g_mobiledata_rounded,
+          size: 30,
+          color: AppColors.onSurface,
+        ),
+      ),
+      onPressed: () {
+        context.read<AuthBloc>().add(const AuthSignInWithGoogleRequested());
+      },
+    );
+
+    final appleButton = _SocialButton(
+      label: 'Apple',
+      icon: Icon(Icons.apple_rounded, size: 28, color: AppColors.onSurface),
+      onPressed: () {},
+    );
+
+    return SizedBox(
+      width: double.infinity,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          googleButton,
+          SizedBox(width: isCompact ? 14 : 18),
+          appleButton,
+        ],
       ),
     );
   }
 }
 
-class _RegisterLink extends StatelessWidget {
-  final VoidCallback onGoRegister;
-  final bool isCompact;
-  const _RegisterLink({required this.onGoRegister, required this.isCompact});
+class _FieldLabel extends StatelessWidget {
+  const _FieldLabel({required this.text});
+
+  final String text;
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: TextButton(
-        onPressed: onGoRegister,
-        child: Text(
-          '¿No tienes cuenta? Regístrate',
-          style: AppTypography.bodyMedium.copyWith(
-            color: AppColors.primary,
-            fontWeight: FontWeight.w600,
+    return Text(
+      text,
+      style: AppTypography.labelLarge.copyWith(
+        color: AppColors.onSurfaceVariant,
+        fontWeight: FontWeight.w700,
+      ),
+    );
+  }
+}
+
+class _TextField extends StatelessWidget {
+  const _TextField({
+    required this.controller,
+    required this.hintText,
+    required this.prefixIcon,
+    this.obscureText = false,
+    this.keyboardType,
+    this.suffixIcon,
+    this.validator,
+  });
+
+  final TextEditingController controller;
+  final String hintText;
+  final IconData prefixIcon;
+  final bool obscureText;
+  final TextInputType? keyboardType;
+  final Widget? suffixIcon;
+  final String? Function(String?)? validator;
+
+  @override
+  Widget build(BuildContext context) {
+    return TextFormField(
+      controller: controller,
+      obscureText: obscureText,
+      keyboardType: keyboardType,
+      validator: validator,
+      style: AppTypography.bodyLarge.copyWith(
+        color: AppColors.onSurface,
+        fontWeight: FontWeight.w600,
+      ),
+      decoration: InputDecoration(
+        hintText: hintText,
+        hintStyle: AppTypography.bodyLarge.copyWith(
+          color: AppColors.outline,
+          fontWeight: FontWeight.w500,
+        ),
+        filled: true,
+        fillColor: AppColors.surfaceContainerHighest,
+        prefixIcon: Icon(prefixIcon, color: AppColors.outline),
+        suffixIcon: suffixIcon,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 18,
+          vertical: 18,
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(22),
+          borderSide: BorderSide.none,
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(22),
+          borderSide: BorderSide.none,
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(22),
+          borderSide: BorderSide(color: AppColors.primaryContainer, width: 1.5),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(22),
+          borderSide: const BorderSide(color: Colors.redAccent, width: 1.2),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(22),
+          borderSide: const BorderSide(color: Colors.redAccent, width: 1.5),
+        ),
+      ),
+    );
+  }
+}
+
+class _SocialButton extends StatelessWidget {
+  const _SocialButton({
+    required this.label,
+    required this.icon,
+    required this.onPressed,
+  });
+
+  final String label;
+  final Widget icon;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: label,
+      child: Semantics(
+        button: true,
+        label: 'Continuar con $label',
+        child: SizedBox.square(
+          dimension: 56,
+          child: OutlinedButton(
+            onPressed: onPressed,
+            style: OutlinedButton.styleFrom(
+              backgroundColor: AppColors.surfaceContainer,
+              padding: EdgeInsets.zero,
+              side: BorderSide(
+                color: AppColors.outlineVariant.withValues(alpha: 0.45),
+              ),
+              shape: const CircleBorder(),
+            ),
+            child: Center(child: icon),
           ),
         ),
       ),
@@ -422,14 +630,25 @@ class _BrandHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(Icons.content_cut_rounded, size: isCompact ? 48 : 64, color: AppColors.primary),
-        const SizedBox(height: 12),
+        Image.asset(
+          'assets/logos/logo4.png',
+          height: isCompact ? 86 : 110,
+          fit: BoxFit.contain,
+          errorBuilder: (_, __, ___) => Icon(
+            Icons.content_cut_rounded,
+            size: isCompact ? 48 : 64,
+            color: AppColors.primary,
+          ),
+        ),
+        SizedBox(height: isCompact ? 6 : 8),
         Text(
-          'Barberly',
-          style: AppTypography.displaySmall.copyWith(
-            fontSize: isCompact ? 32 : null,
-            color: AppColors.onSurface,
+          'Una experiencia única',
+          textAlign: TextAlign.center,
+          style: (isCompact ? AppTypography.bodyMedium : AppTypography.bodyLarge).copyWith(
+            color: AppColors.onSurfaceVariant,
+            fontWeight: FontWeight.w500,
           ),
         ),
       ],

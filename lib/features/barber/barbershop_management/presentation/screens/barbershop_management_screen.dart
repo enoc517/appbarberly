@@ -7,13 +7,24 @@ import '../../../../../shared/theme/app_theme.dart';
 import '../cubit/barbershop_management_hub_cubit.dart';
 import '../cubit/barbershop_management_hub_state.dart';
 
-class BarbershopManagementScreen extends StatelessWidget {
+class BarbershopManagementScreen extends StatefulWidget {
   const BarbershopManagementScreen({super.key});
+
+  @override
+  State<BarbershopManagementScreen> createState() => _BarbershopManagementScreenState();
+}
+
+class _BarbershopManagementScreenState extends State<BarbershopManagementScreen> {
+  @override
+  void initState() {
+    super.initState();
+    context.read<BarbershopManagementHubCubit>().loadBarbershopInfo();
+  }
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider.value(
-      value: context.read<BarbershopManagementHubCubit>()..loadBarbershopInfo(),
+      value: context.read<BarbershopManagementHubCubit>(),
       child: const _BarbershopManagementView(),
     );
   }
@@ -88,7 +99,7 @@ class _NoBarbershopView extends StatelessWidget {
               child: SizedBox(
                 width: double.infinity,
                 child: FilledButton.icon(
-                  onPressed: () => context.go('/cuenta-barbero/crear-barberia'),
+                  onPressed: () => context.push('/cuenta-barbero/crear-barberia'),
                   icon: const Icon(Icons.add_rounded),
                   label: const Text('Crear mi barbería'),
                   style: FilledButton.styleFrom(
@@ -150,7 +161,7 @@ class _ManagementHubView extends StatelessWidget {
             icon: Icons.spa_rounded,
             title: 'Mis servicios',
             subtitle: 'Gestiona los servicios que ofreces',
-            onTap: () => context.go('/cuenta-barbero/mis-servicios'),
+            onTap: () => context.push('/cuenta-barbero/mis-servicios'),
           ),
         ),
         const SizedBox(height: 8),
@@ -160,7 +171,7 @@ class _ManagementHubView extends StatelessWidget {
             icon: Icons.schedule_rounded,
             title: 'Mi horario',
             subtitle: 'Configura tu disponibilidad semanal',
-            onTap: () => context.go('/cuenta-barbero/mi-horario'),
+            onTap: () => context.push('/cuenta-barbero/mi-horario'),
           ),
         ),
         if (isOwner) ...[
@@ -171,7 +182,7 @@ class _ManagementHubView extends StatelessWidget {
               icon: Icons.people_rounded,
               title: 'Solicitudes pendientes',
               subtitle: 'Revisa quién quiere unirse a tu barbería',
-              onTap: () => context.go('/cuenta-barbero/solicitudes'),
+              onTap: () => context.push('/cuenta-barbero/solicitudes'),
             ),
           ),
         ],

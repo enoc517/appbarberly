@@ -95,7 +95,7 @@ class _CreateBarbershopScreenState extends State<CreateBarbershopScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Barbería creada exitosamente')),
           );
-          context.go('/panel');
+          context.go('/barberia');
         }
         if (state is BarbershopManagementError) {
           ScaffoldMessenger.of(context).showSnackBar(
