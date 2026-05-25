@@ -237,7 +237,7 @@ class _ServiceInfo extends StatelessWidget {
   }
 }
 
-/// Semi-circle "ear notch" badge – signature Stitch & Style motif.
+/// Semi-circle "ear notch" badge – signature Barberly motif.
 class _EarNotchBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {

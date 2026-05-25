@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../../shared/theme/app_theme.dart';
+import '../../../../../shared/widgets/app_toast.dart';
 import '../../domain/usecases/send_membership_request.dart';
 import '../cubit/search_barbershops_cubit.dart';
 import '../cubit/search_barbershops_state.dart';
@@ -83,19 +84,14 @@ class _SearchBarbershopsScreenState extends State<SearchBarbershopsScreen> {
             child: BlocConsumer<SearchBarbershopsCubit, SearchBarbershopsState>(
               listener: (context, state) {
                 if (state is MembershipRequestSent) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        'Solicitud enviada a ${state.barbershopName}',
-                      ),
-                    ),
+                  AppToast.success(
+                    context,
+                    'Solicitud enviada a ${state.barbershopName}',
                   );
                   context.pop();
                 }
                 if (state is SearchBarbershopsError) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(state.message)),
-                  );
+                  AppToast.error(context, state.message);
                 }
               },
               builder: (context, state) {

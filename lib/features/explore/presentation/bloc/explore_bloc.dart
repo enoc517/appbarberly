@@ -24,6 +24,8 @@
 
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
+
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -88,7 +90,7 @@ class ExploreBloc extends Bloc<ExploreEvent, ExploreState> {
     ExploreInitialized event,
     Emitter<ExploreState> emit,
   ) async {
-    print('🔵 [ExploreBloc] _onInitialized START');
+    debugPrint('🔵 [ExploreBloc] _onInitialized START');
     emit(const ExploreLoading());
 
     double lat = _kNeilyLat;
@@ -106,41 +108,41 @@ class ExploreBloc extends Bloc<ExploreEvent, ExploreState> {
 
     // Intentar obtener GPS real; si falla, usar Ciudad Neily
     try {
-      print('🔵 [ExploreBloc] Solicitando GPS...');
+      debugPrint('🔵 [ExploreBloc] Solicitando GPS...');
       final pos = await _repo.getCurrentPosition();
       lat = pos.latitude;
       lng = pos.longitude;
-      print('🟢 [ExploreBloc] GPS OK: $lat, $lng');
+      debugPrint('🟢 [ExploreBloc] GPS OK: $lat, $lng');
     } on LocationPermissionDeniedException catch (e) {
-      print('🔴 [ExploreBloc] PERMISO DENEGADO: $e');
+      debugPrint('🔴 [ExploreBloc] PERMISO DENEGADO: $e');
       emit(ExploreError(e.toString()));
       return;
     } on LocationPermissionPermanentlyDeniedException catch (e) {
-      print('🔴 [ExploreBloc] PERMISO DENEGADO PERMANENTEMENTE: $e');
+      debugPrint('🔴 [ExploreBloc] PERMISO DENEGADO PERMANENTEMENTE: $e');
       emit(ExploreError(e.toString()));
       return;
     } catch (e) {
-      print('🟡 [ExploreBloc] GPS falló, usando fallback Neily: $e');
+      debugPrint('🟡 [ExploreBloc] GPS falló, usando fallback Neily: $e');
     }
 
     // ── Suscribir streams de Firestore ────────────────────────────────────
-    print('🔵 [ExploreBloc] Suscribiendo streams en ($lat, $lng)...');
+    debugPrint('🔵 [ExploreBloc] Suscribiendo streams en ($lat, $lng)...');
     await _cancelSubscriptions();
 
     _barbershopsSubscription = _repo
         .getNearbyBarbershops(lat: lat, lng: lng)
         .listen(
           (shops) {
-            print(
+            debugPrint(
               '🟢 [ExploreBloc] Stream barberías: ${shops.length} resultados',
             );
             for (final s in shops) {
-              print('   · ${s.name} (${s.lat}, ${s.lng})');
+              debugPrint('   · ${s.name} (${s.lat}, ${s.lng})');
             }
             add(_BarbershopsUpdated(shops));
           },
           onError: (e) {
-            print('🔴 [ExploreBloc] Stream barberías ERROR: $e');
+            debugPrint('🔴 [ExploreBloc] Stream barberías ERROR: $e');
             add(const _BarbershopsUpdated([]));
           },
         );
@@ -149,25 +151,25 @@ class ExploreBloc extends Bloc<ExploreEvent, ExploreState> {
         .getNearbyServices(lat: lat, lng: lng)
         .listen(
           (svcs) {
-            print(
+            debugPrint(
               '🟢 [ExploreBloc] Stream servicios: ${svcs.length} resultados',
             );
             add(_ServicesUpdated(svcs));
           },
           onError: (e) {
-            print('🔴 [ExploreBloc] Stream servicios ERROR: $e');
+            debugPrint('🔴 [ExploreBloc] Stream servicios ERROR: $e');
             add(const _ServicesUpdated([]));
           },
         );
 
     if (userId != null) {
-      print('🔵 [ExploreBloc] Suscribiendo favoritos para $userId');
+      debugPrint('🔵 [ExploreBloc] Suscribiendo favoritos para $userId');
       _favoritesSubscription = _repo.getUserFavoriteIds(userId).listen((ids) {
-        print('🟢 [ExploreBloc] Stream favoritos: ${ids.length} IDs');
+        debugPrint('🟢 [ExploreBloc] Stream favoritos: ${ids.length} IDs');
         add(_FavoritesUpdated(ids));
       }, onError: (_) => add(const _FavoritesUpdated([])));
     } else {
-      print('🟡 [ExploreBloc] Sin userId — no se suscribe a favoritos');
+      debugPrint('🟡 [ExploreBloc] Sin userId — no se suscribe a favoritos');
     }
 
     // Emitir estado inicial vacío con la posición del usuario
@@ -176,7 +178,7 @@ class ExploreBloc extends Bloc<ExploreEvent, ExploreState> {
       onTap: (shop) => add(ExploreMapBarbershopSelected(shop)),
     );
 
-    print('🟢 [ExploreBloc] Emitiendo ExploreLoaded inicial vacío');
+    debugPrint('🟢 [ExploreBloc] Emitiendo ExploreLoaded inicial vacío');
     emit(
       ExploreLoaded(
         barbershops: const [],
@@ -217,7 +219,7 @@ class ExploreBloc extends Bloc<ExploreEvent, ExploreState> {
     _FavoritesUpdated event,
     Emitter<ExploreState> emit,
   ) async {
-    print(
+    debugPrint(
       '🔵 [ExploreBloc] _onFavoritesUpdated: ${event.favoriteIds.length} IDs',
     );
     _favoriteIds = event.favoriteIds;

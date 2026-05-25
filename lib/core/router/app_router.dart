@@ -30,7 +30,6 @@ import 'package:barberly/features/barber/account/presentation/screens/barber_acc
 import 'package:barberly/features/barber/agenda/presentation/screens/barber_agenda_screen.dart';
 
 // Features: Barber (Barbershop Management)
-import 'package:barberly/features/barber/barbershop_management/presentation/cubit/barbershop_management_hub_cubit.dart';
 import 'package:barberly/features/barber/barbershop_management/presentation/screens/create_barbershop_screen.dart';
 import 'package:barberly/features/barber/barbershop_management/presentation/screens/barbershop_management_screen.dart';
 
@@ -275,7 +274,7 @@ class AppRouter {
                 name: 'barberia',
                 builder: (context, state) {
                   return BlocProvider(
-                    create: (_) => BarbershopManagementHubCubit(),
+                    create: (_) => AppDependencies.buildBarbershopManagementHubCubit(),
                     child: const BarbershopManagementScreen(),
                   );
                 },

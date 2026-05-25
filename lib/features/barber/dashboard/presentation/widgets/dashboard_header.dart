@@ -30,7 +30,7 @@ class DashboardHeader extends StatelessWidget {
                     color: AppColors.onPrimary, size: 18),
               ),
               const SizedBox(width: 10),
-              Text('Stitch & Style', style: AppTypography.titleLarge),
+              Text('Barberly', style: AppTypography.titleLarge),
               const Spacer(),
               IconButton(
                 onPressed: () {},

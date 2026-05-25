@@ -27,6 +27,8 @@ class BarberServicesCubit extends Cubit<BarberServicesState> {
   String? _barberId;
 
   Future<void> load(String barbershopId, String barberId) async {
+    if (barbershopId.isEmpty || barberId.isEmpty) return;
+
     _barbershopId = barbershopId;
     _barberId = barberId;
     emit(const BarberServicesLoading());

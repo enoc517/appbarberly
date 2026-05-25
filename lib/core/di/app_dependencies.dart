@@ -21,6 +21,7 @@ import '../../features/barber/barbershop_management/domain/usecases/create_barbe
 import '../../features/barber/barbershop_management/domain/usecases/get_barbershop_by_owner.dart';
 import '../../features/barber/barbershop_management/domain/usecases/update_barbershop.dart';
 import '../../features/barber/barbershop_management/presentation/cubit/barbershop_management_cubit.dart';
+import '../../features/barber/barbershop_management/presentation/cubit/barbershop_management_hub_cubit.dart';
 import '../../features/barber/membership/data/datasources/membership_remote_datasource.dart';
 import '../../features/barber/membership/data/repositories/membership_repository_impl.dart';
 import '../../features/barber/membership/domain/usecases/get_barbershop_members.dart';
@@ -54,6 +55,7 @@ import '../../features/barber/dashboard/presentation/bloc/dashboard_cubit.dart';
 import '../../features/barber/account/presentation/cubit/barber_profile_cubit.dart';
 import '../../features/barber/agenda/presentation/bloc/barber_agenda_cubit.dart';
 import '../../features/welcome/presentation/bloc/welcome_bloc.dart';
+import '../events/barbershop_event_bus.dart';
 
 class AppDependencies {
   AppDependencies._();
@@ -61,6 +63,9 @@ class AppDependencies {
   static final FirebaseAuth firebaseAuth = FirebaseAuth.instance;
   static final FirebaseFirestore firestore = FirebaseFirestore.instance;
   static final GoogleSignIn googleSignIn = GoogleSignIn(scopes: const ['email']);
+
+  static final BarbershopEventBus barbershopEventBus =
+      BarbershopEventBus.instance;
 
   // Auth
   static final AuthRemoteDatasource authDatasource = AuthRemoteDatasourceImpl(
@@ -135,6 +140,13 @@ class AppDependencies {
       createBarbershop: createBarbershopUseCase,
       updateBarbershop: updateBarbershopUseCase,
       getBarbershopByOwner: getBarbershopByOwnerUseCase,
+      eventBus: barbershopEventBus,
+    );
+  }
+
+  static BarbershopManagementHubCubit buildBarbershopManagementHubCubit() {
+    return BarbershopManagementHubCubit(
+      eventBus: barbershopEventBus,
     );
   }
 

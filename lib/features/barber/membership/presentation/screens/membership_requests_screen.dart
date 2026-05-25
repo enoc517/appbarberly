@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../../shared/theme/app_theme.dart';
 import '../../../../../shared/motion/app_motion.dart';
+import '../../../../../shared/widgets/app_toast.dart';
 import '../../domain/entities/membership_request.dart';
 import '../../domain/usecases/review_membership_request.dart';
 import '../cubit/membership_requests_cubit.dart';
@@ -55,19 +56,14 @@ class _MembershipRequestsScreenState extends State<MembershipRequestsScreen> {
           if (state is MembershipRequestReviewed) {
             final approved = state.request.status ==
                 MembershipRequestStatus.approved;
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  approved ? 'Solicitud aprobada' : 'Solicitud rechazada',
-                ),
-              ),
+            AppToast.success(
+              context,
+              approved ? 'Solicitud aprobada' : 'Solicitud rechazada',
             );
             context.read<MembershipRequestsCubit>().load(widget.barbershopId);
           }
           if (state is MembershipRequestsError) {
-            ScaffoldMessenger.of(
-              context,
-            ).showSnackBar(SnackBar(content: Text(state.message)));
+            AppToast.error(context, state.message);
           }
         },
         builder: (context, state) {

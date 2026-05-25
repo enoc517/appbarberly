@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/router/auth_route_resolver.dart';
 import '../../../../shared/theme/app_theme.dart';
+import '../../../../shared/widgets/app_toast.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
@@ -72,9 +73,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen>
       listener: (context, state) {
         if (state.status == AuthStatus.authenticated) {
           _verificationTimer?.cancel();
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Correo verificado correctamente')),
-          );
+          AppToast.success(context, 'Correo verificado correctamente');
 
           Future.delayed(const Duration(milliseconds: 700), () {
             if (context.mounted) {
@@ -84,9 +83,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen>
         }
 
         if (state.status == AuthStatus.failure && state.errorMessage != null) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text(state.errorMessage!)));
+          AppToast.error(context, state.errorMessage!);
         }
       },
       child: Scaffold(

@@ -53,7 +53,7 @@ class _Avatar extends StatelessWidget {
             ? Image.network(
                 url!,
                 fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => _fallbackIcon(),
+                errorBuilder: (_, _, _) => _fallbackIcon(),
               )
             : _fallbackIcon(),
       ),

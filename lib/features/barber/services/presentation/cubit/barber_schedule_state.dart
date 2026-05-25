@@ -13,12 +13,26 @@ class BarberScheduleLoading extends BarberScheduleState {
 }
 
 class BarberScheduleLoaded extends BarberScheduleState {
-  final List<BarberSchedule> schedule;
-  const BarberScheduleLoaded(this.schedule);
+  final Map<int, BarberSchedule> schedule;
+  final Set<int> selectedDays;
+  final String? pendingStartTime;
+  final String? pendingEndTime;
+
+  const BarberScheduleLoaded({
+    required this.schedule,
+    required this.selectedDays,
+    required this.pendingStartTime,
+    required this.pendingEndTime,
+  });
 }
 
 class BarberScheduleSaved extends BarberScheduleState {
   const BarberScheduleSaved();
+}
+
+class BarberScheduleDaysSaved extends BarberScheduleState {
+  final List<int> daysSaved;
+  const BarberScheduleDaysSaved(this.daysSaved);
 }
 
 class BarberScheduleError extends BarberScheduleState {

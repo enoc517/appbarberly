@@ -4,6 +4,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../../../../shared/theme/app_theme.dart';
+import '../../../../../shared/widgets/app_toast.dart';
 import '../cubit/location_picker_cubit.dart';
 import '../cubit/location_picker_state.dart';
 
@@ -41,9 +42,7 @@ class _LocationPickerView extends StatelessWidget {
           onLocationSelected(state.selectedLocation);
         }
         if (state.errorMessage != null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.errorMessage!)),
-          );
+          AppToast.error(context, state.errorMessage!);
           cubit.clearError();
         }
       },

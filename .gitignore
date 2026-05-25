@@ -54,5 +54,10 @@ app.*.map.json
 
 /lib/session_familirization_project.md
 /.agents/
+/.codegraph/
 session-ses_1db8.md
+session_domingo24.md
+AGENTS.md
 skills-lock.json
+opencode.jsonc
+

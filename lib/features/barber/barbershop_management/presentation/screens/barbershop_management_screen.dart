@@ -16,12 +16,6 @@ class BarbershopManagementScreen extends StatefulWidget {
 
 class _BarbershopManagementScreenState extends State<BarbershopManagementScreen> {
   @override
-  void initState() {
-    super.initState();
-    context.read<BarbershopManagementHubCubit>().loadBarbershopInfo();
-  }
-
-  @override
   Widget build(BuildContext context) {
     return BlocProvider.value(
       value: context.read<BarbershopManagementHubCubit>(),

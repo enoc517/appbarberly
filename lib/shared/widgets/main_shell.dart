@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../motion/app_motion.dart';
 import '../theme/app_theme.dart';
+import 'app_toast.dart';
 
 class MainShell extends StatefulWidget {
   const MainShell({super.key, required this.navigationShell});
@@ -17,6 +18,7 @@ class MainShell extends StatefulWidget {
 
 class _MainShellState extends State<MainShell> {
   DateTime? _lastBackPressedAt;
+  static const _swipeVelocityThreshold = 300.0;
 
   static const _clientItems = [
     _ShellItem(Icons.explore_outlined, 'EXPLORAR', 0),
@@ -46,6 +48,29 @@ class _MainShellState extends State<MainShell> {
     );
   }
 
+  void _onHorizontalDragEnd(DragEndDetails details) {
+    final velocity = details.primaryVelocity ?? 0;
+    if (velocity.abs() < _swipeVelocityThreshold) return;
+
+    final currentIndex = widget.navigationShell.currentIndex;
+    final minIndex = _isBarberShell ? 4 : 0;
+    final maxIndex = _isBarberShell ? 7 : 3;
+
+    var targetIndex = currentIndex;
+    if (velocity < 0 && currentIndex < maxIndex) {
+      targetIndex = currentIndex + 1;
+    } else if (velocity > 0 && currentIndex > minIndex) {
+      targetIndex = currentIndex - 1;
+    }
+
+    if (targetIndex == currentIndex) return;
+
+    widget.navigationShell.goBranch(
+      targetIndex,
+      initialLocation: false,
+    );
+  }
+
   Future<bool> _onBackPressed(BuildContext context) async {
     if (widget.navigationShell.currentIndex != _homeBranchIndex) {
       widget.navigationShell.goBranch(_homeBranchIndex, initialLocation: true);
@@ -63,11 +88,7 @@ class _MainShellState extends State<MainShell> {
     }
 
     _lastBackPressedAt = now;
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        const SnackBar(content: Text('Pulsa atras otra vez para salir')),
-      );
+    AppToast.info(context, 'Pulsa atras otra vez para salir');
     return true;
   }
 
@@ -75,64 +96,68 @@ class _MainShellState extends State<MainShell> {
   Widget build(BuildContext context) {
     return BackButtonListener(
       onBackButtonPressed: () => _onBackPressed(context),
-      child: Scaffold(
-        body: widget.navigationShell,
-        bottomNavigationBar: Container(
-          padding: const EdgeInsets.fromLTRB(8, 8, 8, 16),
-          decoration: const BoxDecoration(
-            color: AppColors.surfaceContainerLowest,
-          ),
-          child: SafeArea(
-            top: false,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: List.generate(_items.length, (i) {
-                final item = _items[i];
-                final selected =
-                    widget.navigationShell.currentIndex == item.branchIndex;
-                return AppPressable(
-                  onTap: () => _onTap(item.branchIndex),
-                  child: AnimatedContainer(
-                    duration: AppMotion.fast,
-                    curve: AppMotion.standard,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 10,
-                    ),
-                    decoration: BoxDecoration(
-                      color: selected ? AppColors.primary : Colors.transparent,
-                      borderRadius: BorderRadius.circular(AppRadius.lg),
-                    ),
-                    child: AnimatedScale(
-                      scale: selected ? 1.02 : 1,
+      child: GestureDetector(
+        behavior: HitTestBehavior.translucent,
+        onHorizontalDragEnd: _onHorizontalDragEnd,
+        child: Scaffold(
+          body: widget.navigationShell,
+          bottomNavigationBar: Container(
+            padding: const EdgeInsets.fromLTRB(8, 8, 8, 16),
+            decoration: const BoxDecoration(
+              color: AppColors.surfaceContainerLowest,
+            ),
+            child: SafeArea(
+              top: false,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: List.generate(_items.length, (i) {
+                  final item = _items[i];
+                  final selected =
+                      widget.navigationShell.currentIndex == item.branchIndex;
+                  return AppPressable(
+                    onTap: () => _onTap(item.branchIndex),
+                    child: AnimatedContainer(
                       duration: AppMotion.fast,
                       curve: AppMotion.standard,
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            item.icon,
-                            size: 22,
-                            color: selected
-                                ? AppColors.onPrimary
-                                : AppColors.onSurfaceVariant,
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            item.label,
-                            style: AppTypography.labelSmall.copyWith(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 10,
+                      ),
+                      decoration: BoxDecoration(
+                        color: selected ? AppColors.primary : Colors.transparent,
+                        borderRadius: BorderRadius.circular(AppRadius.lg),
+                      ),
+                      child: AnimatedScale(
+                        scale: selected ? 1.02 : 1,
+                        duration: AppMotion.fast,
+                        curve: AppMotion.standard,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              item.icon,
+                              size: 22,
                               color: selected
                                   ? AppColors.onPrimary
                                   : AppColors.onSurfaceVariant,
-                              fontWeight: FontWeight.w600,
                             ),
-                          ),
-                        ],
+                            const SizedBox(height: 4),
+                            Text(
+                              item.label,
+                              style: AppTypography.labelSmall.copyWith(
+                                color: selected
+                                    ? AppColors.onPrimary
+                                    : AppColors.onSurfaceVariant,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                );
-              }),
+                  );
+                }),
+              ),
             ),
           ),
         ),

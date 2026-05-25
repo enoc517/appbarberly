@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 /// ─────────────────────────────────────────────────────────────────────────────
-/// Stitch & Style — Galactic Grooming Theme
+/// Barberly — Galactic Grooming Theme
 /// Aligned to DESIGN.md + palette reference.
 /// Tonal layering, no-divider rule, editorial typography.
 /// ─────────────────────────────────────────────────────────────────────────────
@@ -408,14 +408,15 @@ class AppTheme {
       ),
 
       snackBarTheme: SnackBarThemeData(
-        backgroundColor: AppColors.primaryContainer,
+        backgroundColor: AppColors.inverseSurface.withValues(alpha: 0.92),
         contentTextStyle: AppTypography.bodyMedium.copyWith(
-          color: AppColors.onPrimary,
+          color: AppColors.inverseOnSurface,
         ),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.xl),
+          borderRadius: BorderRadius.circular(22),
         ),
         behavior: SnackBarBehavior.floating,
+        elevation: 8,
       ),
     );
   }

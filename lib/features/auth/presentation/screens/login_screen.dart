@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/router/auth_route_resolver.dart';
 import '../../../../shared/motion/app_motion.dart';
 import '../../../../shared/theme/app_theme.dart';
+import '../../../../shared/widgets/app_toast.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
@@ -54,11 +55,7 @@ class _LoginScreenState extends State<LoginScreen> {
       listenWhen: (prev, curr) => prev.status != curr.status,
       listener: (context, state) {
         if (state.status == AuthStatus.emailVerificationPending) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Debes verificar tu correo antes de continuar'),
-            ),
-          );
+          AppToast.info(context, 'Debes verificar tu correo antes de continuar');
           Future.delayed(const Duration(milliseconds: 700), () {
             if (context.mounted) context.go('/verify-email');
           });
@@ -66,9 +63,7 @@ class _LoginScreenState extends State<LoginScreen> {
         }
 
         if (state.status == AuthStatus.authenticated) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Sesión iniciada correctamente')),
-          );
+          AppToast.success(context, 'Sesión iniciada correctamente');
           Future.delayed(const Duration(milliseconds: 700), () {
             if (context.mounted) {
               context.go(routeForAuthenticatedUser(state.user));
@@ -83,9 +78,7 @@ class _LoginScreenState extends State<LoginScreen> {
         }
 
         if (state.status == AuthStatus.failure && state.errorMessage != null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.errorMessage!)),
-          );
+          AppToast.error(context, state.errorMessage!);
         }
       },
       child: Scaffold(
@@ -636,7 +629,7 @@ class _BrandHeader extends StatelessWidget {
           'assets/logos/logo4.png',
           height: isCompact ? 86 : 110,
           fit: BoxFit.contain,
-          errorBuilder: (_, __, ___) => Icon(
+          errorBuilder: (_, _, _) => Icon(
             Icons.content_cut_rounded,
             size: isCompact ? 48 : 64,
             color: AppColors.primary,

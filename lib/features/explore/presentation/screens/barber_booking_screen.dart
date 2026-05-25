@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../shared/theme/app_theme.dart';
 import '../../../../shared/motion/app_motion.dart';
+import '../../../../shared/widgets/app_toast.dart';
 import '../cubit/barber_booking_cubit.dart';
 import '../cubit/barber_booking_state.dart';
 
@@ -41,14 +42,10 @@ class _BarberBookingView extends StatelessWidget {
       listenWhen: (prev, curr) => prev.isBooking != curr.isBooking || prev.errorMessage != curr.errorMessage,
       listener: (context, state) {
         if (state.errorMessage != null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error: ${state.errorMessage}')),
-          );
+          AppToast.error(context, 'Error: ${state.errorMessage}');
         }
         if (!state.isBooking && state.errorMessage == null && state.canConfirm) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Reserva confirmada')),
-          );
+          AppToast.success(context, 'Reserva confirmada');
           context.pop();
         }
       },

@@ -5,6 +5,7 @@ import 'package:latlong2/latlong.dart';
 
 import '../../../../../shared/motion/app_motion.dart';
 import '../../../../../shared/theme/app_theme.dart';
+import '../../../../../shared/widgets/app_toast.dart';
 import '../../domain/repositories/barbershop_management_repository.dart';
 import '../cubit/barbershop_management_cubit.dart';
 import '../cubit/barbershop_management_state.dart';
@@ -64,9 +65,7 @@ class _CreateBarbershopScreenState extends State<CreateBarbershopScreen> {
   void _submit() {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     if (_tags.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Agrega al menos una etiqueta')),
-      );
+      AppToast.info(context, 'Agrega al menos una etiqueta');
       return;
     }
 
@@ -92,15 +91,11 @@ class _CreateBarbershopScreenState extends State<CreateBarbershopScreen> {
     return BlocListener<BarbershopManagementCubit, BarbershopManagementState>(
       listener: (context, state) {
         if (state is BarbershopCreated) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Barbería creada exitosamente')),
-          );
-          context.go('/barberia');
+          AppToast.success(context, 'Barbería creada exitosamente');
+          context.pop();
         }
         if (state is BarbershopManagementError) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.message)),
-          );
+          AppToast.error(context, state.message);
         }
       },
       child: Scaffold(

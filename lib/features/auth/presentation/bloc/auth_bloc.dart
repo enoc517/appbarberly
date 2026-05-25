@@ -45,6 +45,45 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         : AuthStatus.emailVerificationPending;
   }
 
+  String _friendlyAuthError(Object error) {
+    final str = error.toString();
+
+    final codeMatch = RegExp(r'\[firebase_auth\/([^\]]+)\]').firstMatch(str);
+    final code = codeMatch?.group(1) ?? str;
+
+    return switch (code) {
+      'wrong-password' ||
+      'user-not-found' ||
+      'INVALID_LOGIN_CREDENTIALS' ||
+      'invalid-credential' =>
+        'Correo o contraseña incorrectos.',
+      'invalid-email' => 'El correo electrónico no es válido.',
+      'user-disabled' => 'Esta cuenta ha sido deshabilitada.',
+      'too-many-requests' =>
+        'Demasiados intentos. Intenta más tarde.',
+      'network-request-failed' =>
+        'Error de conexión. Revisa tu internet.',
+      'email-already-in-use' =>
+        'Este correo ya está registrado.',
+      'weak-password' =>
+        'La contraseña debe tener al menos 6 caracteres.',
+      'operation-not-allowed' =>
+        'Este método de inicio no está habilitado.',
+      'requires-recent-login' =>
+        'Por seguridad, vuelve a iniciar sesión.',
+      'id-token-expired' =>
+        'Tu sesión expiró, vuelve a ingresar.',
+      'account-exists-with-different-credential' =>
+        'Este correo ya está registrado con otro método.',
+      'sign-in-cancelled' ||
+      'google-sign-in-cancelled' =>
+        'Inicio de sesión cancelado.',
+      'credential-already-in-use' =>
+        'Esta credencial ya está asociada a otra cuenta.',
+      _ => 'Ocurrió un error inesperado. ($code)',
+    };
+  }
+
   Future<void> _onLoadCurrentUserRequested(
     AuthLoadCurrentUserRequested event,
     Emitter<AuthState> emit,
@@ -70,7 +109,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       );
     } catch (e) {
       emit(
-        state.copyWith(status: AuthStatus.failure, errorMessage: e.toString()),
+        state.copyWith(status: AuthStatus.failure, errorMessage: _friendlyAuthError(e)),
       );
     }
   }
@@ -96,7 +135,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       );
     } catch (e) {
       emit(
-        state.copyWith(status: AuthStatus.failure, errorMessage: e.toString()),
+        state.copyWith(status: AuthStatus.failure, errorMessage: _friendlyAuthError(e)),
       );
     }
   }
@@ -127,15 +166,14 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         ),
       );
     } catch (e) {
-      final message = e.toString();
-      if (message.contains('google-sign-in-cancelled')) {
+      if (e.toString().contains('google-sign-in-cancelled')) {
         emit(
           state.copyWith(status: AuthStatus.unauthenticated, clearError: true),
         );
         return;
       }
 
-      emit(state.copyWith(status: AuthStatus.failure, errorMessage: message));
+      emit(state.copyWith(status: AuthStatus.failure, errorMessage: _friendlyAuthError(e)));
     }
   }
 
@@ -159,7 +197,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       );
     } catch (e) {
       emit(
-        state.copyWith(status: AuthStatus.failure, errorMessage: e.toString()),
+        state.copyWith(status: AuthStatus.failure, errorMessage: _friendlyAuthError(e)),
       );
     }
   }
@@ -188,7 +226,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       );
     } catch (e) {
       emit(
-        state.copyWith(status: AuthStatus.failure, errorMessage: e.toString()),
+        state.copyWith(status: AuthStatus.failure, errorMessage: _friendlyAuthError(e)),
       );
     }
   }
@@ -204,7 +242,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       emit(const AuthState(status: AuthStatus.unauthenticated));
     } catch (e) {
       emit(
-        state.copyWith(status: AuthStatus.failure, errorMessage: e.toString()),
+        state.copyWith(status: AuthStatus.failure, errorMessage: _friendlyAuthError(e)),
       );
     }
   }

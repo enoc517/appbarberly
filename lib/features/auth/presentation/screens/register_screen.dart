@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/router/auth_route_resolver.dart';
 import '../../../../shared/motion/app_motion.dart';
 import '../../../../shared/theme/app_theme.dart';
+import '../../../../shared/widgets/app_toast.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
@@ -63,12 +64,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
       listenWhen: (prev, curr) => prev.status != curr.status,
       listener: (context, state) {
         if (state.status == AuthStatus.emailVerificationPending) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
-                'Registro exitoso. Revisa tu correo para verificar la cuenta.',
-              ),
-            ),
+          AppToast.info(
+            context,
+            'Registro exitoso. Revisa tu correo para verificar la cuenta.',
           );
 
           Future.delayed(const Duration(milliseconds: 700), () {
@@ -80,9 +78,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           return;
         }
         if (state.status == AuthStatus.authenticated) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(const SnackBar(content: Text('Registro exitoso')));
+          AppToast.success(context, 'Registro exitoso');
 
           Future.delayed(const Duration(milliseconds: 700), () {
             if (context.mounted) {
@@ -92,9 +88,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         }
 
         if (state.status == AuthStatus.failure && state.errorMessage != null) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text(state.errorMessage!)));
+          AppToast.error(context, state.errorMessage!);
         }
       },
       child: Scaffold(

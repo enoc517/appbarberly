@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../shared/theme/app_theme.dart';
+import '../../../../shared/widgets/app_toast.dart';
 import '../bloc/password_recovery_bloc.dart';
 
 class ForgotPasswordForm extends StatefulWidget {
@@ -29,9 +30,7 @@ class _ForgotPasswordFormState extends State<ForgotPasswordForm> {
       listener: (context, state) {
         if (state.status == RecoveryStatus.error &&
             state.errorMessage != null) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text(state.errorMessage!)));
+          AppToast.error(context, state.errorMessage!);
         }
       },
       builder: (context, state) {

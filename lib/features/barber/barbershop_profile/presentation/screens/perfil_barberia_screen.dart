@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../../shared/motion/app_motion.dart';
 import '../../../../../shared/theme/app_theme.dart';
+import '../../../../../shared/widgets/app_toast.dart';
 import '../../domain/entities/barbershop.dart';
 import '../bloc/barbershop_profile/barbershop_profile_cubit.dart';
 import '../bloc/barbershop_profile/barbershop_profile_state.dart';
@@ -48,13 +49,9 @@ class PerfilBarberiaScreen extends StatelessWidget {
 
   void _onBookingStatus(BuildContext context, BookingState s) {
     if (s.status == BookingStatus.success) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Reserva confirmada ✓')));
+      AppToast.success(context, 'Reserva confirmada ✓');
     } else if (s.status == BookingStatus.failure) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(s.errorMessage ?? 'Error al reservar')),
-      );
+      AppToast.error(context, s.errorMessage ?? 'Error al reservar');
     }
   }
 }
