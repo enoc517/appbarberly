@@ -111,7 +111,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen>
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Image.asset(
-                        'assets/logos/logo3.png',
+                        'assets/logos/logo1.png',
                         height: 96,
                         fit: BoxFit.contain,
                       ),

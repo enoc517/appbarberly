@@ -60,7 +60,7 @@ class GoogleRoleScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       Image.asset(
-                        'assets/logos/logo3.png',
+                        'assets/logos/logo1.png',
                         height: 82,
                         fit: BoxFit.contain,
                       ),

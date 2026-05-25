@@ -50,7 +50,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
             gradient: LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
-              colors: [Color(0xFF1A2A20), Color(0xFF0F1C2C), Color(0xFF050D16)],
+              colors: [Color(0xFF0F1C2C), Color(0xFF050D16)],
             ),
           ),
           child: Center(
@@ -60,7 +60,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                 AppFadeSlideIn(
                   offset: const Offset(0, 0.04),
                   child: Image.asset(
-                    'assets/logos/logo2.png',
+                    'assets/logos/logo1.png',
                     width: MediaQuery.of(context).size.width * 0.6,
                     errorBuilder: (context, error, stackTrace) {
                       return const Text('ERROR CARGANDO IMAGEN');

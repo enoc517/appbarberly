@@ -626,7 +626,7 @@ class _BrandHeader extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Image.asset(
-          'assets/logos/logo4.png',
+          'assets/logos/logo1.png',
           height: isCompact ? 86 : 110,
           fit: BoxFit.contain,
           errorBuilder: (_, _, _) => Icon(

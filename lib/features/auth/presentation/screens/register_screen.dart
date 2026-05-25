@@ -537,7 +537,7 @@ class _BrandPanel extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Image.asset(
-                    'assets/logos/logo3.png',
+                    'assets/logos/logo1.png',
                     height: 140,
                     fit: BoxFit.contain,
                   ),
