@@ -22,16 +22,16 @@ class _VerifyTokenFormState extends State<VerifyTokenForm> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Form(
       key: _formKey,
       child: Column(
         children: [
           const SizedBox(height: 40),
-          // Badge visual: Icono de escudo o mensaje basado en tu diseño
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: AppColors.primaryContainer,
+              color: theme.colorScheme.primaryContainer,
               borderRadius: BorderRadius.circular(28),
             ),
             child: const Icon(
@@ -45,7 +45,7 @@ class _VerifyTokenFormState extends State<VerifyTokenForm> {
             'Verificar Código',
             style: AppTypography.headlineMedium.copyWith(
               fontWeight: FontWeight.w800,
-              color: AppColors.onSurface,
+              color: theme.colorScheme.onSurface,
             ),
           ),
           const SizedBox(height: 12),
@@ -53,12 +53,11 @@ class _VerifyTokenFormState extends State<VerifyTokenForm> {
             'Hemos enviado un código de seguridad a tu correo. Por favor, ingrésalo a continuación para continuar.',
             textAlign: TextAlign.center,
             style: AppTypography.bodyMedium.copyWith(
-              color: AppColors.onSurfaceVariant,
+              color: theme.colorScheme.onSurfaceVariant,
             ),
           ),
           const SizedBox(height: 48),
 
-          // Input de Token (Optimizado para números)
           TextFormField(
             controller: _tokenController,
             keyboardType: TextInputType.number,
@@ -66,13 +65,11 @@ class _VerifyTokenFormState extends State<VerifyTokenForm> {
             style: AppTypography.headlineSmall.copyWith(
               letterSpacing: 12,
               fontWeight: FontWeight.bold,
-              color: AppColors.primary,
+              color: theme.colorScheme.primary,
             ),
             inputFormatters: [
               FilteringTextInputFormatter.digitsOnly,
-              LengthLimitingTextInputFormatter(
-                6,
-              ), // Supongamos código de 6 dígitos
+              LengthLimitingTextInputFormatter(6),
             ],
             decoration: const InputDecoration(
               labelText: 'Código de Verificación',
@@ -89,36 +86,28 @@ class _VerifyTokenFormState extends State<VerifyTokenForm> {
 
           const SizedBox(height: 24),
 
-          // Reenviar código (UX adicional)
           TextButton(
             onPressed: () {
-              // Lógica para reenviar correo mediante BLoC
             },
             child: Text(
               '¿No recibiste el código? Reenviar',
               style: AppTypography.labelLarge.copyWith(
-                color: AppColors.secondary,
+                color: theme.colorScheme.secondary,
               ),
             ),
           ),
 
           const SizedBox(height: 32),
 
-          // Botón de Verificación - Conduce al cambio de contraseña
           SizedBox(
             width: double.infinity,
             height: 58,
             child: FilledButton(
               onPressed: () {
                 GoRouter.of(context).go('/reset_password');
-                /*if (_formKey.currentState!.validate()) {
-                  // FLUJO: Aquí el BLoC valida el token con el backend
-                  // Si es exitoso, navegamos a la pantalla final
-                  GoRouter.of(context).go('/reset_password');
-                }*/
               },
               style: FilledButton.styleFrom(
-                backgroundColor: AppColors.primaryContainer,
+                backgroundColor: theme.colorScheme.primaryContainer,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),
                 ),

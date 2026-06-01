@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../../shared/motion/app_motion.dart';
-import '../../../../../shared/theme/app_theme.dart';
 import '../../../../../shared/widgets/app_toast.dart';
 import '../../domain/entities/barbershop.dart';
 import '../bloc/barbershop_profile/barbershop_profile_cubit.dart';
@@ -23,7 +22,7 @@ class PerfilBarberiaScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: BlocListener<BookingCubit, BookingState>(
         listenWhen: (p, c) => p.status != c.status,
         listener: _onBookingStatus,

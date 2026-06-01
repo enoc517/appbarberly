@@ -14,11 +14,12 @@ class CompletedCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final reduced = AppMotion.reduceMotion(context);
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.surfaceContainerLowest,
+        color: theme.colorScheme.surfaceContainerLowest,
         borderRadius: BorderRadius.circular(AppRadius.xl),
       ),
       child: Row(
@@ -32,7 +33,7 @@ class CompletedCard extends StatelessWidget {
                 Text(
                   'CITAS COMPLETADAS',
                   style: AppTypography.labelMedium.copyWith(
-                    color: AppColors.onSurfaceVariant,
+                    color: theme.colorScheme.onSurfaceVariant,
                     letterSpacing: 1.2,
                   ),
                 ),
@@ -47,7 +48,7 @@ class CompletedCard extends StatelessWidget {
                   builder: (context, value, child) => RichText(
                     text: TextSpan(
                       style: AppTypography.displaySmall.copyWith(
-                        color: AppColors.onSurface,
+                        color: theme.colorScheme.onSurface,
                         fontWeight: FontWeight.w800,
                       ),
                       children: [
@@ -57,7 +58,7 @@ class CompletedCard extends StatelessWidget {
                         TextSpan(
                           text: ' / $total',
                           style: AppTypography.titleMedium.copyWith(
-                            color: AppColors.onSurfaceVariant,
+                            color: theme.colorScheme.onSurfaceVariant,
                           ),
                         ),
                       ],
@@ -67,29 +68,28 @@ class CompletedCard extends StatelessWidget {
               ],
             ),
           ),
-          // Avatares superpuestos decorativos (placeholder)
           SizedBox(
             width: 60,
             height: 32,
             child: Stack(
-              children: const [
+              children: [
                 Positioned(
                   right: 20,
                   child: CircleAvatar(
                     radius: 14,
                     backgroundColor: AppColors.primaryFixedDim,
-                    child: Icon(Icons.person, size: 16),
+                    child: const Icon(Icons.person, size: 16),
                   ),
                 ),
                 Positioned(
                   right: 0,
                   child: CircleAvatar(
                     radius: 14,
-                    backgroundColor: AppColors.primary,
+                    backgroundColor: theme.colorScheme.primary,
                     child: Icon(
                       Icons.person,
                       size: 16,
-                      color: AppColors.onPrimary,
+                      color: theme.colorScheme.onPrimary,
                     ),
                   ),
                 ),

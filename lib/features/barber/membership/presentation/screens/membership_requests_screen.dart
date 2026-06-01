@@ -36,8 +36,9 @@ class _MembershipRequestsScreenState extends State<MembershipRequestsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
@@ -46,7 +47,7 @@ class _MembershipRequestsScreenState extends State<MembershipRequestsScreen> {
         title: Text(
           'Solicitudes pendientes',
           style: AppTypography.titleLarge.copyWith(
-            color: AppColors.onSurface,
+            color: theme.colorScheme.onSurface,
             fontWeight: FontWeight.w700,
           ),
         ),
@@ -81,13 +82,13 @@ class _MembershipRequestsScreenState extends State<MembershipRequestsScreen> {
                       Icon(
                         Icons.inbox_rounded,
                         size: 64,
-                        color: AppColors.outline,
+                        color: theme.colorScheme.outline,
                       ),
                       const SizedBox(height: 16),
                       Text(
                         'No hay solicitudes pendientes',
                         style: AppTypography.titleMedium.copyWith(
-                          color: AppColors.onSurfaceVariant,
+                          color: theme.colorScheme.onSurfaceVariant,
                         ),
                       ),
                     ],
@@ -148,6 +149,7 @@ class _RequestCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: Padding(
@@ -162,11 +164,11 @@ class _RequestCard extends StatelessWidget {
                   height: 48,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: AppColors.surfaceContainerHighest,
+                    color: theme.colorScheme.surfaceContainerHighest,
                   ),
                   child: Icon(
                     Icons.person_rounded,
-                    color: AppColors.outline,
+                    color: theme.colorScheme.outline,
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -177,14 +179,14 @@ class _RequestCard extends StatelessWidget {
                       Text(
                         request.barberName,
                         style: AppTypography.titleMedium.copyWith(
-                          color: AppColors.onSurface,
+                          color: theme.colorScheme.onSurface,
                         ),
                       ),
                       const SizedBox(height: 2),
                       Text(
                         request.barberEmail,
                         style: AppTypography.bodySmall.copyWith(
-                          color: AppColors.onSurfaceVariant,
+                          color: theme.colorScheme.onSurfaceVariant,
                         ),
                       ),
                     ],
@@ -199,8 +201,8 @@ class _RequestCard extends StatelessWidget {
                   child: ElevatedButton(
                     onPressed: onApprove,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primaryContainer,
-                      foregroundColor: AppColors.onPrimary,
+                      backgroundColor: theme.colorScheme.primaryContainer,
+                      foregroundColor: theme.colorScheme.onPrimaryContainer,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(AppRadius.md),
                       ),
@@ -213,11 +215,11 @@ class _RequestCard extends StatelessWidget {
                   child: OutlinedButton(
                     onPressed: onReject,
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.secondary,
+                      foregroundColor: theme.colorScheme.secondary,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(AppRadius.md),
                       ),
-                      side: BorderSide(color: AppColors.secondary.withValues(alpha: 0.3)),
+                      side: BorderSide(color: theme.colorScheme.secondary.withValues(alpha: 0.3)),
                     ),
                     child: const Text('Rechazar'),
                   ),

@@ -6,6 +6,7 @@ class BarbershopHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
       child: Row(
@@ -14,10 +15,10 @@ class BarbershopHeader extends StatelessWidget {
             width: 36,
             height: 36,
             decoration: BoxDecoration(
-              color: AppColors.primary,
+              color: theme.colorScheme.primary,
               borderRadius: BorderRadius.circular(AppRadius.md),
             ),
-            child: const Icon(Icons.cut, color: AppColors.onPrimary, size: 18),
+            child: Icon(Icons.cut, color: theme.colorScheme.onPrimary, size: 18),
           ),
           const SizedBox(width: 10),
           Text('Barberly', style: AppTypography.titleLarge),

@@ -13,11 +13,11 @@ class BarbershopManagementCubit extends Cubit<BarbershopManagementState> {
     required UpdateBarbershop updateBarbershop,
     required GetBarbershopByOwner getBarbershopByOwner,
     required BarbershopEventBus eventBus,
-  })  : _createBarbershop = createBarbershop,
-        _updateBarbershop = updateBarbershop,
-        _getBarbershopByOwner = getBarbershopByOwner,
-        _eventBus = eventBus,
-        super(const BarbershopManagementInitial());
+  }) : _createBarbershop = createBarbershop,
+       _updateBarbershop = updateBarbershop,
+       _getBarbershopByOwner = getBarbershopByOwner,
+       _eventBus = eventBus,
+       super(const BarbershopManagementInitial());
 
   final CreateBarbershop _createBarbershop;
   final UpdateBarbershop _updateBarbershop;
@@ -27,30 +27,39 @@ class BarbershopManagementCubit extends Cubit<BarbershopManagementState> {
   Future<void> create(CreateBarbershopParams params) async {
     emit(const BarbershopManagementLoading());
     final result = await _createBarbershop(params);
-    emit(result.when(
-      ok: (shop) {
-        _eventBus.emit(BarbershopEvent.barbershopCreated);
-        return BarbershopCreated(shop);
-      },
-      fail: (f) => BarbershopManagementError(f.message),
-    ));
+    emit(
+      result.when(
+        ok: (shop) {
+          _eventBus.emit(BarbershopEvent.barbershopCreated);
+          return BarbershopCreated(shop);
+        },
+        fail: (f) => BarbershopManagementError(f.message),
+      ),
+    );
   }
 
   Future<void> update(UpdateBarbershopParams params) async {
     emit(const BarbershopManagementLoading());
     final result = await _updateBarbershop(params);
-    emit(result.when(
-      ok: (shop) => BarbershopUpdated(shop),
-      fail: (f) => BarbershopManagementError(f.message),
-    ));
+    emit(
+      result.when(
+        ok: (shop) {
+          _eventBus.emit(BarbershopEvent.barbershopUpdated);
+          return BarbershopUpdated(shop);
+        },
+        fail: (f) => BarbershopManagementError(f.message),
+      ),
+    );
   }
 
   Future<void> load(String ownerId) async {
     emit(const BarbershopManagementLoading());
     final result = await _getBarbershopByOwner(ownerId);
-    emit(result.when(
-      ok: (shop) => BarbershopLoaded(shop),
-      fail: (f) => BarbershopManagementError(f.message),
-    ));
+    emit(
+      result.when(
+        ok: (shop) => BarbershopLoaded(shop),
+        fail: (f) => BarbershopManagementError(f.message),
+      ),
+    );
   }
 }

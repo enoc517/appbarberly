@@ -14,11 +14,12 @@ class AgendaCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 8, 16, 16),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.surfaceContainerLowest,
+        color: theme.colorScheme.surfaceContainerLowest,
         borderRadius: BorderRadius.circular(AppRadius.xl),
       ),
       child: Column(
@@ -26,8 +27,8 @@ class AgendaCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.calendar_today,
-                  size: 18, color: AppColors.secondary),
+              Icon(Icons.calendar_today,
+                  size: 18, color: theme.colorScheme.secondary),
               const SizedBox(width: 8),
               Text('Agenda tu Cita', style: AppTypography.titleMedium),
             ],
@@ -70,6 +71,7 @@ class AgendaCard extends StatelessWidget {
 class _ConfirmButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return BlocBuilder<BookingCubit, BookingState>(
       buildWhen: (p, c) =>
           p.canConfirm != c.canConfirm || p.status != c.status,
@@ -82,16 +84,16 @@ class _ConfirmButton extends StatelessWidget {
                 ? () => context.read<BookingCubit>().confirm()
                 : null,
             style: FilledButton.styleFrom(
-              backgroundColor: AppColors.primary,
+              backgroundColor: theme.colorScheme.primary,
               padding: const EdgeInsets.symmetric(vertical: 16),
             ),
             child: submitting
-                ? const SizedBox(
+                ? SizedBox(
                     width: 20,
                     height: 20,
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
-                      color: AppColors.onPrimary,
+                      color: theme.colorScheme.onPrimary,
                     ),
                   )
                 : const Text('Confirmar Reserva'),

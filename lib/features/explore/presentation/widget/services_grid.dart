@@ -77,6 +77,7 @@ class _SectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       crossAxisAlignment: CrossAxisAlignment.center,
@@ -84,13 +85,13 @@ class _SectionHeader extends StatelessWidget {
         Text(
           category == 'Todos' ? 'Servicios Premium' : category,
           style: AppTypography.headlineSmall.copyWith(
-            color: AppColors.onSurface,
+            color: theme.colorScheme.onSurface,
           ),
         ),
         Text(
           '$count resultados',
           style: AppTypography.labelMedium.copyWith(
-            color: AppColors.onSurfaceVariant,
+            color: theme.colorScheme.onSurfaceVariant,
           ),
         ),
       ],
@@ -101,6 +102,7 @@ class _SectionHeader extends StatelessWidget {
 class _EmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 48),
@@ -109,20 +111,20 @@ class _EmptyState extends StatelessWidget {
             Icon(
               Icons.search_off_rounded,
               size: 56,
-              color: AppColors.onSurfaceVariant.withValues(alpha: 0.4),
+              color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
             ),
             const SizedBox(height: 16),
             Text(
               'Sin resultados',
               style: AppTypography.headlineSmall.copyWith(
-                color: AppColors.onSurfaceVariant,
+                color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
             const SizedBox(height: 8),
             Text(
               'Prueba con otra categoría o término',
               style: AppTypography.bodyMedium.copyWith(
-                color: AppColors.onSurfaceVariant.withValues(alpha: 0.7),
+                color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
               ),
             ),
           ],

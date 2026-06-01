@@ -38,6 +38,7 @@ class _TimelineRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final isNow = appointment.isNow;
     return IntrinsicHeight(
       child: Row(
@@ -50,7 +51,7 @@ class _TimelineRow extends StatelessWidget {
               child: Text(
                 _hhmm(appointment.startTime),
                 style: AppTypography.labelLarge.copyWith(
-                  color: isNow ? AppColors.secondary : AppColors.onSurface,
+                  color: isNow ? theme.colorScheme.secondary : theme.colorScheme.onSurface,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -59,10 +60,10 @@ class _TimelineRow extends StatelessWidget {
           Column(
             children: [
               const SizedBox(height: 24),
-              Container(width: 2, height: 12, color: AppColors.outlineVariant),
+              Container(width: 2, height: 12, color: theme.colorScheme.outlineVariant),
               if (!isLast)
                 Expanded(
-                  child: Container(width: 2, color: AppColors.outlineVariant),
+                  child: Container(width: 2, color: theme.colorScheme.outlineVariant),
                 ),
             ],
           ),

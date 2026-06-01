@@ -63,9 +63,23 @@ class ClientBookingsCubit extends Cubit<ClientBookingsState> {
               : ClientBookingsLoaded(bookings),
         );
       },
-      onError: (_) =>
+      onError: (Object error) =>
           emit(const ClientBookingsError('No se pudieron cargar tus citas')),
     );
+  }
+
+  Future<void> cancelBooking(Booking booking) async {
+    if (!booking.isActive) return;
+
+    try {
+      await _repository.cancelBooking(
+        bookingId: booking.id,
+        clientId: booking.clientId,
+        cancelledBy: BookingCancellationActor.client,
+      );
+    } catch (_) {
+      emit(const ClientBookingsError('No se pudo cancelar la cita'));
+    }
   }
 
   @override

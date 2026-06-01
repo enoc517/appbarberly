@@ -55,6 +55,8 @@ app.*.map.json
 /lib/session_familirization_project.md
 /.agents/
 /.codegraph/
+/.atl/
+/openspec/
 session-ses_1db8.md
 session_domingo24.md
 AGENTS.md

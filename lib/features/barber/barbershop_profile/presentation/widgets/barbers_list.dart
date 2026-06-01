@@ -44,6 +44,7 @@ class _BarberTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -51,21 +52,21 @@ class _BarberTile extends StatelessWidget {
         decoration: BoxDecoration(
           color: selected
               ? AppColors.primaryFixed
-              : AppColors.surfaceContainer,
+              : theme.colorScheme.surfaceContainer,
           borderRadius: BorderRadius.circular(AppRadius.xl),
         ),
         child: Row(
           children: [
-            const CircleAvatar(
+            CircleAvatar(
               radius: 22,
               backgroundColor: AppColors.primaryFixedDim,
-              child: Icon(Icons.person, color: AppColors.primary),
+              child: Icon(Icons.person, color: theme.colorScheme.primary),
             ),
             const SizedBox(width: 12),
             Text(barber.name, style: AppTypography.titleSmall),
             const Spacer(),
             if (selected)
-              const Icon(Icons.check_circle, color: AppColors.primary),
+              Icon(Icons.check_circle, color: theme.colorScheme.primary),
           ],
         ),
       ),

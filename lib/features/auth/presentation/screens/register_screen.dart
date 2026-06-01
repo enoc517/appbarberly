@@ -54,6 +54,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final width = MediaQuery.sizeOf(context).width;
     final isWide = width >= 900;
     final isLoading = context.select(
@@ -92,7 +93,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         }
       },
       child: Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: theme.scaffoldBackgroundColor,
         body: SafeArea(
           child: Stack(
             children: [
@@ -101,7 +102,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 right: -80,
                 child: _GlowCircle(
                   size: 240,
-                  color: AppColors.primaryContainer.withValues(alpha: 0.04),
+                  color: theme.colorScheme.primaryContainer.withValues(
+                    alpha: 0.04,
+                  ),
                 ),
               ),
               Positioned(
@@ -109,7 +112,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 left: -100,
                 child: _GlowCircle(
                   size: 280,
-                  color: AppColors.secondaryContainer.withValues(alpha: 0.03),
+                  color: theme.colorScheme.secondaryContainer.withValues(
+                    alpha: 0.03,
+                  ),
                 ),
               ),
               Center(
@@ -125,7 +130,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             children: [
                               Expanded(
                                 child: AppFadeSlideIn(
-                                  child: _BrandPanel(theme: Theme.of(context)),
+                                  child: _BrandPanel(theme: theme),
                                 ),
                               ),
                               const SizedBox(width: 32),
@@ -230,16 +235,17 @@ class _RegisterCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Container(
       width: double.infinity,
       constraints: const BoxConstraints(maxWidth: 560),
       padding: const EdgeInsets.all(28),
       decoration: BoxDecoration(
-        color: AppColors.surfaceContainerLowest,
+        color: theme.colorScheme.surfaceContainerLowest,
         borderRadius: BorderRadius.circular(32),
         boxShadow: [
           BoxShadow(
-            color: AppColors.ambientShadow,
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.06),
             blurRadius: 32,
             offset: const Offset(0, 12),
           ),
@@ -257,7 +263,7 @@ class _RegisterCard extends StatelessWidget {
                     'Crear cuenta',
                     textAlign: TextAlign.center,
                     style: AppTypography.headlineMedium.copyWith(
-                      color: AppColors.onSurface,
+                      color: theme.colorScheme.onSurface,
                       fontWeight: FontWeight.w800,
                       height: 1.1,
                     ),
@@ -267,7 +273,7 @@ class _RegisterCard extends StatelessWidget {
                     'Comienza tu viaje en barberos',
                     textAlign: TextAlign.center,
                     style: AppTypography.bodyLarge.copyWith(
-                      color: AppColors.onSurfaceVariant,
+                      color: theme.colorScheme.onSurfaceVariant,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -355,10 +361,10 @@ class _RegisterCard extends StatelessWidget {
               child: ElevatedButton(
                 onPressed: isLoading ? null : onSubmit,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primaryContainer,
-                  foregroundColor: AppColors.onPrimary,
+                  backgroundColor: theme.colorScheme.primaryContainer,
+                  foregroundColor: theme.colorScheme.onPrimaryContainer,
                   elevation: 0,
-                  shadowColor: AppColors.primaryContainer.withValues(
+                  shadowColor: theme.colorScheme.primaryContainer.withValues(
                     alpha: 0.18,
                   ),
                   shape: RoundedRectangleBorder(
@@ -378,7 +384,7 @@ class _RegisterCard extends StatelessWidget {
                               height: 18,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
-                                color: AppColors.onPrimary,
+                                color: theme.colorScheme.onPrimaryContainer,
                               ),
                             ),
                             const SizedBox(width: 12),
@@ -419,7 +425,7 @@ class _RegisterCard extends StatelessWidget {
                   Text(
                     '¿Ya tienes cuenta? ',
                     style: AppTypography.bodyMedium.copyWith(
-                      color: AppColors.onSurfaceVariant,
+                      color: theme.colorScheme.onSurfaceVariant,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -428,7 +434,7 @@ class _RegisterCard extends StatelessWidget {
                     child: Text(
                       'Iniciar sesión',
                       style: AppTypography.bodyMedium.copyWith(
-                        color: AppColors.secondary,
+                        color: theme.colorScheme.secondary,
                         fontWeight: FontWeight.w800,
                       ),
                     ),
@@ -451,6 +457,7 @@ class _ProfessionalSwitch extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 4),
       child: Row(
@@ -462,7 +469,7 @@ class _ProfessionalSwitch extends StatelessWidget {
                 Text(
                   'Perfil Profesional',
                   style: AppTypography.titleLarge.copyWith(
-                    color: AppColors.onSurface,
+                    color: theme.colorScheme.onSurface,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -470,7 +477,7 @@ class _ProfessionalSwitch extends StatelessWidget {
                 Text(
                   'Soy Barbero / Dueño de local',
                   style: AppTypography.bodyMedium.copyWith(
-                    color: AppColors.onSurfaceVariant,
+                    color: theme.colorScheme.onSurfaceVariant,
                   ),
                 ),
               ],
@@ -479,12 +486,12 @@ class _ProfessionalSwitch extends StatelessWidget {
           Switch.adaptive(
             value: value,
             onChanged: onChanged,
-            activeThumbColor: AppColors.secondaryContainer,
-            activeTrackColor: AppColors.secondaryContainer.withValues(
+            activeThumbColor: theme.colorScheme.secondaryContainer,
+            activeTrackColor: theme.colorScheme.secondaryContainer.withValues(
               alpha: 0.22,
             ),
             inactiveThumbColor: Colors.white,
-            inactiveTrackColor: AppColors.surfaceContainerHighest,
+            inactiveTrackColor: theme.colorScheme.surfaceContainerHighest,
           ),
         ],
       ),
@@ -503,13 +510,16 @@ class _BrandPanel extends StatelessWidget {
       height: 680,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(36),
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [AppColors.surface, AppColors.surfaceContainerLow],
+          colors: [
+            theme.colorScheme.surface,
+            theme.colorScheme.surfaceContainerLow,
+          ],
         ),
         border: Border.all(
-          color: AppColors.outlineVariant.withValues(alpha: 0.6),
+          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.6),
         ),
       ),
       child: Stack(
@@ -519,7 +529,7 @@ class _BrandPanel extends StatelessWidget {
             right: -20,
             child: _GlowCircle(
               size: 190,
-              color: AppColors.primaryContainer.withValues(alpha: 0.04),
+              color: theme.colorScheme.primaryContainer.withValues(alpha: 0.04),
             ),
           ),
           Positioned(
@@ -527,7 +537,9 @@ class _BrandPanel extends StatelessWidget {
             left: -50,
             child: _GlowCircle(
               size: 260,
-              color: AppColors.secondaryContainer.withValues(alpha: 0.03),
+              color: theme.colorScheme.secondaryContainer.withValues(
+                alpha: 0.03,
+              ),
             ),
           ),
           Center(
@@ -548,7 +560,7 @@ class _BrandPanel extends StatelessWidget {
                     style: theme.textTheme.displaySmall?.copyWith(
                       fontSize: 44,
                       fontWeight: FontWeight.w800,
-                      color: AppColors.onSurface,
+                      color: theme.colorScheme.onSurface,
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -557,7 +569,7 @@ class _BrandPanel extends StatelessWidget {
                     textAlign: TextAlign.center,
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontSize: 18,
-                      color: AppColors.onSurfaceVariant,
+                      color: theme.colorScheme.onSurfaceVariant,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -578,10 +590,11 @@ class _FieldLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Text(
       text,
       style: AppTypography.labelLarge.copyWith(
-        color: AppColors.onSurfaceVariant,
+        color: theme.colorScheme.onSurfaceVariant,
         fontWeight: FontWeight.w700,
         letterSpacing: 1.1,
       ),
@@ -610,24 +623,25 @@ class _TextField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return TextFormField(
       controller: controller,
       obscureText: obscureText,
       keyboardType: keyboardType,
       validator: validator,
       style: AppTypography.bodyLarge.copyWith(
-        color: AppColors.onSurface,
+        color: theme.colorScheme.onSurface,
         fontWeight: FontWeight.w600,
       ),
       decoration: InputDecoration(
         hintText: hintText,
         hintStyle: AppTypography.bodyLarge.copyWith(
-          color: AppColors.outline,
+          color: theme.colorScheme.outline,
           fontWeight: FontWeight.w500,
         ),
         filled: true,
-        fillColor: AppColors.surfaceContainerHighest,
-        prefixIcon: Icon(prefixIcon, color: AppColors.outline),
+        fillColor: theme.colorScheme.surfaceContainerHighest,
+        prefixIcon: Icon(prefixIcon, color: theme.colorScheme.outline),
         suffixIcon: suffixIcon,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 18,

@@ -7,6 +7,7 @@ class AppUser {
   final String email;
   final String? fullName;
   final String? phone;
+  final String? profileImageUrl;
   final UserRole role;
   final bool isProfessional;
   final ProfessionalStatus professionalStatus;
@@ -20,6 +21,7 @@ class AppUser {
     required this.email,
     this.fullName,
     this.phone,
+    this.profileImageUrl,
     required this.role,
     required this.isProfessional,
     required this.professionalStatus,
@@ -34,6 +36,7 @@ class AppUser {
     String? email,
     String? fullName,
     String? phone,
+    String? profileImageUrl,
     UserRole? role,
     bool? isProfessional,
     ProfessionalStatus? professionalStatus,
@@ -47,6 +50,7 @@ class AppUser {
       email: email ?? this.email,
       fullName: fullName ?? this.fullName,
       phone: phone ?? this.phone,
+      profileImageUrl: profileImageUrl ?? this.profileImageUrl,
       role: role ?? this.role,
       isProfessional: isProfessional ?? this.isProfessional,
       professionalStatus: professionalStatus ?? this.professionalStatus,

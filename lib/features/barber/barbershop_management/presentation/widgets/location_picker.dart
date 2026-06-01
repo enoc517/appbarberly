@@ -47,6 +47,7 @@ class _LocationPickerView extends StatelessWidget {
         }
       },
       builder: (context, state) {
+        final theme = Theme.of(context);
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -77,11 +78,11 @@ class _LocationPickerView extends StatelessWidget {
                           markers: [
                             Marker(
                               point: state.selectedLocation,
-                              child: const Icon(
+                              child: Icon(
                                 Icons.location_on_rounded,
                                 size: 48,
-                                color: AppColors.secondary,
-                                shadows: [
+                                color: theme.colorScheme.secondary,
+                                shadows: const [
                                   Shadow(
                                     color: Colors.black26,
                                     blurRadius: 8,
@@ -98,7 +99,7 @@ class _LocationPickerView extends StatelessWidget {
                       top: 12,
                       right: 12,
                       child: Material(
-                        color: AppColors.surfaceContainerLowest,
+                        color: theme.colorScheme.surfaceContainerLowest,
                         shape: const CircleBorder(),
                         clipBehavior: Clip.antiAlias,
                         child: InkWell(
@@ -157,21 +158,22 @@ class _CoordinatesDisplay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       decoration: BoxDecoration(
-        color: AppColors.surfaceContainerHighest,
+        color: theme.colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(AppRadius.lg),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.location_on_rounded, size: 18, color: AppColors.outline),
+          Icon(Icons.location_on_rounded, size: 18, color: theme.colorScheme.outline),
           const SizedBox(width: 8),
           Text(
             '${location.latitude.toStringAsFixed(6)}, ${location.longitude.toStringAsFixed(6)}',
             style: AppTypography.labelLarge.copyWith(
-              color: AppColors.onSurfaceVariant,
+              color: theme.colorScheme.onSurfaceVariant,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -187,10 +189,11 @@ class _FieldLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Text(
       text,
       style: AppTypography.labelLarge.copyWith(
-        color: AppColors.onSurfaceVariant,
+        color: theme.colorScheme.onSurfaceVariant,
         fontWeight: FontWeight.w700,
         letterSpacing: 1.1,
       ),

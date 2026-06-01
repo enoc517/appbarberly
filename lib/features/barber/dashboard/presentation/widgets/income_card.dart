@@ -14,13 +14,14 @@ class IncomeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final isPositive = deltaPercent >= 0;
     final sign = isPositive ? '+' : '';
     final reduced = AppMotion.reduceMotion(context);
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.primary,
+        color: theme.colorScheme.primary,
         borderRadius: BorderRadius.circular(AppRadius.xl),
       ),
       child: Column(
@@ -30,7 +31,7 @@ class IncomeCard extends StatelessWidget {
             children: [
               Icon(
                 Icons.payments_outlined,
-                color: AppColors.secondary,
+                color: theme.colorScheme.onPrimary,
                 size: 24,
               ),
               const Spacer(),
@@ -40,13 +41,13 @@ class IncomeCard extends StatelessWidget {
                   vertical: 4,
                 ),
                 decoration: BoxDecoration(
-                  color: AppColors.onPrimary.withValues(alpha: 0.1),
+                  color: theme.colorScheme.onPrimary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(AppRadius.full),
                 ),
                 child: Text(
                   '$sign${deltaPercent.toStringAsFixed(0)}% vs ayer',
                   style: AppTypography.labelSmall.copyWith(
-                    color: AppColors.onPrimary,
+                    color: theme.colorScheme.onPrimary,
                   ),
                 ),
               ),
@@ -56,7 +57,7 @@ class IncomeCard extends StatelessWidget {
           Text(
             'INGRESOS DE HOY',
             style: AppTypography.labelMedium.copyWith(
-              color: AppColors.onPrimaryContainer,
+              color: theme.colorScheme.onPrimary,
               letterSpacing: 1.2,
             ),
           ),
@@ -68,7 +69,7 @@ class IncomeCard extends StatelessWidget {
             builder: (context, value, child) => Text(
               '\$${value.toStringAsFixed(2)}',
               style: AppTypography.displaySmall.copyWith(
-                color: AppColors.onPrimary,
+                color: theme.colorScheme.onPrimary,
                 fontWeight: FontWeight.w800,
               ),
             ),

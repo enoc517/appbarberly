@@ -25,6 +25,7 @@ class _ForgotPasswordFormState extends State<ForgotPasswordForm> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return BlocConsumer<PasswordRecoveryBloc, PasswordRecoveryState>(
       listenWhen: (previous, current) => previous.status != current.status,
       listener: (context, state) {
@@ -46,7 +47,7 @@ class _ForgotPasswordFormState extends State<ForgotPasswordForm> {
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: AppColors.primaryContainer,
+                  color: theme.colorScheme.primaryContainer,
                   borderRadius: BorderRadius.circular(28),
                 ),
                 child: const Icon(
@@ -60,7 +61,7 @@ class _ForgotPasswordFormState extends State<ForgotPasswordForm> {
                 'Recuperar acceso',
                 style: AppTypography.headlineMedium.copyWith(
                   fontWeight: FontWeight.w800,
-                  color: AppColors.onSurface,
+                  color: theme.colorScheme.onSurface,
                 ),
               ),
               const SizedBox(height: 12),
@@ -68,7 +69,7 @@ class _ForgotPasswordFormState extends State<ForgotPasswordForm> {
                 'Introduce tu correo electrónico. Te enviaremos un enlace para restablecer tu contraseña.',
                 textAlign: TextAlign.center,
                 style: AppTypography.bodyMedium.copyWith(
-                  color: AppColors.onSurfaceVariant,
+                  color: theme.colorScheme.onSurfaceVariant,
                 ),
               ),
               const SizedBox(height: 48),
@@ -98,7 +99,7 @@ class _ForgotPasswordFormState extends State<ForgotPasswordForm> {
                 child: FilledButton(
                   onPressed: state.isLoading ? null : () => _submit(context),
                   style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.primaryContainer,
+                    backgroundColor: theme.colorScheme.primaryContainer,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20),
                     ),
@@ -149,13 +150,14 @@ class _EmailSentContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Column(
       children: [
         const SizedBox(height: 48),
         Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: AppColors.primaryContainer,
+            color: theme.colorScheme.primaryContainer,
             borderRadius: BorderRadius.circular(28),
           ),
           child: const Icon(
@@ -170,7 +172,7 @@ class _EmailSentContent extends StatelessWidget {
           textAlign: TextAlign.center,
           style: AppTypography.headlineMedium.copyWith(
             fontWeight: FontWeight.w800,
-            color: AppColors.onSurface,
+            color: theme.colorScheme.onSurface,
           ),
         ),
         const SizedBox(height: 12),
@@ -178,7 +180,7 @@ class _EmailSentContent extends StatelessWidget {
           'Firebase envió un enlace para restablecer la contraseña a $email.',
           textAlign: TextAlign.center,
           style: AppTypography.bodyMedium.copyWith(
-            color: AppColors.onSurfaceVariant,
+            color: theme.colorScheme.onSurfaceVariant,
           ),
         ),
         const SizedBox(height: 40),
@@ -188,7 +190,7 @@ class _EmailSentContent extends StatelessWidget {
           child: FilledButton(
             onPressed: () => GoRouter.of(context).go('/login'),
             style: FilledButton.styleFrom(
-              backgroundColor: AppColors.primaryContainer,
+              backgroundColor: theme.colorScheme.primaryContainer,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(20),
               ),

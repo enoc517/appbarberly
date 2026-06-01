@@ -22,8 +22,6 @@ class WelcomeBloc extends Bloc<WelcomeEvent, WelcomeState> {
 
     emit(state.copyWith(status: WelcomeStatus.loading));
 
-    await Future.delayed(const Duration(seconds: 4));
-
     try {
       final user = await _getCurrentUserUseCase();
 

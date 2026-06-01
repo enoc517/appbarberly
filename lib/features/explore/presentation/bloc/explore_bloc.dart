@@ -62,6 +62,7 @@ class ExploreBloc extends Bloc<ExploreEvent, ExploreState> {
     on<ExploreMapBarbershopSelected>(_onBarbershopSelected);
     on<ExploreSortChanged>(_onSortChanged);
     on<ExploreCategoryFilterChanged>(_onCategoryFilterChanged);
+    on<ExploreRadiusChanged>(_onRadiusChanged);
     on<ExploreToggleFavorite>(_onToggleFavorite);
     on<ExploreMapControllerReady>(_onMapControllerReady);
   }
@@ -83,6 +84,9 @@ class ExploreBloc extends Bloc<ExploreEvent, ExploreState> {
   List<ServiceExploreEntity> _allServices = [];
   List<String> _favoriteIds = [];
   MapController? _mapController;
+  double _userLat = _kNeilyLat;
+  double _userLng = _kNeilyLng;
+  double _radiusKm = 10.0;
 
   // ── ExploreInitialized ────────────────────────────────────────────────────
 
@@ -112,6 +116,8 @@ class ExploreBloc extends Bloc<ExploreEvent, ExploreState> {
       final pos = await _repo.getCurrentPosition();
       lat = pos.latitude;
       lng = pos.longitude;
+      _userLat = lat;
+      _userLng = lng;
       debugPrint('🟢 [ExploreBloc] GPS OK: $lat, $lng');
     } on LocationPermissionDeniedException catch (e) {
       debugPrint('🔴 [ExploreBloc] PERMISO DENEGADO: $e');
@@ -127,40 +133,7 @@ class ExploreBloc extends Bloc<ExploreEvent, ExploreState> {
 
     // ── Suscribir streams de Firestore ────────────────────────────────────
     debugPrint('🔵 [ExploreBloc] Suscribiendo streams en ($lat, $lng)...');
-    await _cancelSubscriptions();
-
-    _barbershopsSubscription = _repo
-        .getNearbyBarbershops(lat: lat, lng: lng)
-        .listen(
-          (shops) {
-            debugPrint(
-              '🟢 [ExploreBloc] Stream barberías: ${shops.length} resultados',
-            );
-            for (final s in shops) {
-              debugPrint('   · ${s.name} (${s.lat}, ${s.lng})');
-            }
-            add(_BarbershopsUpdated(shops));
-          },
-          onError: (e) {
-            debugPrint('🔴 [ExploreBloc] Stream barberías ERROR: $e');
-            add(const _BarbershopsUpdated([]));
-          },
-        );
-
-    _servicesSubscription = _repo
-        .getNearbyServices(lat: lat, lng: lng)
-        .listen(
-          (svcs) {
-            debugPrint(
-              '🟢 [ExploreBloc] Stream servicios: ${svcs.length} resultados',
-            );
-            add(_ServicesUpdated(svcs));
-          },
-          onError: (e) {
-            debugPrint('🔴 [ExploreBloc] Stream servicios ERROR: $e');
-            add(const _ServicesUpdated([]));
-          },
-        );
+    await _subscribeNearbyStreams(lat: lat, lng: lng, radiusKm: _radiusKm);
 
     if (userId != null) {
       debugPrint('🔵 [ExploreBloc] Suscribiendo favoritos para $userId');
@@ -189,6 +162,7 @@ class ExploreBloc extends Bloc<ExploreEvent, ExploreState> {
         userLat: lat,
         userLng: lng,
         userName: userName,
+        radiusKm: _radiusKm,
       ),
     );
   }
@@ -238,8 +212,15 @@ class ExploreBloc extends Bloc<ExploreEvent, ExploreState> {
 
     final filtered = _applyFilters(
       barbershops: _allBarbershops,
+      services: _allServices,
       query: event.query,
       sort: current.currentSort,
+    );
+
+    final filteredServices = _applyServiceFilters(
+      services: _allServices,
+      query: event.query,
+      category: current.categoryFilter,
     );
 
     final markers = MarkerUtils.buildMarkers(
@@ -250,6 +231,7 @@ class ExploreBloc extends Bloc<ExploreEvent, ExploreState> {
     emit(
       current.copyWith(
         barbershops: filtered,
+        services: filteredServices,
         markers: markers,
         searchQuery: event.query,
       ),
@@ -296,7 +278,7 @@ class ExploreBloc extends Bloc<ExploreEvent, ExploreState> {
     final current = state as ExploreLoaded;
 
     final sorted = _applySortOnly(
-      barbershops: _allBarbershops,
+      barbershops: current.barbershops,
       sort: event.sort,
     );
 
@@ -323,15 +305,33 @@ class ExploreBloc extends Bloc<ExploreEvent, ExploreState> {
     if (state is! ExploreLoaded) return;
     final current = state as ExploreLoaded;
 
-    final filtered = event.category == null
-        ? _allServices
-        : _allServices.where((s) => s.category == event.category).toList();
+    final filtered = _applyServiceFilters(
+      services: _allServices,
+      query: current.searchQuery,
+      category: event.category,
+    );
 
     emit(
       current.copyWith(
         services: filtered,
         categoryFilter: () => event.category,
       ),
+    );
+  }
+
+  Future<void> _onRadiusChanged(
+    ExploreRadiusChanged event,
+    Emitter<ExploreState> emit,
+  ) async {
+    if (state is! ExploreLoaded) return;
+    final current = state as ExploreLoaded;
+    _radiusKm = event.radiusKm;
+
+    emit(current.copyWith(radiusKm: event.radiusKm));
+    await _subscribeNearbyStreams(
+      lat: _userLat,
+      lng: _userLng,
+      radiusKm: event.radiusKm,
     );
   }
 
@@ -381,15 +381,16 @@ class ExploreBloc extends Bloc<ExploreEvent, ExploreState> {
 
     final filtered = _applyFilters(
       barbershops: _allBarbershops,
+      services: _allServices,
       query: current.searchQuery,
       sort: current.currentSort,
     );
 
-    final filteredServices = current.categoryFilter == null
-        ? _allServices
-        : _allServices
-              .where((s) => s.category == current.categoryFilter)
-              .toList();
+    final filteredServices = _applyServiceFilters(
+      services: _allServices,
+      query: current.searchQuery,
+      category: current.categoryFilter,
+    );
 
     final markers = MarkerUtils.buildMarkers(
       barbershops: filtered,
@@ -409,25 +410,37 @@ class ExploreBloc extends Bloc<ExploreEvent, ExploreState> {
   /// Aplica búsqueda por texto Y ordenamiento.
   List<BarbershopEntity> _applyFilters({
     required List<BarbershopEntity> barbershops,
+    required List<ServiceExploreEntity> services,
     required String query,
     required ExploreSort sort,
   }) {
-    var result = barbershops;
+    return applyExploreSearch(
+      barbershops: barbershops,
+      services: services,
+      query: query,
+      sort: sort,
+    );
+  }
 
-    // Filtro de búsqueda (nombre o dirección, insensible a mayúsculas)
-    if (query.isNotEmpty) {
-      final q = query.toLowerCase();
-      result = result
-          .where(
-            (s) =>
-                s.name.toLowerCase().contains(q) ||
-                s.address.toLowerCase().contains(q) ||
-                s.tags.any((tag) => tag.toLowerCase().contains(q)),
-          )
-          .toList();
-    }
+  List<ServiceExploreEntity> _applyServiceFilters({
+    required List<ServiceExploreEntity> services,
+    required String query,
+    required String? category,
+  }) {
+    final normalizedQuery = normalizeExploreQuery(query);
+    return services.where((service) {
+      final matchesCategory = category == null || service.category == category;
+      if (!matchesCategory) return false;
+      if (normalizedQuery.isEmpty) return true;
 
-    return _applySortOnly(barbershops: result, sort: sort);
+      return normalizeExploreQuery(
+            service.serviceName,
+          ).contains(normalizedQuery) ||
+          normalizeExploreQuery(
+            service.barbershopSnapshot.name,
+          ).contains(normalizedQuery) ||
+          normalizeExploreQuery(service.description).contains(normalizedQuery);
+    }).toList();
   }
 
   /// Solo aplica ordenamiento sobre la lista recibida.
@@ -435,24 +448,7 @@ class ExploreBloc extends Bloc<ExploreEvent, ExploreState> {
     required List<BarbershopEntity> barbershops,
     required ExploreSort sort,
   }) {
-    switch (sort) {
-      case ExploreSort.cercania:
-        // geoflutterfire_plus ya entrega el stream ordenado por distancia ✓
-        return barbershops;
-
-      case ExploreSort.calificacion:
-        return [...barbershops]..sort((a, b) => b.rating.compareTo(a.rating));
-
-      case ExploreSort.conOferta:
-        return [...barbershops]..sort((a, b) {
-          // Primero los que tienen promo activa
-          final promoA = a.hasActivePromotion ? 0 : 1;
-          final promoB = b.hasActivePromotion ? 0 : 1;
-          if (promoA != promoB) return promoA.compareTo(promoB);
-          // Desempate por rating
-          return b.rating.compareTo(a.rating);
-        });
-    }
+    return _sortExploreBarbershops(barbershops, sort);
   }
 
   String _displayNameFor(String? fullName, String? email) {
@@ -463,6 +459,83 @@ class ExploreBloc extends Bloc<ExploreEvent, ExploreState> {
     if (mail != null && mail.isNotEmpty) return mail.split('@').first;
 
     return 'Usuario';
+  }
+
+  Future<void> _subscribeNearbyStreams({
+    required double lat,
+    required double lng,
+    required double radiusKm,
+  }) async {
+    await _barbershopsSubscription?.cancel();
+    await _servicesSubscription?.cancel();
+
+    _barbershopsSubscription = _repo
+        .getNearbyBarbershops(lat: lat, lng: lng, radiusKm: radiusKm)
+        .listen(
+          (shops) {
+            debugPrint(
+              '🟢 [ExploreBloc] Stream barberías: ${shops.length} resultados',
+            );
+            add(_BarbershopsUpdated(_withDistances(shops, lat, lng)));
+          },
+          onError: (e) {
+            debugPrint('🔴 [ExploreBloc] Stream barberías ERROR: $e');
+            add(const _BarbershopsUpdated([]));
+          },
+        );
+
+    _servicesSubscription = _repo
+        .getNearbyServices(lat: lat, lng: lng, radiusKm: radiusKm)
+        .listen(
+          (svcs) {
+            debugPrint(
+              '🟢 [ExploreBloc] Stream servicios: ${svcs.length} resultados',
+            );
+            add(_ServicesUpdated(_servicesWithDistances(svcs, lat, lng)));
+          },
+          onError: (e) {
+            debugPrint('🔴 [ExploreBloc] Stream servicios ERROR: $e');
+            add(const _ServicesUpdated([]));
+          },
+        );
+  }
+
+  List<BarbershopEntity> _withDistances(
+    List<BarbershopEntity> shops,
+    double lat,
+    double lng,
+  ) {
+    const distance = Distance();
+    final userLocation = LatLng(lat, lng);
+    return shops.map((shop) {
+      final meters = distance(userLocation, LatLng(shop.lat, shop.lng));
+      return shop.copyWith(distanceKm: meters / 1000);
+    }).toList();
+  }
+
+  List<ServiceExploreEntity> _servicesWithDistances(
+    List<ServiceExploreEntity> services,
+    double lat,
+    double lng,
+  ) {
+    const distance = Distance();
+    final userLocation = LatLng(lat, lng);
+    return services.map((service) {
+      final meters = distance(userLocation, LatLng(service.lat, service.lng));
+      return ServiceExploreEntity(
+        id: service.id,
+        barbershopId: service.barbershopId,
+        barbershopSnapshot: service.barbershopSnapshot,
+        serviceName: service.serviceName,
+        description: service.description,
+        price: service.price,
+        durationMinutes: service.durationMinutes,
+        category: service.category,
+        lat: service.lat,
+        lng: service.lng,
+        distanceKm: meters / 1000,
+      );
+    }).toList();
   }
 
   /// Cancela todas las suscripciones activas.
@@ -480,5 +553,88 @@ class ExploreBloc extends Bloc<ExploreEvent, ExploreState> {
     await _cancelSubscriptions();
     _mapController?.dispose();
     return super.close();
+  }
+}
+
+@visibleForTesting
+String normalizeExploreQuery(String value) {
+  const replacements = {
+    'á': 'a',
+    'é': 'e',
+    'í': 'i',
+    'ó': 'o',
+    'ú': 'u',
+    'ü': 'u',
+    'ñ': 'n',
+  };
+
+  var result = value.toLowerCase().trim();
+  for (final entry in replacements.entries) {
+    result = result.replaceAll(entry.key, entry.value);
+  }
+  return result;
+}
+
+@visibleForTesting
+List<BarbershopEntity> applyExploreSearch({
+  required List<BarbershopEntity> barbershops,
+  required List<ServiceExploreEntity> services,
+  required String query,
+  required ExploreSort sort,
+}) {
+  var result = barbershops;
+  final normalizedQuery = normalizeExploreQuery(query);
+
+  if (normalizedQuery.isNotEmpty) {
+    final matchingServiceShopIds = services
+        .where(
+          (service) =>
+              normalizeExploreQuery(
+                service.serviceName,
+              ).contains(normalizedQuery) ||
+              normalizeExploreQuery(
+                service.description,
+              ).contains(normalizedQuery) ||
+              normalizeExploreQuery(
+                service.barbershopSnapshot.name,
+              ).contains(normalizedQuery),
+        )
+        .map((service) => service.barbershopId)
+        .toSet();
+
+    result = result.where((shop) {
+      return normalizeExploreQuery(shop.name).contains(normalizedQuery) ||
+          normalizeExploreQuery(shop.ownerName).contains(normalizedQuery) ||
+          normalizeExploreQuery(shop.address).contains(normalizedQuery) ||
+          shop.tags.any(
+            (tag) => normalizeExploreQuery(tag).contains(normalizedQuery),
+          ) ||
+          shop.barberNames.any(
+            (name) => normalizeExploreQuery(name).contains(normalizedQuery),
+          ) ||
+          matchingServiceShopIds.contains(shop.id);
+    }).toList();
+  }
+
+  return _sortExploreBarbershops(result, sort);
+}
+
+List<BarbershopEntity> _sortExploreBarbershops(
+  List<BarbershopEntity> barbershops,
+  ExploreSort sort,
+) {
+  switch (sort) {
+    case ExploreSort.cercania:
+      return [...barbershops]
+        ..sort((a, b) => (a.distanceKm ?? 0).compareTo(b.distanceKm ?? 0));
+    case ExploreSort.calificacion:
+      return [...barbershops]..sort((a, b) => b.rating.compareTo(a.rating));
+    case ExploreSort.conOferta:
+      return [...barbershops]..sort((a, b) {
+        final promoA = a.hasActivePromotion ? 0 : 1;
+        final promoB = b.hasActivePromotion ? 0 : 1;
+        if (promoA != promoB) return promoA.compareTo(promoB);
+        return b.rating.compareTo(a.rating);
+      });
   }
 }

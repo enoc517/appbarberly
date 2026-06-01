@@ -26,14 +26,14 @@ class _ExploreSearchBarState extends State<ExploreSearchBar> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surfaceContainerHighest,
+        color: theme.colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(AppRadius.xl),
-        // Ambient shadow – diffused, no harsh border
         boxShadow: [
           BoxShadow(
-            color: AppColors.onSurface.withValues(alpha: 0.04),
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.04),
             blurRadius: 16,
             offset: const Offset(0, 4),
           ),
@@ -42,22 +42,22 @@ class _ExploreSearchBarState extends State<ExploreSearchBar> {
       child: TextField(
         controller: _controller,
         onChanged: widget.onChanged,
-        style: AppTypography.bodyMedium.copyWith(color: AppColors.onSurface),
+        style: AppTypography.bodyMedium.copyWith(color: theme.colorScheme.onSurface),
         decoration: InputDecoration(
           hintText: widget.hint,
           hintStyle: AppTypography.bodyMedium.copyWith(
-            color: AppColors.onSurfaceVariant,
+            color: theme.colorScheme.onSurfaceVariant,
           ),
           prefixIcon: Icon(
             Icons.search_rounded,
-            color: AppColors.onSurfaceVariant,
+            color: theme.colorScheme.onSurfaceVariant,
             size: 20,
           ),
           suffixIcon: _controller.text.isNotEmpty
               ? IconButton(
                   icon: Icon(
                     Icons.close_rounded,
-                    color: AppColors.onSurfaceVariant,
+                    color: theme.colorScheme.onSurfaceVariant,
                     size: 18,
                   ),
                   onPressed: () {
@@ -66,12 +66,11 @@ class _ExploreSearchBarState extends State<ExploreSearchBar> {
                     setState(() {});
                   },
                 )
-              : const Icon(
+              : Icon(
                   Icons.tune_rounded,
-                  color: AppColors.onSurfaceVariant,
+                  color: theme.colorScheme.onSurfaceVariant,
                   size: 20,
                 ),
-          // Remove all borders per "No-Line" rule
           border: InputBorder.none,
           enabledBorder: InputBorder.none,
           focusedBorder: InputBorder.none,

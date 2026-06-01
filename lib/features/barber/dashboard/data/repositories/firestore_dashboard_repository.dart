@@ -135,6 +135,7 @@ class FirestoreDashboardRepository implements DashboardRepository {
     return Appointment(
       id: booking.id,
       clientName: booking.clientSnapshot.name,
+      clientAvatarUrl: booking.clientSnapshot.imageUrl,
       serviceName: booking.serviceSnapshot.name,
       startTime: booking.slotStart,
       status: switch (booking.status) {

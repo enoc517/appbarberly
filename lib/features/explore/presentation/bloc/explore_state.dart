@@ -45,6 +45,7 @@ class ExploreLoaded extends ExploreState {
     required this.userLat,
     required this.userLng,
     required this.userName,
+    this.radiusKm = 10.0,
     this.searchQuery = '',
     this.categoryFilter,
     this.cameraTarget,
@@ -66,6 +67,7 @@ class ExploreLoaded extends ExploreState {
   final double userLat;
   final double userLng;
   final String userName;
+  final double radiusKm;
   final String searchQuery;
 
   /// null = todas las categorías; string = filtro activo.
@@ -94,6 +96,7 @@ class ExploreLoaded extends ExploreState {
     double? userLat,
     double? userLng,
     String? userName,
+    double? radiusKm,
     String? searchQuery,
     String? Function()? categoryFilter,
     LatLng? Function()? cameraTarget,
@@ -107,6 +110,7 @@ class ExploreLoaded extends ExploreState {
       userLat: userLat ?? this.userLat,
       userLng: userLng ?? this.userLng,
       userName: userName ?? this.userName,
+      radiusKm: radiusKm ?? this.radiusKm,
       searchQuery: searchQuery ?? this.searchQuery,
       categoryFilter: categoryFilter != null
           ? categoryFilter()
@@ -125,6 +129,7 @@ class ExploreLoaded extends ExploreState {
     userLat,
     userLng,
     userName,
+    radiusKm,
     searchQuery,
     categoryFilter,
     cameraTarget,

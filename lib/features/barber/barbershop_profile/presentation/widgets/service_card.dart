@@ -14,10 +14,11 @@ class ServiceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.surfaceContainer,
+        color: theme.colorScheme.surfaceContainer,
         borderRadius: BorderRadius.circular(AppRadius.xl),
       ),
       child: Stack(
@@ -49,7 +50,7 @@ class ServiceCard extends StatelessWidget {
               Text(
                 service.description,
                 style: AppTypography.bodyMedium.copyWith(
-                  color: AppColors.onSurfaceVariant,
+                  color: theme.colorScheme.onSurfaceVariant,
                 ),
               ),
               const SizedBox(height: 14),
@@ -61,13 +62,13 @@ class ServiceCard extends StatelessWidget {
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: AppColors.surfaceContainerHigh,
+                      color: theme.colorScheme.surfaceContainerHigh,
                       borderRadius: BorderRadius.circular(AppRadius.full),
                     ),
                     child: Text(
                       '${service.duration.inMinutes} MIN',
                       style: AppTypography.labelSmall.copyWith(
-                        color: AppColors.onSurfaceVariant,
+                        color: theme.colorScheme.onSurfaceVariant,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -76,7 +77,7 @@ class ServiceCard extends StatelessWidget {
                   FilledButton(
                     onPressed: onReserve,
                     style: FilledButton.styleFrom(
-                      backgroundColor: AppColors.primary,
+                      backgroundColor: theme.colorScheme.primary,
                       padding: const EdgeInsets.symmetric(
                         horizontal: 20,
                         vertical: 10,
@@ -100,6 +101,7 @@ class _FeaturedBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Positioned(
       top: -4,
       right: -4,
@@ -113,7 +115,7 @@ class _FeaturedBadge extends StatelessWidget {
             bottomLeft: Radius.circular(AppRadius.md),
           ),
         ),
-        child: const Icon(Icons.star, size: 16, color: AppColors.secondary),
+        child: Icon(Icons.star, size: 16, color: theme.colorScheme.secondary),
       ),
     );
   }

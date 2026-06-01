@@ -15,6 +15,7 @@ class GoogleRoleScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final user = FirebaseAuth.instance.currentUser;
     final displayName = user?.displayName?.trim();
     final email = user?.email?.trim();
@@ -35,7 +36,7 @@ class GoogleRoleScreen extends StatelessWidget {
         }
       },
       child: Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: theme.scaffoldBackgroundColor,
         body: SafeArea(
           child: Center(
             child: SingleChildScrollView(
@@ -45,11 +46,13 @@ class GoogleRoleScreen extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.all(28),
                   decoration: BoxDecoration(
-                    color: AppColors.surfaceContainerLowest,
+                    color: theme.colorScheme.surfaceContainerLowest,
                     borderRadius: BorderRadius.circular(32),
                     boxShadow: [
                       BoxShadow(
-                        color: AppColors.ambientShadow,
+                        color: theme.colorScheme.onSurface.withValues(
+                          alpha: 0.06,
+                        ),
                         blurRadius: 32,
                         offset: const Offset(0, 12),
                       ),
@@ -69,7 +72,7 @@ class GoogleRoleScreen extends StatelessWidget {
                         'Completa tu perfil',
                         textAlign: TextAlign.center,
                         style: AppTypography.headlineMedium.copyWith(
-                          color: AppColors.onSurface,
+                          color: theme.colorScheme.onSurface,
                           fontWeight: FontWeight.w800,
                         ),
                       ),
@@ -78,7 +81,7 @@ class GoogleRoleScreen extends StatelessWidget {
                         _subtitle(displayName: displayName, email: email),
                         textAlign: TextAlign.center,
                         style: AppTypography.bodyLarge.copyWith(
-                          color: AppColors.onSurfaceVariant,
+                          color: theme.colorScheme.onSurfaceVariant,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -157,8 +160,9 @@ class _RoleCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Material(
-      color: AppColors.surfaceContainer,
+      color: theme.colorScheme.surfaceContainer,
       borderRadius: BorderRadius.circular(22),
       child: InkWell(
         onTap: isLoading ? null : onTap,
@@ -170,11 +174,15 @@ class _RoleCard extends StatelessWidget {
               Container(
                 width: 50,
                 height: 50,
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: AppColors.primaryContainer,
+                  color: theme.colorScheme.primaryContainer,
                 ),
-                child: Icon(icon, color: AppColors.onPrimary, size: 26),
+                child: Icon(
+                  icon,
+                  color: theme.colorScheme.onPrimaryContainer,
+                  size: 26,
+                ),
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -184,7 +192,7 @@ class _RoleCard extends StatelessWidget {
                     Text(
                       title,
                       style: AppTypography.titleMedium.copyWith(
-                        color: AppColors.onSurface,
+                        color: theme.colorScheme.onSurface,
                         fontWeight: FontWeight.w800,
                       ),
                     ),
@@ -192,7 +200,7 @@ class _RoleCard extends StatelessWidget {
                     Text(
                       description,
                       style: AppTypography.bodyMedium.copyWith(
-                        color: AppColors.onSurfaceVariant,
+                        color: theme.colorScheme.onSurfaceVariant,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -200,10 +208,10 @@ class _RoleCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 12),
-              const Icon(
+              Icon(
                 Icons.arrow_forward_ios_rounded,
                 size: 16,
-                color: AppColors.onSurfaceVariant,
+                color: theme.colorScheme.onSurfaceVariant,
               ),
             ],
           ),

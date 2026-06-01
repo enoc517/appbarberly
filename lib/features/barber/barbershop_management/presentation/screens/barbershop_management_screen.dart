@@ -11,10 +11,12 @@ class BarbershopManagementScreen extends StatefulWidget {
   const BarbershopManagementScreen({super.key});
 
   @override
-  State<BarbershopManagementScreen> createState() => _BarbershopManagementScreenState();
+  State<BarbershopManagementScreen> createState() =>
+      _BarbershopManagementScreenState();
 }
 
-class _BarbershopManagementScreenState extends State<BarbershopManagementScreen> {
+class _BarbershopManagementScreenState
+    extends State<BarbershopManagementScreen> {
   @override
   Widget build(BuildContext context) {
     return BlocProvider.value(
@@ -30,26 +32,32 @@ class _BarbershopManagementView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         bottom: false,
-        child: BlocBuilder<BarbershopManagementHubCubit, BarbershopManagementHubState>(
-          buildWhen: (prev, curr) =>
-              prev.isLoading != curr.isLoading ||
-              prev.hasBarbershop != curr.hasBarbershop,
-          builder: (context, state) {
-            if (state.isLoading) {
-              return const Center(child: CircularProgressIndicator());
-            }
-            if (!state.hasBarbershop) {
-              return const _NoBarbershopView();
-            }
-            return _ManagementHubView(
-              barbershopName: state.barbershopName,
-              isOwner: state.isOwner,
-            );
-          },
-        ),
+        child:
+            BlocBuilder<
+              BarbershopManagementHubCubit,
+              BarbershopManagementHubState
+            >(
+              buildWhen: (prev, curr) =>
+                  prev.isLoading != curr.isLoading ||
+                  prev.hasBarbershop != curr.hasBarbershop ||
+                  prev.barbershopName != curr.barbershopName ||
+                  prev.isOwner != curr.isOwner,
+              builder: (context, state) {
+                if (state.isLoading) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (!state.hasBarbershop) {
+                  return const _NoBarbershopView();
+                }
+                return _ManagementHubView(
+                  barbershopName: state.barbershopName,
+                  isOwner: state.isOwner,
+                );
+              },
+            ),
       ),
     );
   }
@@ -60,6 +68,7 @@ class _NoBarbershopView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
@@ -69,13 +78,13 @@ class _NoBarbershopView extends StatelessWidget {
             Icon(
               Icons.storefront_rounded,
               size: 72,
-              color: AppColors.onSurfaceVariant.withValues(alpha: 0.3),
+              color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
             ),
             const SizedBox(height: 20),
             Text(
               'No tienes barbería asignada',
               style: AppTypography.titleLarge.copyWith(
-                color: AppColors.onSurface,
+                color: theme.colorScheme.onSurface,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -84,7 +93,7 @@ class _NoBarbershopView extends StatelessWidget {
               'Crea tu propia barbería o únete a una existente para empezar a gestionar tu negocio.',
               textAlign: TextAlign.center,
               style: AppTypography.bodyMedium.copyWith(
-                color: AppColors.onSurfaceVariant,
+                color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
             const SizedBox(height: 32),
@@ -93,12 +102,13 @@ class _NoBarbershopView extends StatelessWidget {
               child: SizedBox(
                 width: double.infinity,
                 child: FilledButton.icon(
-                  onPressed: () => context.push('/cuenta-barbero/crear-barberia'),
+                  onPressed: () =>
+                      context.push('/cuenta-barbero/crear-barberia'),
                   icon: const Icon(Icons.add_rounded),
                   label: const Text('Crear mi barbería'),
                   style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.primaryContainer,
-                    foregroundColor: AppColors.onPrimary,
+                    backgroundColor: theme.colorScheme.primaryContainer,
+                    foregroundColor: theme.colorScheme.onPrimaryContainer,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(AppRadius.xl),
@@ -113,7 +123,8 @@ class _NoBarbershopView extends StatelessWidget {
               child: SizedBox(
                 width: double.infinity,
                 child: OutlinedButton.icon(
-                  onPressed: () => context.go('/cuenta-barbero/buscar-barberias'),
+                  onPressed: () =>
+                      context.go('/cuenta-barbero/buscar-barberias'),
                   icon: const Icon(Icons.search_rounded),
                   label: const Text('Buscar barberías para unirme'),
                   style: OutlinedButton.styleFrom(
@@ -143,10 +154,7 @@ class _ManagementHubView extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 120),
       children: [
         AppFadeSlideIn(
-          child: _HubHeader(
-            barbershopName: barbershopName,
-            isOwner: isOwner,
-          ),
+          child: _HubHeader(barbershopName: barbershopName, isOwner: isOwner),
         ),
         const SizedBox(height: 24),
         AppFadeSlideIn(
@@ -162,6 +170,26 @@ class _ManagementHubView extends StatelessWidget {
         AppFadeSlideIn(
           delay: AppMotion.delay(2),
           child: _HubAction(
+            icon: Icons.notifications_rounded,
+            title: 'Notificaciones',
+            subtitle: 'Revisa novedades de citas y penalizaciones',
+            onTap: () => context.push('/notificaciones'),
+          ),
+        ),
+        const SizedBox(height: 8),
+        AppFadeSlideIn(
+          delay: AppMotion.delay(3),
+          child: _HubAction(
+            icon: Icons.request_quote_rounded,
+            title: 'Penalizaciones pendientes',
+            subtitle: 'Clientes con cancelaciones tardías por resolver',
+            onTap: () => context.push('/cuenta-barbero/penalizaciones'),
+          ),
+        ),
+        const SizedBox(height: 8),
+        AppFadeSlideIn(
+          delay: AppMotion.delay(4),
+          child: _HubAction(
             icon: Icons.schedule_rounded,
             title: 'Mi horario',
             subtitle: 'Configura tu disponibilidad semanal',
@@ -171,7 +199,17 @@ class _ManagementHubView extends StatelessWidget {
         if (isOwner) ...[
           const SizedBox(height: 8),
           AppFadeSlideIn(
-            delay: AppMotion.delay(3),
+            delay: AppMotion.delay(5),
+            child: _HubAction(
+              icon: Icons.edit_rounded,
+              title: 'Editar información',
+              subtitle: 'Actualiza datos, ubicación e imagen de tu barbería',
+              onTap: () => context.push('/cuenta-barbero/editar-barberia'),
+            ),
+          ),
+          const SizedBox(height: 8),
+          AppFadeSlideIn(
+            delay: AppMotion.delay(6),
             child: _HubAction(
               icon: Icons.people_rounded,
               title: 'Solicitudes pendientes',
@@ -192,15 +230,16 @@ class _HubHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.primary,
+        color: theme.colorScheme.primary,
         borderRadius: BorderRadius.circular(AppRadius.xl),
       ),
       child: Row(
         children: [
-          const Icon(Icons.storefront_rounded, color: AppColors.secondary),
+          Icon(Icons.storefront_rounded, color: theme.colorScheme.onPrimary),
           const SizedBox(width: 16),
           Expanded(
             child: Column(
@@ -209,7 +248,7 @@ class _HubHeader extends StatelessWidget {
                 Text(
                   barbershopName ?? 'Mi barbería',
                   style: AppTypography.titleLarge.copyWith(
-                    color: AppColors.onPrimary,
+                    color: theme.colorScheme.onPrimary,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
@@ -217,7 +256,7 @@ class _HubHeader extends StatelessWidget {
                 Text(
                   isOwner ? 'Dueño' : 'Barbero',
                   style: AppTypography.bodySmall.copyWith(
-                    color: AppColors.onPrimary.withValues(alpha: 0.7),
+                    color: theme.colorScheme.onPrimary.withValues(alpha: 0.7),
                   ),
                 ),
               ],
@@ -243,21 +282,22 @@ class _HubAction extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Material(
-      color: AppColors.surfaceContainerLowest,
+      color: theme.colorScheme.surfaceContainerLowest,
       borderRadius: BorderRadius.circular(AppRadius.xl),
       child: ListTile(
-        leading: Icon(icon, color: AppColors.primary),
+        leading: Icon(icon, color: theme.colorScheme.primary),
         title: Text(
           title,
           style: AppTypography.titleSmall.copyWith(
-            color: AppColors.onSurface,
+            color: theme.colorScheme.onSurface,
           ),
         ),
         subtitle: Text(
           subtitle,
           style: AppTypography.bodySmall.copyWith(
-            color: AppColors.onSurfaceVariant,
+            color: theme.colorScheme.onSurfaceVariant,
           ),
         ),
         trailing: const Icon(Icons.chevron_right_rounded),

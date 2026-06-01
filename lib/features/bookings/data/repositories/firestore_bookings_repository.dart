@@ -79,22 +79,150 @@ class FirestoreBookingsRepository implements BookingsRepository {
   Future<void> cancelBooking({
     required String bookingId,
     required String clientId,
+    required BookingCancellationActor cancelledBy,
+  }) async {
+    await _finishBooking(
+      bookingId: bookingId,
+      clientId: clientId,
+      status: AppointmentBookingStatus.cancelled,
+      cancelledBy: cancelledBy,
+    );
+  }
+
+  @override
+  Future<void> completeBooking({
+    required String bookingId,
+    required String clientId,
+  }) async {
+    await _finishBooking(
+      bookingId: bookingId,
+      clientId: clientId,
+      status: AppointmentBookingStatus.completed,
+      cancelledBy: null,
+    );
+  }
+
+  Future<void> _finishBooking({
+    required String bookingId,
+    required String clientId,
+    required AppointmentBookingStatus status,
+    required BookingCancellationActor? cancelledBy,
   }) async {
     final bookingRef = _bookings.doc(bookingId);
     final userRef = _db.collection('users').doc(clientId);
+    final penaltyRef = _db.collection('penalties').doc();
+    final cancellationNotificationRef = _db.collection('notifications').doc();
+    final penaltyNotificationRef = _db.collection('notifications').doc();
 
     await _db.runTransaction((transaction) async {
       final bookingSnapshot = await transaction.get(bookingRef);
       final bookingData = bookingSnapshot.data();
       if (bookingData == null) return;
 
+      final cancellationData = <String, dynamic>{};
+      if (status == AppointmentBookingStatus.cancelled && cancelledBy != null) {
+        cancellationData.addAll({
+          'cancelledBy': cancelledBy.name,
+          'cancelledAt': FieldValue.serverTimestamp(),
+        });
+      }
+
+      if (status == AppointmentBookingStatus.cancelled && cancelledBy != null) {
+        final recipientId = cancelledBy == BookingCancellationActor.client
+            ? bookingData['barberId'] as String? ?? ''
+            : bookingData['clientId'] as String? ?? clientId;
+        final recipientRole = cancelledBy == BookingCancellationActor.client
+            ? 'barber'
+            : 'client';
+        if (recipientId.isNotEmpty) {
+          transaction.set(cancellationNotificationRef, {
+            'recipientId': recipientId,
+            'recipientRole': recipientRole,
+            'type': 'bookingCancelled',
+            'title': 'Cita cancelada',
+            'body': _cancellationNotificationBody(bookingData, cancelledBy),
+            'bookingId': bookingRef.id,
+            'barbershopId': bookingData['barbershopId'] as String? ?? '',
+            'penaltyId': null,
+            'readAt': null,
+            'createdAt': FieldValue.serverTimestamp(),
+            'updatedAt': FieldValue.serverTimestamp(),
+            'data': {'cancelledBy': cancelledBy.name},
+          });
+        }
+      }
+
       transaction.update(bookingRef, {
-        'status': AppointmentBookingStatus.cancelled.name,
+        'status': status.name,
         'updatedAt': FieldValue.serverTimestamp(),
+        ...cancellationData,
       });
 
+      if (status == AppointmentBookingStatus.cancelled &&
+          cancelledBy == BookingCancellationActor.client) {
+        final slotStart = _dateTime(bookingData['slotStart']);
+        final price = (bookingData['price'] as num?)?.toDouble() ?? 0;
+        final shouldApplyPenalty =
+            slotStart.difference(DateTime.now()) < const Duration(hours: 1);
+
+        if (shouldApplyPenalty && price > 0) {
+          final penaltyAmount = price * 0.5;
+          transaction.set(penaltyRef, {
+            'bookingId': bookingRef.id,
+            'barbershopId': bookingData['barbershopId'] as String? ?? '',
+            'barberId': bookingData['barberId'] as String? ?? '',
+            'clientId': bookingData['clientId'] as String? ?? clientId,
+            'clientSnapshot': bookingData['clientSnapshot'],
+            'serviceSnapshot': bookingData['serviceSnapshot'],
+            'shopSnapshot': bookingData['shopSnapshot'],
+            'appointmentStart': bookingData['slotStart'],
+            'servicePrice': price,
+            'penaltyPercent': 50,
+            'penaltyAmount': penaltyAmount,
+            'status': 'pending',
+            'reason': 'lateClientCancellation',
+            'createdAt': FieldValue.serverTimestamp(),
+            'updatedAt': FieldValue.serverTimestamp(),
+            'resolvedAt': null,
+          });
+
+          transaction.update(bookingRef, {
+            'penaltyApplied': true,
+            'penaltyAmount': penaltyAmount,
+            'penaltyStatus': 'pending',
+            'penaltyId': penaltyRef.id,
+          });
+
+          final barberId = bookingData['barberId'] as String? ?? '';
+          if (barberId.isNotEmpty) {
+            transaction.set(penaltyNotificationRef, {
+              'recipientId': barberId,
+              'recipientRole': 'barber',
+              'type': 'lateCancellationPenalty',
+              'title': 'Penalización pendiente',
+              'body': _penaltyNotificationBody(bookingData, penaltyAmount),
+              'bookingId': bookingRef.id,
+              'barbershopId': bookingData['barbershopId'] as String? ?? '',
+              'penaltyId': penaltyRef.id,
+              'readAt': null,
+              'createdAt': FieldValue.serverTimestamp(),
+              'updatedAt': FieldValue.serverTimestamp(),
+              'data': {'penaltyAmount': penaltyAmount, 'penaltyPercent': 50},
+            });
+          }
+        } else {
+          transaction.update(bookingRef, {
+            'penaltyApplied': false,
+            'penaltyAmount': 0,
+            'penaltyStatus': null,
+          });
+        }
+      }
+
       final slotPath = bookingData['slotPath'] as String?;
-      if (slotPath != null && slotPath.isNotEmpty) {
+      if (status == AppointmentBookingStatus.cancelled &&
+          slotPath != null &&
+          slotPath.isNotEmpty) {
         transaction.update(_db.doc(slotPath), {
           'status': 'available',
           'bookingId': null,
@@ -153,6 +281,54 @@ class FirestoreBookingsRepository implements BookingsRepository {
 
   Map<String, dynamic> _snapshotToMap(BookingSnapshot snapshot) {
     return {'name': snapshot.name, 'imageUrl': snapshot.imageUrl};
+  }
+
+  static DateTime _dateTime(Object? value) {
+    if (value is Timestamp) return value.toDate();
+    if (value is DateTime) return value;
+    return DateTime.fromMillisecondsSinceEpoch(0);
+  }
+
+  static String _cancellationNotificationBody(
+    Map<String, dynamic> bookingData,
+    BookingCancellationActor cancelledBy,
+  ) {
+    final clientName = _snapshotName(
+      bookingData['clientSnapshot'],
+      'El cliente',
+    );
+    final barberName = _snapshotName(
+      bookingData['barberSnapshot'],
+      'El barbero',
+    );
+    final serviceName = _snapshotName(
+      bookingData['serviceSnapshot'],
+      'la cita',
+    );
+    if (cancelledBy == BookingCancellationActor.client) {
+      return '$clientName canceló $serviceName.';
+    }
+    return '$barberName canceló $serviceName.';
+  }
+
+  static String _penaltyNotificationBody(
+    Map<String, dynamic> bookingData,
+    double penaltyAmount,
+  ) {
+    final clientName = _snapshotName(
+      bookingData['clientSnapshot'],
+      'El cliente',
+    );
+    final amount = penaltyAmount.toStringAsFixed(0);
+    return '$clientName canceló tarde y debe una penalización de \$$amount.';
+  }
+
+  static String _snapshotName(Object? value, String fallback) {
+    if (value is Map<String, dynamic>) {
+      final name = value['name'] as String?;
+      if (name != null && name.trim().isNotEmpty) return name.trim();
+    }
+    return fallback;
   }
 
   static const _activeStatusNames = {'pending', 'confirmed', 'inProgress'};

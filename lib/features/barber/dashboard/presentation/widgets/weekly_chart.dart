@@ -11,11 +11,12 @@ class WeeklyChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final reduced = AppMotion.reduceMotion(context);
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.surfaceContainerLowest,
+        color: theme.colorScheme.surfaceContainerLowest,
         borderRadius: BorderRadius.circular(AppRadius.xl),
       ),
       child: Column(
@@ -26,17 +27,24 @@ class WeeklyChart extends StatelessWidget {
               Text(
                 'RENDIMIENTO SEMANAL',
                 style: AppTypography.labelMedium.copyWith(
-                  color: AppColors.onSurfaceVariant,
+                  color: theme.colorScheme.onSurfaceVariant,
                   letterSpacing: 1.2,
                 ),
               ),
               const Spacer(),
-              const Icon(
+              Icon(
                 Icons.trending_up,
                 size: 18,
-                color: AppColors.onSurfaceVariant,
+                color: theme.colorScheme.onSurfaceVariant,
               ),
             ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Citas completadas por día',
+            style: AppTypography.bodySmall.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
           ),
           const SizedBox(height: 20),
           SizedBox(
@@ -50,11 +58,11 @@ class WeeklyChart extends StatelessWidget {
                     data.dailyValues.reduce((a, b) => a > b ? a : b);
                 Color color;
                 if (isToday) {
-                  color = AppColors.secondary;
+                  color = theme.colorScheme.primaryContainer;
                 } else if (isMax) {
-                  color = AppColors.primary;
+                  color = theme.colorScheme.primary;
                 } else {
-                  color = AppColors.surfaceContainerHigh;
+                  color = theme.colorScheme.surfaceContainerHigh;
                 }
                 return Expanded(
                   child: Padding(
@@ -62,20 +70,35 @@ class WeeklyChart extends StatelessWidget {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
-                        TweenAnimationBuilder<double>(
-                          tween: Tween<double>(
-                            begin: reduced ? data.dailyValues[i] : 0,
-                            end: data.dailyValues[i],
-                          ),
-                          duration: reduced
-                              ? Duration.zero
-                              : Duration(milliseconds: 320 + (i * 45)),
-                          curve: AppMotion.standard,
-                          builder: (context, value, child) => Container(
-                            height: 110 * value,
-                            decoration: BoxDecoration(
-                              color: color,
-                              borderRadius: BorderRadius.circular(AppRadius.md),
+                        Expanded(
+                          child: Align(
+                            alignment: Alignment.bottomCenter,
+                            child: FractionallySizedBox(
+                              heightFactor: data.dailyValues[i].clamp(0.0, 1.0),
+                              alignment: Alignment.bottomCenter,
+                              child: TweenAnimationBuilder<double>(
+                                tween: Tween<double>(
+                                  begin: reduced ? 1 : 0,
+                                  end: 1,
+                                ),
+                                duration: reduced
+                                    ? Duration.zero
+                                    : Duration(milliseconds: 320 + (i * 45)),
+                                curve: AppMotion.standard,
+                                builder: (context, value, child) => Align(
+                                  alignment: Alignment.bottomCenter,
+                                  heightFactor: value,
+                                  child: child,
+                                ),
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: color,
+                                    borderRadius: BorderRadius.circular(
+                                      AppRadius.md,
+                                    ),
+                                  ),
+                                ),
+                              ),
                             ),
                           ),
                         ),
@@ -83,7 +106,7 @@ class WeeklyChart extends StatelessWidget {
                         Text(
                           _labels[i],
                           style: AppTypography.labelSmall.copyWith(
-                            color: AppColors.onSurfaceVariant,
+                            color: theme.colorScheme.onSurfaceVariant,
                           ),
                         ),
                       ],

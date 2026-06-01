@@ -17,16 +17,16 @@ class ServiceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return AppPressable(
       onTap: onTap,
       child: Container(
         decoration: BoxDecoration(
-          color: AppColors.surfaceContainerLowest,
+          color: theme.colorScheme.surfaceContainerLowest,
           borderRadius: BorderRadius.circular(AppRadius.xl),
-          // Tonal layering ambient shadow
           boxShadow: [
             BoxShadow(
-              color: AppColors.onSurface.withValues(alpha: 0.06),
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.06),
               blurRadius: 16,
               offset: const Offset(0, 4),
             ),
@@ -42,7 +42,6 @@ class ServiceCard extends StatelessWidget {
                 _ServiceInfo(service: service, isCompact: isCompact),
               ],
             ),
-            // "Ear silhouette" notch for NEW status (top-right)
             if (service.isNew)
               Positioned(top: 0, right: 12, child: _EarNotchBadge()),
           ],
@@ -59,6 +58,7 @@ class _ServiceImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return ClipRRect(
       borderRadius: BorderRadius.only(
         topLeft: Radius.circular(AppRadius.xl),
@@ -75,7 +75,7 @@ class _ServiceImage extends StatelessWidget {
               loadingBuilder: (_, child, loadingProgress) {
                 if (loadingProgress == null) return child;
                 return Container(
-                  color: AppColors.surfaceContainerHighest,
+                  color: theme.colorScheme.surfaceContainerHighest,
                   child: Center(
                     child: CircularProgressIndicator(
                       value: loadingProgress.expectedTotalBytes != null
@@ -83,27 +83,26 @@ class _ServiceImage extends StatelessWidget {
                                 loadingProgress.expectedTotalBytes!
                           : null,
                       strokeWidth: 2,
-                      color: AppColors.primaryContainer,
+                      color: theme.colorScheme.primaryContainer,
                     ),
                   ),
                 );
               },
               errorBuilder: (context, error, stackTrace) => Container(
-                color: AppColors.surfaceContainerHighest,
+                color: theme.colorScheme.surfaceContainerHighest,
                 child: Icon(
                   Icons.content_cut_rounded,
-                  color: AppColors.onSurfaceVariant,
+                  color: theme.colorScheme.onSurfaceVariant,
                   size: 32,
                 ),
               ),
             ),
           ),
-          // Availability overlay
           if (!service.isAvailable)
             Positioned.fill(
               child: Container(
                 decoration: BoxDecoration(
-                  color: AppColors.onSurface.withValues(alpha: 0.55),
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.55),
                 ),
                 child: Center(
                   child: Container(
@@ -112,13 +111,13 @@ class _ServiceImage extends StatelessWidget {
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: AppColors.surfaceContainerLowest,
+                      color: theme.colorScheme.surfaceContainerLowest,
                       borderRadius: BorderRadius.circular(AppRadius.sm),
                     ),
                     child: Text(
                       'No disponible',
                       style: AppTypography.labelSmall.copyWith(
-                        color: AppColors.onSurface,
+                        color: theme.colorScheme.onSurface,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -139,6 +138,7 @@ class _ServiceInfo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Padding(
       padding: EdgeInsets.all(isCompact ? 8 : 12),
       child: Column(
@@ -147,7 +147,7 @@ class _ServiceInfo extends StatelessWidget {
           Text(
             service.name,
             style: AppTypography.titleSmall.copyWith(
-              color: AppColors.onSurface,
+              color: theme.colorScheme.onSurface,
               fontWeight: FontWeight.w700,
             ),
             maxLines: 1,
@@ -157,7 +157,7 @@ class _ServiceInfo extends StatelessWidget {
           Text(
             service.shopName,
             style: AppTypography.bodyMedium.copyWith(
-              color: AppColors.onSurfaceVariant,
+              color: theme.colorScheme.onSurfaceVariant,
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
@@ -165,32 +165,32 @@ class _ServiceInfo extends StatelessWidget {
           SizedBox(height: isCompact ? 4 : 8),
           Row(
             children: [
-              Icon(Icons.star_rounded, size: 14, color: AppColors.tertiary),
+              Icon(Icons.star_rounded, size: 14, color: theme.colorScheme.tertiary),
               const SizedBox(width: 3),
               Text(
                 service.rating.toStringAsFixed(1),
                 style: AppTypography.labelMedium.copyWith(
-                  color: AppColors.onSurface,
+                  color: theme.colorScheme.onSurface,
                   fontWeight: FontWeight.w600,
                 ),
               ),
               Text(
                 ' (${service.reviewCount})',
                 style: AppTypography.labelSmall.copyWith(
-                  color: AppColors.onSurfaceVariant,
+                  color: theme.colorScheme.onSurfaceVariant,
                 ),
               ),
               const Spacer(),
               Icon(
                 Icons.location_on_outlined,
                 size: 13,
-                color: AppColors.onSurfaceVariant,
+                color: theme.colorScheme.onSurfaceVariant,
               ),
               const SizedBox(width: 2),
               Text(
                 service.distance,
                 style: AppTypography.labelSmall.copyWith(
-                  color: AppColors.onSurfaceVariant,
+                  color: theme.colorScheme.onSurfaceVariant,
                 ),
               ),
             ],
@@ -205,7 +205,7 @@ class _ServiceInfo extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: AppTypography.titleSmall.copyWith(
-                    color: AppColors.primaryContainer,
+                    color: theme.colorScheme.primaryContainer,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
@@ -218,13 +218,13 @@ class _ServiceInfo extends StatelessWidget {
                     vertical: 2,
                   ),
                   decoration: BoxDecoration(
-                    color: AppColors.primaryContainer.withValues(alpha: 0.10),
+                    color: theme.colorScheme.primaryContainer.withValues(alpha: 0.10),
                     borderRadius: BorderRadius.circular(AppRadius.sm),
                   ),
                   child: Text(
                     'Disponible',
                     style: AppTypography.labelSmall.copyWith(
-                      color: AppColors.primaryContainer,
+                      color: theme.colorScheme.primaryContainer,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -241,17 +241,18 @@ class _ServiceInfo extends StatelessWidget {
 class _EarNotchBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return ClipPath(
       clipper: _SemiCircleClipper(),
       child: Container(
         width: 28,
         height: 16,
-        color: AppColors.secondary,
+        color: theme.colorScheme.secondary,
         alignment: Alignment.center,
         child: Text(
           'NEW',
           style: AppTypography.labelSmall.copyWith(
-            color: AppColors.onPrimary,
+            color: theme.colorScheme.onSecondary,
             fontSize: 7,
             fontWeight: FontWeight.w800,
             letterSpacing: 0.5,

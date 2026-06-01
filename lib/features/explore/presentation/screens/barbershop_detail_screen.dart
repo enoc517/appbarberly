@@ -8,16 +8,11 @@ import '../cubit/barbershop_detail_cubit.dart';
 import '../cubit/barbershop_detail_state.dart';
 
 class BarbershopDetailScreen extends StatelessWidget {
-  final String shopId;
-
-  const BarbershopDetailScreen({super.key, required this.shopId});
+  const BarbershopDetailScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => BarbershopDetailCubit(shopId: shopId)..loadData(),
-      child: const _BarbershopDetailView(),
-    );
+    return const _BarbershopDetailView();
   }
 }
 
@@ -26,12 +21,13 @@ class _BarbershopDetailView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
-          onPressed: () => context.pop(),
+          onPressed: () => context.go('/explorar'),
         ),
       ),
       body: BlocBuilder<BarbershopDetailCubit, BarbershopDetailState>(
@@ -45,12 +41,17 @@ class _BarbershopDetailView extends StatelessWidget {
               child: Text(
                 'Barbería no encontrada',
                 style: AppTypography.titleMedium.copyWith(
-                  color: AppColors.onSurfaceVariant,
+                  color: theme.colorScheme.onSurfaceVariant,
                 ),
               ),
             );
           }
-          return _DetailContent(shop: state.shop!, members: state.members);
+          final shopId = context.read<BarbershopDetailCubit>().shopId;
+          return _DetailContent(
+            shopId: shopId,
+            shop: state.shop!,
+            members: state.members,
+          );
         },
       ),
     );
@@ -58,13 +59,19 @@ class _BarbershopDetailView extends StatelessWidget {
 }
 
 class _DetailContent extends StatelessWidget {
+  final String shopId;
   final Map<String, dynamic> shop;
   final List<Map<String, dynamic>> members;
 
-  const _DetailContent({required this.shop, required this.members});
+  const _DetailContent({
+    required this.shopId,
+    required this.shop,
+    required this.members,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
       child: Column(
@@ -76,10 +83,10 @@ class _DetailContent extends StatelessWidget {
               child: Container(
                 height: 200,
                 width: double.infinity,
-                color: AppColors.surfaceContainerHighest,
+                color: theme.colorScheme.surfaceContainerHighest,
                 child: (shop['imageUrl'] as String?)?.isNotEmpty == true
                     ? Image.network(shop['imageUrl']!, fit: BoxFit.cover)
-                    : Icon(Icons.storefront_rounded, size: 64, color: AppColors.outline),
+                    : Icon(Icons.storefront_rounded, size: 64, color: theme.colorScheme.outline),
               ),
             ),
           ),
@@ -88,29 +95,29 @@ class _DetailContent extends StatelessWidget {
             delay: AppMotion.delay(1),
             child: Text(
               shop['name'] as String? ?? '',
-              style: AppTypography.headlineMedium.copyWith(color: AppColors.onSurface),
+              style: AppTypography.headlineMedium.copyWith(color: theme.colorScheme.onSurface),
             ),
           ),
           const SizedBox(height: 8),
           Row(
             children: [
-              Icon(Icons.star_rounded, size: 18, color: AppColors.secondary),
+              Icon(Icons.star_rounded, size: 18, color: theme.colorScheme.secondary),
               const SizedBox(width: 4),
               Text(
                 '${shop['rating'] ?? 0} (${shop['reviewCount'] ?? 0} reseñas)',
-                style: AppTypography.bodyMedium.copyWith(color: AppColors.onSurfaceVariant),
+                style: AppTypography.bodyMedium.copyWith(color: theme.colorScheme.onSurfaceVariant),
               ),
             ],
           ),
           const SizedBox(height: 8),
           Row(
             children: [
-              Icon(Icons.location_on_rounded, size: 18, color: AppColors.onSurfaceVariant),
+              Icon(Icons.location_on_rounded, size: 18, color: theme.colorScheme.onSurfaceVariant),
               const SizedBox(width: 4),
               Expanded(
                 child: Text(
                   shop['address'] as String? ?? '',
-                  style: AppTypography.bodyMedium.copyWith(color: AppColors.onSurfaceVariant),
+                  style: AppTypography.bodyMedium.copyWith(color: theme.colorScheme.onSurfaceVariant),
                 ),
               ),
             ],
@@ -122,8 +129,8 @@ class _DetailContent extends StatelessWidget {
             children: (shop['tags'] as List<dynamic>?)
                     ?.map((t) => Chip(
                           label: Text(t.toString(),
-                              style: AppTypography.labelSmall.copyWith(color: AppColors.onPrimary)),
-                          backgroundColor: AppColors.primaryContainer,
+                              style: AppTypography.labelSmall.copyWith(color: theme.colorScheme.onPrimaryContainer)),
+                          backgroundColor: theme.colorScheme.primaryContainer,
                           side: BorderSide.none,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(AppRadius.full),
@@ -136,7 +143,7 @@ class _DetailContent extends StatelessWidget {
           Text(
             'Barberos',
             style: AppTypography.titleLarge.copyWith(
-              color: AppColors.onSurface,
+              color: theme.colorScheme.onSurface,
               fontWeight: FontWeight.w800,
             ),
           ),
@@ -144,34 +151,198 @@ class _DetailContent extends StatelessWidget {
           if (members.isEmpty)
             Text(
               'No hay barberos aún',
-              style: AppTypography.bodyLarge.copyWith(color: AppColors.onSurfaceVariant),
+              style: AppTypography.bodyLarge.copyWith(color: theme.colorScheme.onSurfaceVariant),
             )
           else
-            ...members.map((member) => Card(
-                  margin: const EdgeInsets.only(bottom: 12),
-                  child: ListTile(
-                    leading: CircleAvatar(
-                      backgroundColor: AppColors.surfaceContainerHighest,
-                      child: Icon(Icons.person_rounded, color: AppColors.outline),
-                    ),
-                    title: Text(
-                      member['barberName'] as String? ?? '',
-                      style: AppTypography.titleMedium.copyWith(color: AppColors.onSurface),
-                    ),
-                    subtitle: Text(
-                      member['role'] == 'owner' ? 'Dueño' : 'Barbero',
-                      style: AppTypography.bodySmall.copyWith(color: AppColors.onSurfaceVariant),
-                    ),
-                    trailing: const Icon(Icons.chevron_right_rounded),
-                    onTap: () {
-                      final barberId = member['barberId'] as String? ?? '';
-                      if (barberId.isNotEmpty) {
-                        context.go('/barberia/${member['barberId']}/barbero/$barberId');
-                      }
-                    },
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final width = constraints.maxWidth;
+                final crossAxisCount = width < 360 ? 1 : 2;
+                final isCompact = width < 390;
+
+                return GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: crossAxisCount,
+                    crossAxisSpacing: 12,
+                    mainAxisSpacing: 12,
+                    mainAxisExtent: isCompact ? 250 : 270,
                   ),
-                )),
+                  itemCount: members.length,
+                  itemBuilder: (context, index) {
+                    final member = members[index];
+                    return _BarberMemberCard(
+                      member: member,
+                      onTap: () {
+                        final barberId = member['barberId'] as String? ?? '';
+                        if (barberId.isNotEmpty) {
+                          context.go('/barberia/$shopId/barbero/$barberId');
+                        }
+                      },
+                    );
+                  },
+                );
+              },
+            ),
         ],
+      ),
+    );
+  }
+}
+
+class _BarberMemberCard extends StatelessWidget {
+  const _BarberMemberCard({required this.member, required this.onTap});
+
+  final Map<String, dynamic> member;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final name = member['barberName'] as String? ?? 'Barbero';
+    final roleLabel = member['role'] == 'owner' ? 'Dueño' : 'Barbero';
+    final avatarUrl = member['barberAvatarUrl'] as String? ?? '';
+
+    return Semantics(
+      button: true,
+      label: 'Reservar con $name, $roleLabel',
+      child: Container(
+        decoration: BoxDecoration(
+          color: colorScheme.surfaceContainerLowest,
+          borderRadius: BorderRadius.circular(AppRadius.xl),
+          boxShadow: [
+            BoxShadow(
+              color: colorScheme.onSurface.withValues(alpha: 0.08),
+              blurRadius: 20,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: onTap,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(
+                  height: 140,
+                  width: double.infinity,
+                  child: _BarberAvatar(name: name, imageUrl: avatarUrl),
+                ),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.all(14),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTypography.titleMedium.copyWith(
+                            color: colorScheme.onSurface,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 5,
+                          ),
+                          decoration: BoxDecoration(
+                            color: colorScheme.primaryContainer,
+                            borderRadius: BorderRadius.circular(
+                              AppRadius.full,
+                            ),
+                          ),
+                          child: Text(
+                            roleLabel,
+                            style: AppTypography.labelSmall.copyWith(
+                              color: colorScheme.onPrimaryContainer,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
+                        const Spacer(),
+                        Row(
+                          children: [
+                            Text(
+                              'Reservar',
+                              style: AppTypography.labelMedium.copyWith(
+                                color: colorScheme.secondary,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            Icon(
+                              Icons.arrow_forward_rounded,
+                              size: 16,
+                              color: colorScheme.secondary,
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _BarberAvatar extends StatelessWidget {
+  const _BarberAvatar({required this.name, required this.imageUrl});
+
+  final String name;
+  final String imageUrl;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return Container(
+      color: colorScheme.surfaceContainerHighest,
+      child: imageUrl.isEmpty
+          ? _AvatarFallback(name: name)
+          : Image.network(
+              imageUrl,
+              fit: BoxFit.cover,
+              semanticLabel: 'Foto de $name',
+              errorBuilder: (context, error, stackTrace) =>
+                  _AvatarFallback(name: name),
+            ),
+    );
+  }
+}
+
+class _AvatarFallback extends StatelessWidget {
+  const _AvatarFallback({required this.name});
+
+  final String name;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final initial = name.trim().isEmpty ? 'B' : name.trim()[0].toUpperCase();
+
+    return Center(
+      child: Text(
+        initial,
+        style: AppTypography.headlineSmall.copyWith(
+          color: colorScheme.onSurfaceVariant,
+          fontWeight: FontWeight.w800,
+        ),
       ),
     );
   }

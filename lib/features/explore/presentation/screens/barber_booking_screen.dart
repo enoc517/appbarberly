@@ -9,27 +9,11 @@ import '../cubit/barber_booking_cubit.dart';
 import '../cubit/barber_booking_state.dart';
 
 class BarberBookingScreen extends StatelessWidget {
-  final String shopId;
-  final String barberId;
-  final String? clientId;
-
-  const BarberBookingScreen({
-    super.key,
-    required this.shopId,
-    required this.barberId,
-    this.clientId,
-  });
+  const BarberBookingScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => BarberBookingCubit(
-        shopId: shopId,
-        barberId: barberId,
-        clientId: clientId,
-      )..loadData(),
-      child: const _BarberBookingView(),
-    );
+    return const _BarberBookingView();
   }
 }
 
@@ -38,6 +22,7 @@ class _BarberBookingView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return BlocListener<BarberBookingCubit, BarberBookingState>(
       listenWhen: (prev, curr) => prev.isBooking != curr.isBooking || prev.errorMessage != curr.errorMessage,
       listener: (context, state) {
@@ -50,17 +35,17 @@ class _BarberBookingView extends StatelessWidget {
         }
       },
       child: Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: theme.scaffoldBackgroundColor,
         appBar: AppBar(
           leading: IconButton(
             icon: const Icon(Icons.arrow_back_rounded),
-            onPressed: () => context.pop(),
+            onPressed: () => context.go('/explorar'),
           ),
           title: BlocBuilder<BarberBookingCubit, BarberBookingState>(
             builder: (context, state) => Text(
               state.barberName ?? 'Barbero',
               style: AppTypography.titleLarge.copyWith(
-                color: AppColors.onSurface,
+                color: theme.colorScheme.onSurface,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -85,6 +70,7 @@ class _BookingContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return BlocBuilder<BarberBookingCubit, BarberBookingState>(
       builder: (context, state) {
         return SingleChildScrollView(
@@ -96,7 +82,7 @@ class _BookingContent extends StatelessWidget {
                 child: Text(
                   'Servicios',
                   style: AppTypography.titleLarge.copyWith(
-                    color: AppColors.onSurface,
+                    color: theme.colorScheme.onSurface,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
@@ -106,7 +92,7 @@ class _BookingContent extends StatelessWidget {
                 Text(
                   'No hay servicios disponibles',
                   style: AppTypography.bodyLarge.copyWith(
-                    color: AppColors.onSurfaceVariant,
+                    color: theme.colorScheme.onSurfaceVariant,
                   ),
                 )
               else
@@ -117,7 +103,7 @@ class _BookingContent extends StatelessWidget {
                   child: Text(
                     'Selecciona el día',
                     style: AppTypography.titleLarge.copyWith(
-                      color: AppColors.onSurface,
+                      color: theme.colorScheme.onSurface,
                       fontWeight: FontWeight.w800,
                     ),
                   ),
@@ -127,7 +113,7 @@ class _BookingContent extends StatelessWidget {
                   Text(
                     'No hay días disponibles',
                     style: AppTypography.bodyLarge.copyWith(
-                      color: AppColors.onSurfaceVariant,
+                      color: theme.colorScheme.onSurfaceVariant,
                     ),
                   )
                 else
@@ -140,11 +126,11 @@ class _BookingContent extends StatelessWidget {
                         label: Text(
                           '${day.day}/${day.month}',
                           style: TextStyle(
-                            color: selected ? AppColors.onPrimary : AppColors.onSurface,
+                            color: selected ? theme.colorScheme.onPrimary : theme.colorScheme.onSurface,
                           ),
                         ),
                         selected: selected,
-                        selectedColor: AppColors.primaryContainer,
+                        selectedColor: theme.colorScheme.primaryContainer,
                         onSelected: (_) => context.read<BarberBookingCubit>().selectDay(day),
                       );
                     }).toList(),
@@ -156,7 +142,7 @@ class _BookingContent extends StatelessWidget {
                   child: Text(
                     'Selecciona la hora',
                     style: AppTypography.titleLarge.copyWith(
-                      color: AppColors.onSurface,
+                      color: theme.colorScheme.onSurface,
                       fontWeight: FontWeight.w800,
                     ),
                   ),
@@ -171,11 +157,11 @@ class _BookingContent extends StatelessWidget {
                       label: Text(
                         time,
                         style: TextStyle(
-                          color: selected ? AppColors.onPrimary : AppColors.onSurface,
+                          color: selected ? theme.colorScheme.onPrimary : theme.colorScheme.onSurface,
                         ),
                       ),
                       selected: selected,
-                      selectedColor: AppColors.primaryContainer,
+                      selectedColor: theme.colorScheme.primaryContainer,
                       onSelected: (_) => context.read<BarberBookingCubit>().selectTime(time),
                     );
                   }).toList(),
@@ -191,19 +177,19 @@ class _BookingContent extends StatelessWidget {
                         ? () => context.read<BarberBookingCubit>().confirmBooking()
                         : null,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.secondary,
-                      foregroundColor: AppColors.onSecondary,
+                      backgroundColor: theme.colorScheme.secondary,
+                      foregroundColor: theme.colorScheme.onSecondary,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(AppRadius.xl),
                       ),
                     ),
                     child: state.isBooking
-                        ? const SizedBox(
+                        ? SizedBox(
                             width: 20,
                             height: 20,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              color: AppColors.onSecondary,
+                              color: theme.colorScheme.onSecondary,
                             ),
                           )
                         : const Text(
@@ -236,21 +222,22 @@ class _ServiceTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return BlocBuilder<BarberBookingCubit, BarberBookingState>(
       buildWhen: (prev, curr) => prev.selectedService != curr.selectedService,
       builder: (context, state) {
         final selected = state.selectedService?['id'] == service['id'];
         return Card(
           margin: const EdgeInsets.only(bottom: 8),
-          color: selected ? AppColors.primaryContainer.withValues(alpha: 0.1) : null,
+          color: selected ? theme.colorScheme.primaryContainer.withValues(alpha: 0.1) : null,
           child: ListTile(
             title: Text(
               service['name'] as String,
-              style: AppTypography.titleMedium.copyWith(color: AppColors.onSurface),
+              style: AppTypography.titleMedium.copyWith(color: theme.colorScheme.onSurface),
             ),
             subtitle: Text(
               '₡${(service['price'] as num).toStringAsFixed(0)} — ${service['durationMinutes']}min',
-              style: AppTypography.bodySmall.copyWith(color: AppColors.onSurfaceVariant),
+              style: AppTypography.bodySmall.copyWith(color: theme.colorScheme.onSurfaceVariant),
             ),
             onTap: () => context.read<BarberBookingCubit>().selectService(service),
           ),

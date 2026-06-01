@@ -18,18 +18,16 @@ abstract class BarbershopManagementRemoteDatasource {
 
 class BarbershopManagementRemoteDatasourceImpl
     implements BarbershopManagementRemoteDatasource {
-  BarbershopManagementRemoteDatasourceImpl({
-    FirebaseFirestore? firestore,
-  }) : _db = firestore ?? FirebaseFirestore.instance;
+  BarbershopManagementRemoteDatasourceImpl({FirebaseFirestore? firestore})
+    : _db = firestore ?? FirebaseFirestore.instance;
 
   final FirebaseFirestore _db;
 
   CollectionReference<Map<String, dynamic>> get _shopsCollection =>
       _db.collection('barbershops');
 
-  CollectionReference<Map<String, dynamic>> _membersCollection(
-    String shopId,
-  ) => _shopsCollection.doc(shopId).collection('members');
+  CollectionReference<Map<String, dynamic>> _membersCollection(String shopId) =>
+      _shopsCollection.doc(shopId).collection('members');
 
   @override
   Future<Barbershop> create({
@@ -53,6 +51,7 @@ class BarbershopManagementRemoteDatasourceImpl
       'reviewCount': 0,
       'hasActivePromotion': false,
       'tags': params.tags,
+      'barberNames': [ownerName],
       'isActive': true,
       'position': geoFirePoint.data,
       'createdAt': FieldValue.serverTimestamp(),
@@ -94,9 +93,7 @@ class BarbershopManagementRemoteDatasourceImpl
 
   @override
   Future<Barbershop> update(UpdateBarbershopParams params) async {
-    final data = <String, dynamic>{
-      'updatedAt': FieldValue.serverTimestamp(),
-    };
+    final data = <String, dynamic>{'updatedAt': FieldValue.serverTimestamp()};
 
     if (params.name != null) data['name'] = params.name;
     if (params.phone != null) data['phone'] = params.phone;

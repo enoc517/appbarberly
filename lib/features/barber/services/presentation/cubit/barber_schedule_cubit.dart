@@ -18,22 +18,30 @@ class BarberScheduleCubit extends Cubit<BarberScheduleState> {
 
   String? _barbershopId;
   String? _barberId;
-  final Map<int, _DaySchedule> _localSchedule = {};
-  final Set<int> _selectedDays = {};
 
-  String? _pendingStartTime;
-  String? _pendingEndTime;
+  Set<int> get selectedDays =>
+      state is BarberScheduleLoaded
+          ? (state as BarberScheduleLoaded).selectedDays
+          : <int>{};
 
-  Set<int> get selectedDays => Set.unmodifiable(_selectedDays);
-  String? get pendingStartTime => _pendingStartTime;
-  String? get pendingEndTime => _pendingEndTime;
+  String? get pendingStartTime =>
+      state is BarberScheduleLoaded
+          ? (state as BarberScheduleLoaded).pendingStartTime
+          : null;
+
+  String? get pendingEndTime =>
+      state is BarberScheduleLoaded
+          ? (state as BarberScheduleLoaded).pendingEndTime
+          : null;
+
+  BarberScheduleLoaded? get _loadedOrNull =>
+      state is BarberScheduleLoaded ? state as BarberScheduleLoaded : null;
 
   Future<void> load(String barbershopId, String barberId) async {
     if (barbershopId.isEmpty || barberId.isEmpty) return;
 
     _barbershopId = barbershopId;
     _barberId = barberId;
-    _selectedDays.clear();
     emit(const BarberScheduleLoading());
 
     final result = await _getBarberSchedule(
@@ -42,99 +50,116 @@ class BarberScheduleCubit extends Cubit<BarberScheduleState> {
 
     emit(result.when(
       ok: (schedule) {
-        _localSchedule.clear();
+        final scheduleMap = <int, BarberSchedule>{};
         for (final s in schedule) {
-          _localSchedule[s.dayOfWeek] = _DaySchedule(
-            isActive: s.isActive,
-            startTime: s.startTime,
-            endTime: s.endTime,
-          );
+          scheduleMap[s.dayOfWeek] = s;
         }
-        return _loadedState();
+        return BarberScheduleLoaded(
+          schedule: scheduleMap,
+          selectedDays: const {},
+          pendingStartTime: null,
+          pendingEndTime: null,
+        );
       },
       fail: (f) => BarberScheduleError(f.message),
     ));
   }
 
   void toggleDay(int dayOfWeek) {
-    if (_selectedDays.contains(dayOfWeek)) {
-      _selectedDays.remove(dayOfWeek);
+    final current = _loadedOrNull;
+    if (current == null) return;
+
+    final updated = Set<int>.from(current.selectedDays);
+    if (updated.contains(dayOfWeek)) {
+      updated.remove(dayOfWeek);
     } else {
-      _selectedDays.add(dayOfWeek);
+      updated.add(dayOfWeek);
     }
-    _emitSelectionChanged();
+    emit(_buildLoaded(
+      current,
+      selectedDays: updated,
+    ));
   }
 
   void selectPreset(List<int> days) {
-    _selectedDays.clear();
-    _selectedDays.addAll(days);
-    _emitSelectionChanged();
-  }
+    final current = _loadedOrNull;
+    if (current == null) return;
 
-  void _emitSelectionChanged() {
-    emit(_loadedState());
+    emit(_buildLoaded(
+      current,
+      selectedDays: days.toSet(),
+    ));
   }
 
   void setPendingTimes(String? startTime, String? endTime) {
-    _pendingStartTime = startTime;
-    _pendingEndTime = endTime;
-    emit(_loadedState());
+    final current = _loadedOrNull;
+    if (current == null) return;
+
+    emit(_buildLoaded(
+      current,
+      pendingStartTime: startTime,
+      pendingEndTime: endTime,
+    ));
   }
 
   Future<void> saveDays() async {
+    final current = _loadedOrNull;
+    if (current == null) return;
     if (_barbershopId == null || _barberId == null) return;
-    if (_selectedDays.isEmpty) return;
-    if (_pendingStartTime == null || _pendingEndTime == null) return;
+    if (current.selectedDays.isEmpty) return;
+    if (current.pendingStartTime == null || current.pendingEndTime == null) return;
 
-    final startTime24 = _to24h(_pendingStartTime!);
-    final endTime24 = _to24h(_pendingEndTime!);
+    final startTime24 = _to24h(current.pendingStartTime!);
+    final endTime24 = _to24h(current.pendingEndTime!);
 
     final futures = <Future>[];
-    for (final day in _selectedDays) {
-      final params = SetScheduleParams(
+    for (final day in current.selectedDays) {
+      futures.add(_setSchedule(SetScheduleParams(
         barbershopId: _barbershopId!,
         barberId: _barberId!,
         dayOfWeek: day,
         startTime: startTime24,
         endTime: endTime24,
         isActive: true,
-      );
-      futures.add(_setSchedule(params));
+      )));
     }
 
     await Future.wait(futures);
 
-    for (final day in _selectedDays) {
-      _localSchedule[day] = _DaySchedule(
+    final updatedSchedule = Map<int, BarberSchedule>.from(current.schedule);
+    for (final day in current.selectedDays) {
+      updatedSchedule[day] = BarberSchedule(
+        id: 'day_$day',
+        dayOfWeek: day,
         isActive: true,
         startTime: startTime24,
         endTime: endTime24,
       );
     }
 
-    emit(BarberScheduleDaysSaved(_selectedDays.toList()));
+    emit(BarberScheduleDaysSaved(current.selectedDays.toList()));
 
     await Future.delayed(const Duration(milliseconds: 100));
-    emit(_loadedState());
+    emit(BarberScheduleLoaded(
+      schedule: updatedSchedule,
+      selectedDays: const {},
+      pendingStartTime: null,
+      pendingEndTime: null,
+    ));
   }
 
-  BarberScheduleLoaded _loadedState() {
+  BarberScheduleLoaded _buildLoaded(
+    BarberScheduleLoaded current, {
+    Map<int, BarberSchedule>? schedule,
+    Set<int>? selectedDays,
+    String? pendingStartTime,
+    String? pendingEndTime,
+  }) {
     return BarberScheduleLoaded(
-      schedule: Map.fromEntries(
-        _localSchedule.entries.map((e) => MapEntry(
-              e.key,
-              BarberSchedule(
-                id: 'day_${e.key}',
-                dayOfWeek: e.key,
-                isActive: e.value.isActive,
-                startTime: e.value.startTime,
-                endTime: e.value.endTime,
-              ),
-            )),
-      ),
-      selectedDays: Set.from(_selectedDays),
-      pendingStartTime: _pendingStartTime,
-      pendingEndTime: _pendingEndTime,
+      schedule: schedule ?? current.schedule,
+      selectedDays: selectedDays ?? current.selectedDays,
+      pendingStartTime: pendingStartTime ?? current.pendingStartTime,
+      pendingEndTime: pendingEndTime ?? current.pendingEndTime,
     );
   }
 
@@ -150,21 +175,19 @@ class BarberScheduleCubit extends Cubit<BarberScheduleState> {
   }
 
   Future<void> saveAll() async {
+    final current = _loadedOrNull;
+    if (current == null) return;
     if (_barbershopId == null || _barberId == null) return;
 
-    for (var i = 1; i <= 7; i++) {
-      final day = _localSchedule[i];
-      if (day == null) continue;
-
-      final params = SetScheduleParams(
+    for (final entry in current.schedule.entries) {
+      await _setSchedule(SetScheduleParams(
         barbershopId: _barbershopId!,
         barberId: _barberId!,
-        dayOfWeek: i,
-        startTime: day.startTime,
-        endTime: day.endTime,
-        isActive: day.isActive,
-      );
-      await _setSchedule(params);
+        dayOfWeek: entry.key,
+        startTime: entry.value.startTime,
+        endTime: entry.value.endTime,
+        isActive: entry.value.isActive,
+      ));
     }
 
     emit(const BarberScheduleSaved());
@@ -172,16 +195,4 @@ class BarberScheduleCubit extends Cubit<BarberScheduleState> {
       load(_barbershopId!, _barberId!);
     }
   }
-}
-
-class _DaySchedule {
-  final bool isActive;
-  final String startTime;
-  final String endTime;
-
-  const _DaySchedule({
-    required this.isActive,
-    required this.startTime,
-    required this.endTime,
-  });
 }

@@ -1,70 +1,36 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../../features/bookings/data/repositories/firestore_bookings_repository.dart';
-import '../../../../features/bookings/domain/entities/booking.dart';
+import '../../domain/repositories/barber_booking_repository.dart';
+import '../../../bookings/domain/entities/booking.dart';
 import 'barber_booking_state.dart';
 
 class BarberBookingCubit extends Cubit<BarberBookingState> {
   final String shopId;
   final String barberId;
   final String? clientId;
+  final BarberBookingRepository _repository;
 
   BarberBookingCubit({
     required this.shopId,
     required this.barberId,
     this.clientId,
-  }) : super(const BarberBookingState());
+    required BarberBookingRepository repository,
+  })  : _repository = repository,
+        super(const BarberBookingState());
 
   Future<void> loadData() async {
     emit(state.copyWith(isLoading: true, errorMessage: null));
 
     try {
-      final db = FirebaseFirestore.instance;
+      final result = await _repository.loadBarberData(shopId, barberId);
 
-      final memberDoc = await db
-          .collection('barbershops')
-          .doc(shopId)
-          .collection('members')
-          .doc(barberId)
-          .get();
-
-      final barberName = memberDoc.data()?['barberName'] as String? ?? 'Barbero';
-
-      final servicesSnapshot = await db
-          .collection('barbershops')
-          .doc(shopId)
-          .collection('barbers')
-          .doc(barberId)
-          .collection('services')
-          .where('isActive', isEqualTo: true)
-          .get();
-
-      final scheduleSnapshot = await db
-          .collection('barbershops')
-          .doc(shopId)
-          .collection('barbers')
-          .doc(barberId)
-          .collection('schedule')
-          .get();
-
-      final services = servicesSnapshot.docs.map((d) => {'id': d.id, ...d.data()}).toList();
-
-      final schedule = <int, bool>{};
-      for (final doc in scheduleSnapshot.docs) {
-        final data = doc.data();
-        if (data['isActive'] == true) {
-          schedule[data['dayOfWeek'] as int] = true;
-        }
-      }
-
-      final availableDays = _computeAvailableDays(schedule);
+      final availableDays = _computeAvailableDays(result.schedule);
 
       emit(state.copyWith(
         isLoading: false,
-        barberName: barberName,
-        services: services,
-        schedule: schedule,
+        barberName: result.barberName,
+        services: result.services,
+        schedule: result.schedule,
         availableDays: availableDays,
       ));
     } catch (e) {
@@ -90,13 +56,9 @@ class BarberBookingCubit extends Cubit<BarberBookingState> {
     emit(state.copyWith(isBooking: true, errorMessage: null));
 
     try {
-      final db = FirebaseFirestore.instance;
-
-      final clientDoc = await db.collection('users').doc(clientId).get();
-      final clientName = clientDoc.data()?['fullName'] as String? ?? 'Cliente';
-
-      final shopDoc = await db.collection('barbershops').doc(shopId).get();
-      final shopName = shopDoc.data()?['name'] as String? ?? '';
+      final clientName =
+          await _repository.getClientName(clientId!);
+      final shopName = await _repository.getShopName(shopId);
 
       final serviceName = state.selectedService!['name'] as String;
       final price = (state.selectedService!['price'] as num).toDouble();
@@ -113,8 +75,7 @@ class BarberBookingCubit extends Cubit<BarberBookingState> {
       final dateKey =
           '${slotStart.year}-${slotStart.month.toString().padLeft(2, '0')}-${slotStart.day.toString().padLeft(2, '0')}';
 
-      final repository = FirestoreBookingsRepository(firestore: db);
-      await repository.createBooking(
+      await _repository.createBooking(
         BookingDraft(
           clientId: clientId!,
           barberId: barberId,
@@ -126,7 +87,8 @@ class BarberBookingCubit extends Cubit<BarberBookingState> {
           price: price,
           durationMinutes: durationMin,
           clientSnapshot: BookingSnapshot(name: clientName),
-          barberSnapshot: BookingSnapshot(name: state.barberName ?? 'Barbero'),
+          barberSnapshot:
+              BookingSnapshot(name: state.barberName ?? 'Barbero'),
           shopSnapshot: BookingSnapshot(name: shopName),
           serviceSnapshot: BookingSnapshot(name: serviceName),
         ),

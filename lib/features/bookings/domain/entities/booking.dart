@@ -6,6 +6,8 @@ enum AppointmentBookingStatus {
   cancelled,
 }
 
+enum BookingCancellationActor { client, barber }
+
 extension AppointmentBookingStatusX on AppointmentBookingStatus {
   bool get isActive =>
       this == AppointmentBookingStatus.pending ||

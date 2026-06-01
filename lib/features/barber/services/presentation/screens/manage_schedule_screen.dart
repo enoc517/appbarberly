@@ -46,7 +46,7 @@ class _ManageScheduleView extends StatelessWidget {
         }
       },
       child: Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         appBar: AppBar(
           leading: IconButton(
             icon: const Icon(Icons.arrow_back_rounded),
@@ -55,7 +55,7 @@ class _ManageScheduleView extends StatelessWidget {
           title: Text(
             'Mi horario',
             style: AppTypography.titleLarge.copyWith(
-              color: AppColors.onSurface,
+              color: Theme.of(context).colorScheme.onSurface,
               fontWeight: FontWeight.w700,
             ),
           ),
@@ -63,8 +63,8 @@ class _ManageScheduleView extends StatelessWidget {
         body: BlocBuilder<BarberScheduleCubit, BarberScheduleState>(
           builder: (context, state) {
             if (state is BarberScheduleLoading) {
-              return const Center(
-                child: CircularProgressIndicator(color: AppColors.primary),
+              return Center(
+                child: CircularProgressIndicator(color: Theme.of(context).colorScheme.primary),
               );
             }
             if (state is BarberScheduleLoaded) {
@@ -121,13 +121,14 @@ class _DaySelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           'Días',
           style: AppTypography.labelLarge.copyWith(
-            color: AppColors.onSurfaceVariant,
+            color: theme.colorScheme.onSurfaceVariant,
             fontWeight: FontWeight.w700,
             letterSpacing: 0.8,
           ),
@@ -183,6 +184,7 @@ class _DayChip extends StatelessWidget {
           (prev is! BarberScheduleLoaded ||
               prev.selectedDays != curr.selectedDays),
       builder: (context, state) {
+        final theme = Theme.of(context);
         final selected =
             state is BarberScheduleLoaded && state.selectedDays.contains(day);
 
@@ -193,10 +195,10 @@ class _DayChip extends StatelessWidget {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: selected ? AppColors.secondary : AppColors.surfaceContainerHighest,
+              color: selected ? theme.colorScheme.secondary : theme.colorScheme.surfaceContainerHighest,
               borderRadius: BorderRadius.circular(AppRadius.md),
               border: Border.all(
-                color: selected ? AppColors.secondary : Colors.transparent,
+                color: selected ? theme.colorScheme.secondary : Colors.transparent,
                 width: 2,
               ),
             ),
@@ -204,7 +206,7 @@ class _DayChip extends StatelessWidget {
               child: Text(
                 label,
                 style: AppTypography.labelLarge.copyWith(
-                  color: selected ? Colors.white : AppColors.onSurfaceVariant,
+                  color: selected ? Colors.white : theme.colorScheme.onSurfaceVariant,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -223,17 +225,18 @@ class _PresetButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return TextButton(
       onPressed: onPressed,
       style: TextButton.styleFrom(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        backgroundColor: AppColors.surfaceContainerHighest,
+        backgroundColor: theme.colorScheme.surfaceContainerHighest,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.full)),
       ),
       child: Text(
         label,
         style: AppTypography.labelMedium.copyWith(
-          color: AppColors.onSurfaceVariant,
+          color: theme.colorScheme.onSurfaceVariant,
           fontWeight: FontWeight.w600,
         ),
       ),
@@ -279,7 +282,7 @@ class _TimeForm extends StatelessWidget {
                   child: Text(
                     'La hora de cierre debe ser posterior a la de apertura',
                     style: AppTypography.bodySmall.copyWith(
-                      color: AppColors.secondary,
+                      color: Theme.of(context).colorScheme.secondary,
                     ),
                   ),
                 ),
@@ -333,20 +336,21 @@ class _TimeField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
           style: AppTypography.labelLarge.copyWith(
-            color: AppColors.onSurfaceVariant,
+            color: theme.colorScheme.onSurfaceVariant,
             fontWeight: FontWeight.w700,
             letterSpacing: 0.8,
           ),
         ),
         const SizedBox(height: 8),
         Material(
-          color: AppColors.surfaceContainerHighest,
+          color: theme.colorScheme.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(AppRadius.xl),
           child: InkWell(
             borderRadius: BorderRadius.circular(AppRadius.xl),
@@ -355,18 +359,18 @@ class _TimeField extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
               child: Row(
                 children: [
-                  Icon(Icons.access_time_rounded, color: AppColors.outline, size: 20),
+                  Icon(Icons.access_time_rounded, color: theme.colorScheme.outline, size: 20),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
                       value.isEmpty ? 'Seleccionar' : value,
                       style: AppTypography.bodyLarge.copyWith(
-                        color: value.isEmpty ? AppColors.outline : AppColors.onSurface,
+                        color: value.isEmpty ? theme.colorScheme.outline : theme.colorScheme.onSurface,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),
-                  Icon(Icons.unfold_more_rounded, color: AppColors.onSurfaceVariant, size: 20),
+                  Icon(Icons.unfold_more_rounded, color: theme.colorScheme.onSurfaceVariant, size: 20),
                 ],
               ),
             ),
@@ -391,6 +395,7 @@ class _ApplyButton extends StatelessWidget {
               prev.pendingEndTime != curr.pendingEndTime ||
               prev.schedule.length != curr.schedule.length),
       builder: (context, state) {
+        final theme = Theme.of(context);
         if (state is! BarberScheduleLoaded) return const SizedBox.shrink();
         final selectedCount = state.selectedDays.length;
         final startTime = state.pendingStartTime;
@@ -410,8 +415,8 @@ class _ApplyButton extends StatelessWidget {
                 : null,
             style: FilledButton.styleFrom(
               backgroundColor:
-                  canApply ? AppColors.primary : AppColors.surfaceContainerHighest,
-              foregroundColor: canApply ? AppColors.onPrimary : AppColors.outline,
+                  canApply ? theme.colorScheme.primary : theme.colorScheme.surfaceContainerHighest,
+              foregroundColor: canApply ? theme.colorScheme.onPrimary : theme.colorScheme.outline,
               elevation: 0,
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(AppRadius.xl)),
@@ -422,7 +427,7 @@ class _ApplyButton extends StatelessWidget {
                 Icon(
                   Icons.check_rounded,
                   size: 22,
-                  color: canApply ? AppColors.onPrimary : AppColors.outline,
+                  color: canApply ? theme.colorScheme.onPrimary : theme.colorScheme.outline,
                 ),
                 const SizedBox(width: 8),
                 Text(
@@ -430,7 +435,7 @@ class _ApplyButton extends StatelessWidget {
                       ? 'Aplicar a $selectedCount ${selectedCount == 1 ? 'día' : 'días'}'
                       : 'Seleccioná los días',
                   style: AppTypography.labelLarge.copyWith(
-                    color: canApply ? AppColors.onPrimary : AppColors.outline,
+                    color: canApply ? theme.colorScheme.onPrimary : theme.colorScheme.outline,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
@@ -465,13 +470,14 @@ class _SchedulePreview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           'Mi horario',
           style: AppTypography.labelLarge.copyWith(
-            color: AppColors.onSurfaceVariant,
+            color: theme.colorScheme.onSurfaceVariant,
             fontWeight: FontWeight.w700,
             letterSpacing: 0.8,
           ),
@@ -483,7 +489,7 @@ class _SchedulePreview extends StatelessWidget {
 
             return Container(
               decoration: BoxDecoration(
-                color: AppColors.surfaceContainerLowest,
+                color: theme.colorScheme.surfaceContainerLowest,
                 borderRadius: BorderRadius.circular(AppRadius.xl),
               ),
               child: Column(
@@ -500,7 +506,7 @@ class _SchedulePreview extends StatelessWidget {
                       border: index < 6
                           ? Border(
                               bottom: BorderSide(
-                                color: AppColors.outline.withValues(alpha: 0.1),
+                                color: theme.colorScheme.outline.withValues(alpha: 0.1),
                               ),
                             )
                           : null,
@@ -512,15 +518,15 @@ class _SchedulePreview extends StatelessWidget {
                           height: 32,
                           decoration: BoxDecoration(
                             color: isActive
-                                ? AppColors.primary.withValues(alpha: 0.12)
-                                : AppColors.surfaceContainerHighest,
+                                ? theme.colorScheme.primary.withValues(alpha: 0.12)
+                                : theme.colorScheme.surfaceContainerHighest,
                             borderRadius: BorderRadius.circular(AppRadius.sm),
                           ),
                           child: Center(
                             child: Text(
                               _dayInitials[index],
                               style: AppTypography.labelMedium.copyWith(
-                                color: isActive ? AppColors.primary : AppColors.onSurfaceVariant,
+                                color: isActive ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant,
                                 fontWeight: FontWeight.w700,
                               ),
                             ),
@@ -531,14 +537,14 @@ class _SchedulePreview extends StatelessWidget {
                           child: Text(
                             isActive ? _formatSchedule(start, end) : 'Día libre',
                             style: AppTypography.bodyMedium.copyWith(
-                              color: isActive ? AppColors.onSurface : AppColors.outline,
+                              color: isActive ? theme.colorScheme.onSurface : theme.colorScheme.outline,
                               fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
                             ),
                           ),
                         ),
                         Icon(
                           isActive ? Icons.check_circle_rounded : Icons.circle_outlined,
-                          color: isActive ? AppColors.primary : AppColors.outline.withValues(alpha: 0.4),
+                          color: isActive ? theme.colorScheme.primary : theme.colorScheme.outline.withValues(alpha: 0.4),
                           size: 18,
                         ),
                       ],
@@ -592,9 +598,10 @@ class _TimePickerSheetState extends State<_TimePickerSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surfaceContainerLowest,
+        color: theme.colorScheme.surfaceContainerLowest,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
       ),
       child: Column(
@@ -608,7 +615,7 @@ class _TimePickerSheetState extends State<_TimePickerSheet> {
                   width: 36,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: AppColors.outline.withValues(alpha: 0.3),
+                    color: theme.colorScheme.outline.withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -616,7 +623,7 @@ class _TimePickerSheetState extends State<_TimePickerSheet> {
                 Text(
                   widget.isStart ? 'Hora de apertura' : 'Hora de cierre',
                   style: AppTypography.titleMedium.copyWith(
-                    color: AppColors.onSurface,
+                    color: theme.colorScheme.onSurface,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -647,7 +654,7 @@ class _TimePickerSheetState extends State<_TimePickerSheet> {
                     ),
                     child: Text(
                       'Cancelar',
-                      style: AppTypography.labelLarge.copyWith(color: AppColors.onSurfaceVariant),
+                      style: AppTypography.labelLarge.copyWith(color: theme.colorScheme.onSurfaceVariant),
                     ),
                   ),
                 ),
@@ -667,15 +674,15 @@ class _TimePickerSheetState extends State<_TimePickerSheet> {
                       widget.onSelected(time12h);
                     },
                     style: FilledButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      foregroundColor: AppColors.onPrimary,
+                      backgroundColor: theme.colorScheme.primary,
+                      foregroundColor: theme.colorScheme.onPrimary,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.xl)),
                     ),
                     child: Text(
                       'Aceptar',
                       style: AppTypography.labelLarge.copyWith(
-                        color: AppColors.onPrimary,
+                        color: theme.colorScheme.onPrimary,
                         fontWeight: FontWeight.w700,
                       ),
                     ),

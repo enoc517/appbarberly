@@ -6,15 +6,16 @@ class BarbershopMap extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       height: 140,
       decoration: BoxDecoration(
-        color: AppColors.primary,
+        color: theme.colorScheme.primary,
         borderRadius: BorderRadius.circular(AppRadius.xl),
       ),
-      child: const Center(
-        child: Icon(Icons.location_on, size: 56, color: AppColors.secondary),
+      child: Center(
+        child: Icon(Icons.location_on, size: 56, color: theme.colorScheme.secondary),
       ),
     );
   }

@@ -16,8 +16,9 @@ class DashboardScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
         bottom: false,
         child: BlocBuilder<DashboardCubit, DashboardState>(
@@ -40,6 +41,7 @@ class _Content extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return ListView(
       padding: const EdgeInsets.only(bottom: 24),
       children: [
@@ -83,7 +85,7 @@ class _Content extends StatelessWidget {
               Text(
                 '${data.summary.pendingAppointments} pendientes',
                 style: AppTypography.labelLarge.copyWith(
-                  color: AppColors.secondary,
+                  color: theme.colorScheme.secondary,
                   fontWeight: FontWeight.w700,
                 ),
               ),

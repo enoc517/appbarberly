@@ -72,6 +72,60 @@ class AppColors {
 
   static Color ambientShadow = onSurface.withValues(alpha: 0.06);
   static Color ghostBorder = outlineVariant.withValues(alpha: 0.15);
+
+  // ── Dark mode colors -------------------------------------------------------
+  static const Color darkPrimary = Color(0xFFBAC8DC);
+  static const Color darkOnPrimary = Color(0xFF0D1B2A);
+  static const Color darkPrimaryContainer = Color(0xFF1A2B3D);
+  static const Color darkOnPrimaryContainer = Color(0xFFD6E4F9);
+
+  static const Color darkSecondary = Color(0xFFFFB3B1);
+  static const Color darkOnSecondary = Color(0xFF68000B);
+  static const Color darkSecondaryContainer = Color(0xFFE63946);
+  static const Color darkOnSecondaryContainer = Color(0xFFFFFFFF);
+
+  static const Color darkTertiary = Color(0xFFFFB2B8);
+  static const Color darkOnTertiary = Color(0xFF670018);
+  static const Color darkTertiaryContainer = Color(0xFFFF4D6D);
+  static const Color darkOnTertiaryContainer = Color(0xFFFFFFFF);
+
+  static const Color darkError = Color(0xFFFFB4AB);
+  static const Color darkOnError = Color(0xFF690005);
+  static const Color darkErrorContainer = Color(0xFF93000A);
+  static const Color darkOnErrorContainer = Color(0xFFFFDAD6);
+
+  static const Color darkSurface = Color(0xFF121212);
+  static const Color darkSurfaceBright = Color(0xFF383838);
+  static const Color darkSurfaceDim = Color(0xFF121212);
+  static const Color darkSurfaceContainer = Color(0xFF1E1E1E);
+  static const Color darkSurfaceContainerLow = Color(0xFF1A1A1A);
+  static const Color darkSurfaceContainerHigh = Color(0xFF282828);
+  static const Color darkSurfaceContainerHighest = Color(0xFF333333);
+  static const Color darkSurfaceContainerLowest = Color(0xFF0F0F0F);
+  static const Color darkSurfaceVariant = Color(0xFF2A2A2A);
+  static const Color darkSurfaceTint = Color(0xFFBAC8DC);
+
+  static const Color darkOnSurface = Color(0xFFE1E1E1);
+  static const Color darkOnSurfaceVariant = Color(0xFFC4C6CC);
+  static const Color darkBackground = Color(0xFF121212);
+  static const Color darkOnBackground = Color(0xFFE1E1E1);
+
+  static const Color darkOutline = Color(0xFF8E9096);
+  static const Color darkOutlineVariant = Color(0xFF44474C);
+
+  static const Color darkInverseSurface = Color(0xFFE1E1E1);
+  static const Color darkInverseOnSurface = Color(0xFF2E3132);
+  static const Color darkInversePrimary = Color(0xFF0D1B2A);
+
+  static const Color darkPrimaryFixed = Color(0xFFD6E4F9);
+  static const Color darkPrimaryFixedDim = Color(0xFFBAC8DC);
+  static const Color darkSecondaryFixed = Color(0xFFFFDAD8);
+  static const Color darkSecondaryFixedDim = Color(0xFFFFB3B1);
+  static const Color darkTertiaryFixed = Color(0xFFFFDADB);
+  static const Color darkTertiaryFixedDim = Color(0xFFFFB2B8);
+
+  static Color darkAmbientShadow = darkOnSurface.withValues(alpha: 0.3);
+  static Color darkGhostBorder = darkOutlineVariant.withValues(alpha: 0.3);
 }
 
 // ── Typography ---------------------------------------------------------------
@@ -292,7 +346,7 @@ class AppTheme {
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           backgroundColor: AppColors.primaryContainer,
-          foregroundColor: AppColors.onPrimary,
+          foregroundColor: AppColors.onPrimaryContainer,
           textStyle: AppTypography.labelLarge.copyWith(
             fontFamily: AppTypography.headlineFamily,
             fontWeight: FontWeight.w700,
@@ -308,7 +362,7 @@ class AppTheme {
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primaryContainer,
-          foregroundColor: AppColors.onPrimary,
+          foregroundColor: AppColors.onPrimaryContainer,
           textStyle: AppTypography.labelLarge.copyWith(
             fontFamily: AppTypography.headlineFamily,
             fontWeight: FontWeight.w700,
@@ -369,10 +423,11 @@ class AppTheme {
           borderRadius: BorderRadius.circular(AppRadius.xl),
           borderSide: BorderSide.none,
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        hintStyle: AppTypography.bodyMedium.copyWith(
-          color: AppColors.outline,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 14,
         ),
+        hintStyle: AppTypography.bodyMedium.copyWith(color: AppColors.outline),
         labelStyle: AppTypography.bodyMedium.copyWith(
           color: AppColors.onSurfaceVariant,
         ),
@@ -412,9 +467,213 @@ class AppTheme {
         contentTextStyle: AppTypography.bodyMedium.copyWith(
           color: AppColors.inverseOnSurface,
         ),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(22),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+        behavior: SnackBarBehavior.floating,
+        elevation: 8,
+      ),
+    );
+  }
+
+  static ThemeData get dark {
+    const colorScheme = ColorScheme(
+      brightness: Brightness.dark,
+      primary: AppColors.darkPrimary,
+      onPrimary: AppColors.darkOnPrimary,
+      primaryContainer: AppColors.darkPrimaryContainer,
+      onPrimaryContainer: AppColors.darkOnPrimaryContainer,
+      secondary: AppColors.darkSecondary,
+      onSecondary: AppColors.darkOnSecondary,
+      secondaryContainer: AppColors.darkSecondaryContainer,
+      onSecondaryContainer: AppColors.darkOnSecondaryContainer,
+      tertiary: AppColors.darkTertiary,
+      onTertiary: AppColors.darkOnTertiary,
+      tertiaryContainer: AppColors.darkTertiaryContainer,
+      onTertiaryContainer: AppColors.darkOnTertiaryContainer,
+      error: AppColors.darkError,
+      onError: AppColors.darkOnError,
+      errorContainer: AppColors.darkErrorContainer,
+      onErrorContainer: AppColors.darkOnErrorContainer,
+      surface: AppColors.darkSurface,
+      onSurface: AppColors.darkOnSurface,
+      surfaceContainerLowest: AppColors.darkSurfaceContainerLowest,
+      surfaceContainerLow: AppColors.darkSurfaceContainerLow,
+      surfaceContainer: AppColors.darkSurfaceContainer,
+      surfaceContainerHigh: AppColors.darkSurfaceContainerHigh,
+      surfaceContainerHighest: AppColors.darkSurfaceContainerHighest,
+      outline: AppColors.darkOutline,
+      outlineVariant: AppColors.darkOutlineVariant,
+      inverseSurface: AppColors.darkInverseSurface,
+      onInverseSurface: AppColors.darkInverseOnSurface,
+      inversePrimary: AppColors.darkInversePrimary,
+      surfaceTint: AppColors.darkSurfaceTint,
+    );
+
+    return ThemeData(
+      useMaterial3: true,
+      colorScheme: colorScheme,
+      scaffoldBackgroundColor: AppColors.darkBackground,
+      fontFamily: AppTypography.bodyFamily,
+      splashFactory: InkSparkle.splashFactory,
+
+      appBarTheme: const AppBarTheme(
+        backgroundColor: Colors.transparent,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        centerTitle: false,
+        systemOverlayStyle: SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: Brightness.light,
+          statusBarBrightness: Brightness.dark,
+          systemNavigationBarColor: Colors.transparent,
+          systemNavigationBarIconBrightness: Brightness.light,
         ),
+      ),
+
+      textTheme: const TextTheme(
+        displayLarge: AppTypography.displayLarge,
+        displayMedium: AppTypography.displayMedium,
+        displaySmall: AppTypography.displaySmall,
+        headlineLarge: AppTypography.headlineLarge,
+        headlineMedium: AppTypography.headlineMedium,
+        headlineSmall: AppTypography.headlineSmall,
+        titleLarge: AppTypography.titleLarge,
+        titleMedium: AppTypography.titleMedium,
+        titleSmall: AppTypography.titleSmall,
+        bodyLarge: AppTypography.bodyLarge,
+        bodyMedium: AppTypography.bodyMedium,
+        bodySmall: AppTypography.bodySmall,
+        labelLarge: AppTypography.labelLarge,
+        labelMedium: AppTypography.labelMedium,
+        labelSmall: AppTypography.labelSmall,
+      ),
+
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          backgroundColor: AppColors.darkPrimaryContainer,
+          foregroundColor: AppColors.darkOnPrimaryContainer,
+          textStyle: AppTypography.labelLarge.copyWith(
+            fontFamily: AppTypography.headlineFamily,
+            fontWeight: FontWeight.w700,
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.xl),
+          ),
+          elevation: 0,
+        ),
+      ),
+
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.darkPrimaryContainer,
+          foregroundColor: AppColors.darkOnPrimaryContainer,
+          textStyle: AppTypography.labelLarge.copyWith(
+            fontFamily: AppTypography.headlineFamily,
+            fontWeight: FontWeight.w700,
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.xl),
+          ),
+          elevation: 0,
+        ),
+      ),
+
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: AppColors.darkOnSurface,
+          textStyle: AppTypography.labelLarge.copyWith(
+            fontFamily: AppTypography.headlineFamily,
+            fontWeight: FontWeight.w600,
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.xl),
+          ),
+          side: BorderSide(color: AppColors.darkGhostBorder),
+        ),
+      ),
+
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: AppColors.darkSecondary,
+          textStyle: AppTypography.labelLarge.copyWith(
+            fontFamily: AppTypography.bodyFamily,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ),
+
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: AppColors.darkSurfaceContainerHighest,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.xl),
+          borderSide: BorderSide.none,
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.xl),
+          borderSide: BorderSide.none,
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.xl),
+          borderSide: BorderSide.none,
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.xl),
+          borderSide: BorderSide.none,
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.xl),
+          borderSide: BorderSide.none,
+        ),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 14,
+        ),
+        hintStyle: AppTypography.bodyMedium.copyWith(
+          color: AppColors.darkOutline,
+        ),
+        labelStyle: AppTypography.bodyMedium.copyWith(
+          color: AppColors.darkOnSurfaceVariant,
+        ),
+      ),
+
+      cardTheme: CardThemeData(
+        color: AppColors.darkSurfaceContainerLowest,
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.xl),
+        ),
+        margin: const EdgeInsets.symmetric(vertical: 6),
+      ),
+
+      dividerTheme: const DividerThemeData(
+        thickness: 0,
+        space: 0,
+        color: Colors.transparent,
+      ),
+
+      chipTheme: ChipThemeData(
+        backgroundColor: AppColors.darkSurfaceContainer,
+        selectedColor: AppColors.darkPrimaryContainer,
+        secondarySelectedColor: AppColors.darkSecondaryContainer,
+        labelStyle: AppTypography.labelMedium.copyWith(
+          color: AppColors.darkOnSurface,
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.full),
+        ),
+        side: BorderSide.none,
+      ),
+
+      snackBarTheme: SnackBarThemeData(
+        backgroundColor: AppColors.darkInverseSurface.withValues(alpha: 0.92),
+        contentTextStyle: AppTypography.bodyMedium.copyWith(
+          color: AppColors.darkInverseOnSurface,
+        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
         behavior: SnackBarBehavior.floating,
         elevation: 8,
       ),

@@ -1,32 +1,28 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../domain/repositories/barbershop_detail_repository.dart';
 import 'barbershop_detail_state.dart';
 
 class BarbershopDetailCubit extends Cubit<BarbershopDetailState> {
   final String shopId;
+  final BarbershopDetailRepository _repository;
 
-  BarbershopDetailCubit({required this.shopId})
-      : super(const BarbershopDetailState());
+  BarbershopDetailCubit({
+    required this.shopId,
+    required BarbershopDetailRepository repository,
+  })  : _repository = repository,
+        super(const BarbershopDetailState());
 
   Future<void> loadData() async {
     emit(state.copyWith(isLoading: true, errorMessage: null));
 
     try {
-      final db = FirebaseFirestore.instance;
-
-      final shopDoc = await db.collection('barbershops').doc(shopId).get();
-      final membersSnapshot = await db
-          .collection('barbershops')
-          .doc(shopId)
-          .collection('members')
-          .orderBy('joinedAt')
-          .get();
+      final result = await _repository.getDetail(shopId);
 
       emit(state.copyWith(
         isLoading: false,
-        shop: shopDoc.data(),
-        members: membersSnapshot.docs.map((d) => d.data()).toList(),
+        shop: result.shop,
+        members: result.members,
       ));
     } catch (e) {
       emit(state.copyWith(isLoading: false, errorMessage: e.toString()));

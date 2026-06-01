@@ -33,16 +33,16 @@ class _Avatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Container(
       width: 46,
       height: 46,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: AppColors.surfaceContainerHighest,
-        // Ghost border fallback (15% opacity outline_variant)
+        color: theme.colorScheme.surfaceContainerHighest,
         boxShadow: [
           BoxShadow(
-            color: AppColors.outlineVariant.withValues(alpha: 0.15),
+            color: theme.colorScheme.outlineVariant.withValues(alpha: 0.15),
             blurRadius: 0,
             spreadRadius: 1.5,
           ),
@@ -53,19 +53,19 @@ class _Avatar extends StatelessWidget {
             ? Image.network(
                 url!,
                 fit: BoxFit.cover,
-                errorBuilder: (_, _, _) => _fallbackIcon(),
+                errorBuilder: (_, _, _) => _fallbackIcon(theme),
               )
-            : _fallbackIcon(),
+            : _fallbackIcon(theme),
       ),
     );
   }
 
-  Widget _fallbackIcon() {
+  Widget _fallbackIcon(ThemeData theme) {
     return Container(
-      color: AppColors.primaryContainer,
-      child: const Icon(
+      color: theme.colorScheme.primaryContainer,
+      child: Icon(
         Icons.person_rounded,
-        color: AppColors.onPrimary,
+        color: theme.colorScheme.onPrimaryContainer,
         size: 24,
       ),
     );
@@ -78,6 +78,7 @@ class _Greeting extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final displayName = userName.trim().isEmpty ? 'Usuario' : userName.trim();
 
     return Column(
@@ -87,13 +88,13 @@ class _Greeting extends StatelessWidget {
         Text(
           'Buen día,',
           style: AppTypography.labelMedium.copyWith(
-            color: AppColors.onSurfaceVariant,
+            color: theme.colorScheme.onSurfaceVariant,
           ),
         ),
         Text(
           displayName,
           style: AppTypography.titleMedium.copyWith(
-            color: AppColors.onSurface,
+            color: theme.colorScheme.onSurface,
             fontWeight: FontWeight.w700,
           ),
           overflow: TextOverflow.ellipsis,
@@ -109,11 +110,12 @@ class _NotificationButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Stack(
       clipBehavior: Clip.none,
       children: [
         Material(
-          color: AppColors.surfaceContainerLowest,
+          color: theme.colorScheme.surfaceContainerLowest,
           borderRadius: BorderRadius.circular(AppRadius.md),
           child: InkWell(
             borderRadius: BorderRadius.circular(AppRadius.md),
@@ -122,13 +124,12 @@ class _NotificationButton extends StatelessWidget {
               padding: const EdgeInsets.all(10),
               child: Icon(
                 Icons.notifications_outlined,
-                color: AppColors.onSurface,
+                color: theme.colorScheme.onSurface,
                 size: 22,
               ),
             ),
           ),
         ),
-        // Notification dot
         Positioned(
           top: 8,
           right: 8,
@@ -136,7 +137,7 @@ class _NotificationButton extends StatelessWidget {
             width: 8,
             height: 8,
             decoration: BoxDecoration(
-              color: AppColors.secondary,
+              color: theme.colorScheme.secondary,
               shape: BoxShape.circle,
             ),
           ),

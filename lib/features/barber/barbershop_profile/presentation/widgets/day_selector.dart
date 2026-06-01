@@ -17,6 +17,7 @@ class DaySelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Row(
       children: List.generate(days.length, (i) {
         final d = days[i];
@@ -30,7 +31,7 @@ class DaySelector extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 decoration: BoxDecoration(
                   color:
-                      isSel ? AppColors.primary : AppColors.surfaceContainer,
+                      isSel ? theme.colorScheme.primary : theme.colorScheme.surfaceContainer,
                   borderRadius: BorderRadius.circular(AppRadius.lg),
                 ),
                 child: Column(
@@ -39,8 +40,8 @@ class DaySelector extends StatelessWidget {
                       _weekdayAbbr[d.weekday - 1],
                       style: AppTypography.labelSmall.copyWith(
                         color: isSel
-                            ? AppColors.onPrimary
-                            : AppColors.onSurfaceVariant,
+                            ? theme.colorScheme.onPrimary
+                            : theme.colorScheme.onSurfaceVariant,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -49,8 +50,8 @@ class DaySelector extends StatelessWidget {
                       d.day.toString(),
                       style: AppTypography.titleMedium.copyWith(
                         color: isSel
-                            ? AppColors.onPrimary
-                            : AppColors.onSurface,
+                            ? theme.colorScheme.onPrimary
+                            : theme.colorScheme.onSurface,
                         fontWeight: FontWeight.w700,
                       ),
                     ),

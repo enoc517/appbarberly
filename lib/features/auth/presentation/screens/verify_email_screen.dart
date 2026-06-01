@@ -60,6 +60,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen>
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final userEmail = context.select<AuthBloc, String?>(
       (bloc) => bloc.state.user?.email,
     );
@@ -87,7 +88,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen>
         }
       },
       child: Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: theme.scaffoldBackgroundColor,
         body: SafeArea(
           child: Center(
             child: SingleChildScrollView(
@@ -97,11 +98,11 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen>
                 child: Container(
                   padding: const EdgeInsets.all(28),
                   decoration: BoxDecoration(
-                    color: AppColors.surfaceContainerLowest,
+                    color: theme.colorScheme.surfaceContainerLowest,
                     borderRadius: BorderRadius.circular(32),
                     boxShadow: [
                       BoxShadow(
-                        color: AppColors.ambientShadow,
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.06),
                         blurRadius: 32,
                         offset: const Offset(0, 12),
                       ),
@@ -120,7 +121,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen>
                         'Verifica tu correo',
                         textAlign: TextAlign.center,
                         style: AppTypography.headlineMedium.copyWith(
-                          color: AppColors.onSurface,
+                          color: theme.colorScheme.onSurface,
                           fontWeight: FontWeight.w800,
                         ),
                       ),
@@ -131,7 +132,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen>
                             : 'Te enviamos un enlace de verificación a\n$userEmail',
                         textAlign: TextAlign.center,
                         style: AppTypography.bodyLarge.copyWith(
-                          color: AppColors.onSurfaceVariant,
+                          color: theme.colorScheme.onSurfaceVariant,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -143,7 +144,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen>
                           vertical: 16,
                         ),
                         decoration: BoxDecoration(
-                          color: AppColors.surfaceContainer,
+                          color: theme.colorScheme.surfaceContainer,
                           borderRadius: BorderRadius.circular(AppRadius.xl),
                         ),
                         child: Row(
@@ -154,7 +155,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen>
                               height: 18,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
-                                color: AppColors.primaryContainer,
+                                color: theme.colorScheme.primaryContainer,
                               ),
                             ),
                             const SizedBox(width: 12),
@@ -165,7 +166,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen>
                                     : 'Esperando verificación automática...',
                                 textAlign: TextAlign.center,
                                 style: AppTypography.labelLarge.copyWith(
-                                  color: AppColors.onSurface,
+                                  color: theme.colorScheme.onSurface,
                                   fontWeight: FontWeight.w700,
                                 ),
                               ),

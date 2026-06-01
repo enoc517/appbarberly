@@ -55,7 +55,10 @@ class _LoginScreenState extends State<LoginScreen> {
       listenWhen: (prev, curr) => prev.status != curr.status,
       listener: (context, state) {
         if (state.status == AuthStatus.emailVerificationPending) {
-          AppToast.info(context, 'Debes verificar tu correo antes de continuar');
+          AppToast.info(
+            context,
+            'Debes verificar tu correo antes de continuar',
+          );
           Future.delayed(const Duration(milliseconds: 700), () {
             if (context.mounted) context.go('/verify-email');
           });
@@ -82,7 +85,7 @@ class _LoginScreenState extends State<LoginScreen> {
         }
       },
       child: Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         body: SafeArea(
           child: Stack(
             children: [
@@ -91,7 +94,9 @@ class _LoginScreenState extends State<LoginScreen> {
                 right: -80,
                 child: _GlowCircle(
                   size: 240,
-                  color: AppColors.primaryContainer.withValues(alpha: 0.04),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.primaryContainer.withValues(alpha: 0.04),
                 ),
               ),
               Positioned(
@@ -99,7 +104,9 @@ class _LoginScreenState extends State<LoginScreen> {
                 left: -100,
                 child: _GlowCircle(
                   size: 280,
-                  color: AppColors.secondaryContainer.withValues(alpha: 0.03),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.secondaryContainer.withValues(alpha: 0.03),
                 ),
               ),
               Positioned.fill(
@@ -121,16 +128,22 @@ class _LoginScreenState extends State<LoginScreen> {
                         child: ConstrainedBox(
                           constraints: BoxConstraints(
                             maxWidth: 1120,
-                            minHeight: minContentHeight > 0 ? minContentHeight : 0,
+                            minHeight: minContentHeight > 0
+                                ? minContentHeight
+                                : 0,
                           ),
                           child: Align(
-                            alignment: isWide ? Alignment.center : Alignment.topCenter,
+                            alignment: isWide
+                                ? Alignment.center
+                                : Alignment.topCenter,
                             child: isWide
                                 ? Row(
                                     children: [
                                       Expanded(
                                         child: AppFadeSlideIn(
-                                          child: _BrandPanel(theme: Theme.of(context)),
+                                          child: _BrandPanel(
+                                            theme: Theme.of(context),
+                                          ),
                                         ),
                                       ),
                                       const SizedBox(width: 32),
@@ -142,15 +155,18 @@ class _LoginScreenState extends State<LoginScreen> {
                                             isCompact: isCompact,
                                             formKey: _formKey,
                                             emailController: _emailController,
-                                            passwordController: _passwordController,
+                                            passwordController:
+                                                _passwordController,
                                             obscurePassword: _obscurePassword,
                                             onTogglePassword: () {
                                               setState(() {
-                                                _obscurePassword = !_obscurePassword;
+                                                _obscurePassword =
+                                                    !_obscurePassword;
                                               });
                                             },
                                             onSubmit: _submit,
-                                            onGoRegister: () => context.go('/register'),
+                                            onGoRegister: () =>
+                                                context.go('/register'),
                                           ),
                                         ),
                                       ),
@@ -160,7 +176,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
                                       AppFadeSlideIn(
-                                        child: _BrandHeader(isCompact: isCompact),
+                                        child: _BrandHeader(
+                                          isCompact: isCompact,
+                                        ),
                                       ),
                                       SizedBox(height: isCompact ? 18 : 28),
                                       AppFadeSlideIn(
@@ -170,15 +188,18 @@ class _LoginScreenState extends State<LoginScreen> {
                                           isCompact: isCompact,
                                           formKey: _formKey,
                                           emailController: _emailController,
-                                          passwordController: _passwordController,
+                                          passwordController:
+                                              _passwordController,
                                           obscurePassword: _obscurePassword,
                                           onTogglePassword: () {
                                             setState(() {
-                                              _obscurePassword = !_obscurePassword;
+                                              _obscurePassword =
+                                                  !_obscurePassword;
                                             });
                                           },
                                           onSubmit: _submit,
-                                          onGoRegister: () => context.go('/register'),
+                                          onGoRegister: () =>
+                                              context.go('/register'),
                                         ),
                                       ),
                                     ],
@@ -227,17 +248,18 @@ class _LoginCard extends StatelessWidget {
     final titleGap = isCompact ? 26.0 : 36.0;
     final fieldGap = isCompact ? 20.0 : 24.0;
     final socialGap = isCompact ? 18.0 : 24.0;
+    final theme = Theme.of(context);
 
     return Container(
       width: double.infinity,
       constraints: const BoxConstraints(maxWidth: 560),
       padding: EdgeInsets.all(cardPadding),
       decoration: BoxDecoration(
-        color: AppColors.surfaceContainerLowest,
+        color: theme.colorScheme.surfaceContainerLowest,
         borderRadius: BorderRadius.circular(isCompact ? 26 : 32),
         boxShadow: [
           BoxShadow(
-            color: AppColors.ambientShadow,
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.06),
             blurRadius: 32,
             offset: const Offset(0, 12),
           ),
@@ -252,7 +274,7 @@ class _LoginCard extends StatelessWidget {
               'Bienvenido de nuevo',
               style: AppTypography.headlineMedium.copyWith(
                 fontSize: isCompact ? 25 : null,
-                color: AppColors.onSurface,
+                color: theme.colorScheme.onSurface,
               ),
             ),
             SizedBox(height: titleGap),
@@ -301,14 +323,14 @@ class _LoginCard extends StatelessWidget {
               child: TextButton(
                 onPressed: () => context.go('/forgot_password'),
                 style: TextButton.styleFrom(
-                  foregroundColor: AppColors.secondary,
+                  foregroundColor: theme.colorScheme.secondary,
                   padding: EdgeInsets.zero,
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
                 child: Text(
                   '¿Olvidaste tu contraseña?',
                   style: AppTypography.labelLarge.copyWith(
-                    color: AppColors.secondary,
+                    color: theme.colorScheme.secondary,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -321,10 +343,10 @@ class _LoginCard extends StatelessWidget {
               child: ElevatedButton(
                 onPressed: isLoading ? null : onSubmit,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primaryContainer,
-                  foregroundColor: AppColors.onPrimary,
+                  backgroundColor: theme.colorScheme.primaryContainer,
+                  foregroundColor: theme.colorScheme.onPrimaryContainer,
                   elevation: 0,
-                  shadowColor: AppColors.primaryContainer.withValues(
+                  shadowColor: theme.colorScheme.primaryContainer.withValues(
                     alpha: 0.18,
                   ),
                   shape: RoundedRectangleBorder(
@@ -344,7 +366,7 @@ class _LoginCard extends StatelessWidget {
                               height: 18,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
-                                color: AppColors.onPrimary,
+                                color: theme.colorScheme.onPrimaryContainer,
                               ),
                             ),
                             const SizedBox(width: 12),
@@ -389,7 +411,7 @@ class _LoginCard extends StatelessWidget {
                   Text(
                     '¿Aún no eres parte del equipo? ',
                     style: AppTypography.bodyMedium.copyWith(
-                      color: AppColors.onSurfaceVariant,
+                      color: theme.colorScheme.onSurfaceVariant,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -398,7 +420,7 @@ class _LoginCard extends StatelessWidget {
                     child: Text(
                       'Registrarse',
                       style: AppTypography.bodyMedium.copyWith(
-                        color: AppColors.onSurface,
+                        color: theme.colorScheme.onSurface,
                         fontWeight: FontWeight.w800,
                       ),
                     ),
@@ -419,12 +441,13 @@ class _SocialDivider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Row(
       children: [
         Expanded(
           child: Divider(
             height: 1,
-            color: AppColors.outlineVariant.withValues(alpha: 0.35),
+            color: theme.colorScheme.outlineVariant.withValues(alpha: 0.35),
           ),
         ),
         Padding(
@@ -432,7 +455,7 @@ class _SocialDivider extends StatelessWidget {
           child: Text(
             'o continúa con',
             style: AppTypography.bodySmall.copyWith(
-              color: AppColors.onSurfaceVariant,
+              color: theme.colorScheme.onSurfaceVariant,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -440,7 +463,7 @@ class _SocialDivider extends StatelessWidget {
         Expanded(
           child: Divider(
             height: 1,
-            color: AppColors.outlineVariant.withValues(alpha: 0.35),
+            color: theme.colorScheme.outlineVariant.withValues(alpha: 0.35),
           ),
         ),
       ],
@@ -455,6 +478,7 @@ class _SocialButtons extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final googleButton = _SocialButton(
       label: 'Google',
       icon: Image.asset(
@@ -464,7 +488,7 @@ class _SocialButtons extends StatelessWidget {
         errorBuilder: (_, _, _) => Icon(
           Icons.g_mobiledata_rounded,
           size: 30,
-          color: AppColors.onSurface,
+          color: theme.colorScheme.onSurface,
         ),
       ),
       onPressed: () {
@@ -474,7 +498,11 @@ class _SocialButtons extends StatelessWidget {
 
     final appleButton = _SocialButton(
       label: 'Apple',
-      icon: Icon(Icons.apple_rounded, size: 28, color: AppColors.onSurface),
+      icon: Icon(
+        Icons.apple_rounded,
+        size: 28,
+        color: theme.colorScheme.onSurface,
+      ),
       onPressed: () {},
     );
 
@@ -499,10 +527,11 @@ class _FieldLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Text(
       text,
       style: AppTypography.labelLarge.copyWith(
-        color: AppColors.onSurfaceVariant,
+        color: theme.colorScheme.onSurfaceVariant,
         fontWeight: FontWeight.w700,
       ),
     );
@@ -530,24 +559,25 @@ class _TextField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return TextFormField(
       controller: controller,
       obscureText: obscureText,
       keyboardType: keyboardType,
       validator: validator,
       style: AppTypography.bodyLarge.copyWith(
-        color: AppColors.onSurface,
+        color: theme.colorScheme.onSurface,
         fontWeight: FontWeight.w600,
       ),
       decoration: InputDecoration(
         hintText: hintText,
         hintStyle: AppTypography.bodyLarge.copyWith(
-          color: AppColors.outline,
+          color: theme.colorScheme.outline,
           fontWeight: FontWeight.w500,
         ),
         filled: true,
-        fillColor: AppColors.surfaceContainerHighest,
-        prefixIcon: Icon(prefixIcon, color: AppColors.outline),
+        fillColor: theme.colorScheme.surfaceContainerHighest,
+        prefixIcon: Icon(prefixIcon, color: theme.colorScheme.outline),
         suffixIcon: suffixIcon,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 18,
@@ -563,7 +593,10 @@ class _TextField extends StatelessWidget {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(22),
-          borderSide: BorderSide(color: AppColors.primaryContainer, width: 1.5),
+          borderSide: BorderSide(
+            color: theme.colorScheme.primaryContainer,
+            width: 1.5,
+          ),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(22),
@@ -591,6 +624,7 @@ class _SocialButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Tooltip(
       message: label,
       child: Semantics(
@@ -601,10 +635,10 @@ class _SocialButton extends StatelessWidget {
           child: OutlinedButton(
             onPressed: onPressed,
             style: OutlinedButton.styleFrom(
-              backgroundColor: AppColors.surfaceContainer,
+              backgroundColor: theme.colorScheme.surfaceContainer,
               padding: EdgeInsets.zero,
               side: BorderSide(
-                color: AppColors.outlineVariant.withValues(alpha: 0.45),
+                color: theme.colorScheme.outlineVariant.withValues(alpha: 0.45),
               ),
               shape: const CircleBorder(),
             ),
@@ -622,27 +656,30 @@ class _BrandHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         Image.asset(
-          'assets/logos/logo1.png',
+          'assets/logos/logo2.png',
           height: isCompact ? 86 : 110,
           fit: BoxFit.contain,
           errorBuilder: (_, _, _) => Icon(
             Icons.content_cut_rounded,
             size: isCompact ? 48 : 64,
-            color: AppColors.primary,
+            color: theme.colorScheme.primary,
           ),
         ),
         SizedBox(height: isCompact ? 6 : 8),
         Text(
           'Una experiencia única',
           textAlign: TextAlign.center,
-          style: (isCompact ? AppTypography.bodyMedium : AppTypography.bodyLarge).copyWith(
-            color: AppColors.onSurfaceVariant,
-            fontWeight: FontWeight.w500,
-          ),
+          style:
+              (isCompact ? AppTypography.bodyMedium : AppTypography.bodyLarge)
+                  .copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                    fontWeight: FontWeight.w500,
+                  ),
         ),
       ],
     );
@@ -658,16 +695,24 @@ class _BrandPanel extends StatelessWidget {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Icon(Icons.content_cut_rounded, size: 96, color: AppColors.primary),
+        Icon(
+          Icons.content_cut_rounded,
+          size: 96,
+          color: theme.colorScheme.primary,
+        ),
         const SizedBox(height: 24),
         Text(
           'Barberly',
-          style: AppTypography.displayMedium.copyWith(color: AppColors.onSurface),
+          style: AppTypography.displayMedium.copyWith(
+            color: theme.colorScheme.onSurface,
+          ),
         ),
         const SizedBox(height: 12),
         Text(
           'Tu plataforma de gestión para barberías',
-          style: AppTypography.bodyLarge.copyWith(color: AppColors.onSurfaceVariant),
+          style: AppTypography.bodyLarge.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
           textAlign: TextAlign.center,
         ),
       ],
@@ -685,10 +730,7 @@ class _GlowCircle extends StatelessWidget {
     return Container(
       width: size,
       height: size,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: color,
-      ),
+      decoration: BoxDecoration(shape: BoxShape.circle, color: color),
     );
   }
 }

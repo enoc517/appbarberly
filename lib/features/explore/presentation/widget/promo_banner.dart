@@ -6,19 +6,19 @@ class PromoBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Container(
       height: 148,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(AppRadius.xl),
-        // Glass & Gradient Rule: primaryContainer → primary
-        gradient: const LinearGradient(
-          colors: [AppColors.primaryContainer, AppColors.primary],
+        gradient: LinearGradient(
+          colors: [theme.colorScheme.primaryContainer, theme.colorScheme.primary],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primaryContainer.withValues(alpha: 0.35),
+            color: theme.colorScheme.primaryContainer.withValues(alpha: 0.35),
             blurRadius: 24,
             offset: const Offset(0, 8),
           ),
@@ -27,7 +27,6 @@ class PromoBanner extends StatelessWidget {
       child: Stack(
         clipBehavior: Clip.none,
         children: [
-          // Decorative semi-circle motif (abstract Stitch curve)
           Positioned(
             right: -20,
             top: -20,
@@ -52,7 +51,6 @@ class PromoBanner extends StatelessWidget {
               ),
             ),
           ),
-          // Content
           Padding(
             padding: const EdgeInsets.all(20),
             child: Column(
@@ -64,13 +62,13 @@ class PromoBanner extends StatelessWidget {
                     vertical: 4,
                   ),
                   decoration: BoxDecoration(
-                    color: AppColors.secondary.withValues(alpha: 0.85),
+                    color: theme.colorScheme.secondary.withValues(alpha: 0.85),
                     borderRadius: BorderRadius.circular(AppRadius.sm),
                   ),
                   child: Text(
                     'OFERTA ESPECIAL',
                     style: AppTypography.labelSmall.copyWith(
-                      color: AppColors.onPrimary,
+                      color: theme.colorScheme.onSecondary,
                       fontWeight: FontWeight.w700,
                       letterSpacing: 1.2,
                     ),
@@ -80,7 +78,7 @@ class PromoBanner extends StatelessWidget {
                 Text(
                   '20% de descuento\nen tu primer corte',
                   style: AppTypography.headlineSmall.copyWith(
-                    color: AppColors.onPrimary,
+                    color: theme.colorScheme.onPrimaryContainer,
                     height: 1.2,
                   ),
                 ),
@@ -90,14 +88,14 @@ class PromoBanner extends StatelessWidget {
                     Text(
                       'Reservar ahora',
                       style: AppTypography.labelMedium.copyWith(
-                        color: AppColors.onPrimary.withValues(alpha: 0.85),
+                        color: theme.colorScheme.onPrimaryContainer,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
                     const SizedBox(width: 4),
                     Icon(
                       Icons.arrow_forward_rounded,
-                      color: AppColors.onPrimary.withValues(alpha: 0.85),
+                      color: theme.colorScheme.onPrimaryContainer,
                       size: 16,
                     ),
                   ],

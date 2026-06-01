@@ -13,7 +13,7 @@ class BarberAgendaScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         bottom: false,
         child: BlocBuilder<BarberAgendaCubit, BarberAgendaState>(
@@ -62,6 +62,7 @@ class _Header extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Row(
       children: [
         Expanded(
@@ -73,7 +74,7 @@ class _Header extends StatelessWidget {
               Text(
                 'Vista operativa de citas y espacios disponibles.',
                 style: AppTypography.bodyMedium.copyWith(
-                  color: AppColors.onSurfaceVariant,
+                  color: theme.colorScheme.onSurfaceVariant,
                 ),
               ),
             ],
@@ -127,6 +128,7 @@ class _DayPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     const labels = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
     return GestureDetector(
       onTap: onTap,
@@ -134,8 +136,8 @@ class _DayPill extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
           color: selected
-              ? AppColors.primary
-              : AppColors.surfaceContainerLowest,
+              ? theme.colorScheme.primary
+              : theme.colorScheme.surfaceContainerLowest,
           borderRadius: BorderRadius.circular(AppRadius.xl),
         ),
         child: Column(
@@ -144,15 +146,15 @@ class _DayPill extends StatelessWidget {
               labels[date.weekday - 1],
               style: AppTypography.labelSmall.copyWith(
                 color: selected
-                    ? AppColors.onPrimary
-                    : AppColors.onSurfaceVariant,
+                    ? theme.colorScheme.onPrimary
+                    : theme.colorScheme.onSurfaceVariant,
               ),
             ),
             const SizedBox(height: 4),
             Text(
               date.day.toString().padLeft(2, '0'),
               style: AppTypography.titleSmall.copyWith(
-                color: selected ? AppColors.onPrimary : AppColors.onSurface,
+                color: selected ? theme.colorScheme.onPrimary : theme.colorScheme.onSurface,
               ),
             ),
           ],
@@ -169,6 +171,7 @@ class _AgendaBlock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
@@ -188,14 +191,14 @@ class _AgendaBlock extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: AppColors.surfaceContainerLowest,
+                color: theme.colorScheme.surfaceContainerLowest,
                 borderRadius: BorderRadius.circular(AppRadius.xl),
               ),
               child: Row(
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.person_outline_rounded,
-                    color: AppColors.primary,
+                    color: theme.colorScheme.primary,
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -209,18 +212,32 @@ class _AgendaBlock extends StatelessWidget {
                         Text(
                           booking.serviceSnapshot.name,
                           style: AppTypography.bodySmall.copyWith(
-                            color: AppColors.onSurfaceVariant,
+                            color: theme.colorScheme.onSurfaceVariant,
                           ),
                         ),
                       ],
                     ),
                   ),
-                  Text(
-                    booking.status.label,
-                    style: AppTypography.labelSmall.copyWith(
-                      color: AppColors.secondary,
-                      fontWeight: FontWeight.w700,
-                    ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        booking.status.label,
+                        style: AppTypography.labelSmall.copyWith(
+                          color: theme.colorScheme.secondary,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      if (booking.isActive) ...[
+                        const SizedBox(height: 8),
+                        TextButton(
+                          onPressed: () => context
+                              .read<BarberAgendaCubit>()
+                              .completeBooking(booking),
+                          child: const Text('Completar'),
+                        ),
+                      ],
+                    ],
                   ),
                 ],
               ),
@@ -239,10 +256,11 @@ class _InlineEmpty extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Text(
       message,
       style: AppTypography.bodyMedium.copyWith(
-        color: AppColors.onSurfaceVariant,
+        color: theme.colorScheme.onSurfaceVariant,
       ),
     );
   }
@@ -263,6 +281,7 @@ class _EmptyView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final isNoBarbershop = message.contains('barbería');
 
     return Center(
@@ -276,13 +295,13 @@ class _EmptyView extends StatelessWidget {
                   ? Icons.storefront_rounded
                   : Icons.calendar_today_outlined,
               size: 72,
-              color: AppColors.onSurfaceVariant.withValues(alpha: 0.3),
+              color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
             ),
             const SizedBox(height: 20),
             Text(
               isNoBarbershop ? 'Sin barbería asignada' : 'Sin citas',
               style: AppTypography.titleLarge.copyWith(
-                color: AppColors.onSurface,
+                color: theme.colorScheme.onSurface,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -291,7 +310,7 @@ class _EmptyView extends StatelessWidget {
               message,
               textAlign: TextAlign.center,
               style: AppTypography.bodyMedium.copyWith(
-                color: AppColors.onSurfaceVariant,
+                color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
             if (isNoBarbershop) ...[
@@ -305,8 +324,8 @@ class _EmptyView extends StatelessWidget {
                     icon: const Icon(Icons.storefront_rounded),
                     label: const Text('Ir a Barbería'),
                     style: FilledButton.styleFrom(
-                      backgroundColor: AppColors.primaryContainer,
-                      foregroundColor: AppColors.onPrimary,
+                      backgroundColor: theme.colorScheme.primaryContainer,
+                      foregroundColor: theme.colorScheme.onPrimaryContainer,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(AppRadius.xl),
@@ -329,6 +348,7 @@ class _ErrorView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
@@ -336,7 +356,7 @@ class _ErrorView extends StatelessWidget {
           message,
           textAlign: TextAlign.center,
           style: AppTypography.bodyMedium.copyWith(
-            color: AppColors.onSurfaceVariant,
+            color: theme.colorScheme.onSurfaceVariant,
           ),
         ),
       ),

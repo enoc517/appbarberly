@@ -14,23 +14,20 @@ class AppointmentTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final isNow = appointment.isNow;
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.surfaceContainerLowest,
+        color: theme.colorScheme.surfaceContainerLowest,
         borderRadius: BorderRadius.circular(AppRadius.xl),
         border: isNow
-            ? Border.all(color: AppColors.secondary, width: 1.5)
+            ? Border.all(color: theme.colorScheme.secondary, width: 1.5)
             : null,
       ),
       child: Row(
         children: [
-          CircleAvatar(
-            radius: 24,
-            backgroundColor: AppColors.primaryFixedDim,
-            child: const Icon(Icons.person, color: AppColors.primary),
-          ),
+          _ClientAvatar(imageUrl: appointment.clientAvatarUrl),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -52,14 +49,13 @@ class AppointmentTile extends StatelessWidget {
                           vertical: 2,
                         ),
                         decoration: BoxDecoration(
-                          color: AppColors.secondary,
-                          borderRadius:
-                              BorderRadius.circular(AppRadius.sm),
+                          color: theme.colorScheme.secondary,
+                          borderRadius: BorderRadius.circular(AppRadius.sm),
                         ),
                         child: Text(
                           'AHORA',
                           style: AppTypography.labelSmall.copyWith(
-                            color: AppColors.onSecondary,
+                            color: theme.colorScheme.onSecondary,
                             fontWeight: FontWeight.w700,
                           ),
                         ),
@@ -70,7 +66,7 @@ class AppointmentTile extends StatelessWidget {
                 Text(
                   appointment.serviceName,
                   style: AppTypography.bodySmall.copyWith(
-                    color: AppColors.onSurfaceVariant,
+                    color: theme.colorScheme.onSurfaceVariant,
                   ),
                 ),
               ],
@@ -90,6 +86,30 @@ class AppointmentTile extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _ClientAvatar extends StatelessWidget {
+  const _ClientAvatar({required this.imageUrl});
+
+  final String? imageUrl;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final normalizedUrl = imageUrl?.trim() ?? '';
+
+    return CircleAvatar(
+      radius: 24,
+      backgroundColor: colorScheme.primaryContainer,
+      backgroundImage: normalizedUrl.isEmpty
+          ? null
+          : NetworkImage(normalizedUrl),
+      child: normalizedUrl.isEmpty
+          ? Icon(Icons.person_rounded, color: colorScheme.onPrimaryContainer)
+          : null,
     );
   }
 }

@@ -19,6 +19,7 @@ class TimeSlotGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
@@ -40,7 +41,7 @@ class TimeSlotGrid extends StatelessWidget {
               child: Text(
                 'Unirse a lista de espera',
                 style: AppTypography.labelMedium.copyWith(
-                  color: AppColors.secondary,
+                  color: theme.colorScheme.secondary,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -70,23 +71,24 @@ class _SlotChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final enabled = slot.isAvailable;
     return GestureDetector(
       onTap: enabled ? onTap : null,
       child: Container(
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: selected ? AppColors.primary : AppColors.surfaceContainer,
+          color: selected ? theme.colorScheme.primary : theme.colorScheme.surfaceContainer,
           borderRadius: BorderRadius.circular(AppRadius.lg),
         ),
         child: Text(
           _formatTime(slot.startTime),
           style: AppTypography.labelLarge.copyWith(
             color: !enabled
-                ? AppColors.outline
+                ? theme.colorScheme.outline
                 : selected
-                    ? AppColors.onPrimary
-                    : AppColors.onSurface,
+                    ? theme.colorScheme.onPrimary
+                    : theme.colorScheme.onSurface,
             fontWeight: FontWeight.w600,
           ),
         ),

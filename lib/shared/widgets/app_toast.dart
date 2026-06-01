@@ -97,6 +97,7 @@ class _AppToastOverlayState extends State<_AppToastOverlay>
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final (icon, tint, accent) = switch (widget.type) {
       AppToastType.success => (
           Icons.check_circle_rounded,
@@ -106,12 +107,12 @@ class _AppToastOverlayState extends State<_AppToastOverlay>
       AppToastType.error => (
           Icons.error_rounded,
           const Color(0xFFF7C2C0),
-          AppColors.secondary,
+          theme.colorScheme.secondary,
         ),
       AppToastType.info => (
           Icons.info_rounded,
-          AppColors.primaryFixed,
-          AppColors.primary,
+          theme.colorScheme.primaryFixed,
+          theme.colorScheme.primary,
         ),
     };
 
@@ -138,7 +139,7 @@ class _AppToastOverlayState extends State<_AppToastOverlay>
                           vertical: 14,
                         ),
                         decoration: BoxDecoration(
-                          color: AppColors.inverseSurface.withValues(alpha: 0.92),
+                          color: theme.colorScheme.inverseSurface.withValues(alpha: 0.92),
                           borderRadius: BorderRadius.circular(22),
                           border: Border.all(
                             color: Colors.white.withValues(alpha: 0.08),
@@ -168,7 +169,7 @@ class _AppToastOverlayState extends State<_AppToastOverlay>
                               child: Text(
                                 widget.message,
                                 style: AppTypography.bodyMedium.copyWith(
-                                  color: AppColors.inverseOnSurface,
+                                  color: theme.colorScheme.onInverseSurface,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),

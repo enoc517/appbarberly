@@ -54,7 +54,7 @@ class _ManageServicesView extends StatelessWidget {
         }
       },
       child: Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         appBar: AppBar(
           leading: IconButton(
             icon: const Icon(Icons.arrow_back_rounded),
@@ -63,7 +63,7 @@ class _ManageServicesView extends StatelessWidget {
           title: Text(
             'Mis servicios',
             style: AppTypography.titleLarge.copyWith(
-              color: AppColors.onSurface,
+              color: Theme.of(context).colorScheme.onSurface,
               fontWeight: FontWeight.w700,
             ),
           ),
@@ -77,8 +77,8 @@ class _ManageServicesView extends StatelessWidget {
         body: BlocBuilder<BarberServicesCubit, BarberServicesState>(
           builder: (context, state) {
             if (state is BarberServicesLoading) {
-              return const Center(
-                child: CircularProgressIndicator(color: AppColors.primary),
+              return Center(
+                child: CircularProgressIndicator(color: Theme.of(context).colorScheme.primary),
               );
             }
             if (state is BarberServicesLoaded) {
@@ -94,15 +94,15 @@ class _ManageServicesView extends StatelessWidget {
         ),
         floatingActionButton: FloatingActionButton.extended(
           onPressed: () => _showServiceBottomSheet(context),
-          backgroundColor: AppColors.primary,
-          foregroundColor: AppColors.onPrimary,
+          backgroundColor: Theme.of(context).colorScheme.primary,
+          foregroundColor: Theme.of(context).colorScheme.onPrimary,
           elevation: 4,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.lg)),
           icon: const Icon(Icons.add_rounded),
           label: Text(
             'Agregar',
             style: AppTypography.labelLarge.copyWith(
-              color: AppColors.onPrimary,
+              color: Theme.of(context).colorScheme.onPrimary,
               fontWeight: FontWeight.w700,
             ),
           ),
@@ -154,7 +154,8 @@ class _ServiceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final categoryStyle = _categoryStyle(service.category);
+    final theme = Theme.of(context);
+    final categoryStyle = _categoryStyle(service.category, theme);
     final isCombo = service.category == 'combo';
 
     return Padding(
@@ -166,7 +167,7 @@ class _ServiceCard extends StatelessWidget {
           alignment: Alignment.centerRight,
           padding: const EdgeInsets.only(right: 24),
           decoration: BoxDecoration(
-            color: AppColors.secondary,
+            color: theme.colorScheme.secondary,
             borderRadius: BorderRadius.circular(AppRadius.xl),
           ),
           child: const Icon(Icons.delete_rounded, color: Colors.white, size: 28),
@@ -175,29 +176,29 @@ class _ServiceCard extends StatelessWidget {
           return await showDialog<bool>(
             context: context,
             builder: (ctx) => AlertDialog(
-              backgroundColor: AppColors.surfaceContainerLowest,
+              backgroundColor: theme.colorScheme.surfaceContainerLowest,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.xl)),
               title: Text(
                 'Eliminar servicio',
-                style: AppTypography.titleMedium.copyWith(color: AppColors.onSurface),
+                style: AppTypography.titleMedium.copyWith(color: theme.colorScheme.onSurface),
               ),
               content: Text(
                 '¿Estás seguro de eliminar "${service.name}"?',
-                style: AppTypography.bodyMedium.copyWith(color: AppColors.onSurfaceVariant),
+                style: AppTypography.bodyMedium.copyWith(color: theme.colorScheme.onSurfaceVariant),
               ),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(ctx, false),
                   child: Text(
                     'Cancelar',
-                    style: AppTypography.labelLarge.copyWith(color: AppColors.onSurfaceVariant),
+                    style: AppTypography.labelLarge.copyWith(color: theme.colorScheme.onSurfaceVariant),
                   ),
                 ),
                 TextButton(
                   onPressed: () => Navigator.pop(ctx, true),
                   child: Text(
                     'Eliminar',
-                    style: AppTypography.labelLarge.copyWith(color: AppColors.secondary),
+                    style: AppTypography.labelLarge.copyWith(color: theme.colorScheme.secondary),
                   ),
                 ),
               ],
@@ -208,7 +209,7 @@ class _ServiceCard extends StatelessWidget {
           context.read<BarberServicesCubit>().deleteService(service.id);
         },
         child: Material(
-          color: AppColors.surfaceContainerLowest,
+          color: theme.colorScheme.surfaceContainerLowest,
           borderRadius: BorderRadius.circular(AppRadius.xl),
           elevation: 0,
           child: InkWell(
@@ -242,7 +243,7 @@ class _ServiceCard extends StatelessWidget {
                               child: Text(
                                 service.name,
                                 style: AppTypography.titleMedium.copyWith(
-                                  color: AppColors.onSurface,
+                                  color: theme.colorScheme.onSurface,
                                   fontWeight: FontWeight.w700,
                                 ),
                                 maxLines: 1,
@@ -253,13 +254,13 @@ class _ServiceCard extends StatelessWidget {
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                                 decoration: BoxDecoration(
-                                  color: AppColors.secondary.withValues(alpha: 0.15),
+                                  color: theme.colorScheme.secondary.withValues(alpha: 0.15),
                                   borderRadius: BorderRadius.circular(AppRadius.full),
                                 ),
                                 child: Text(
                                   'COMBO',
                                   style: AppTypography.labelSmall.copyWith(
-                                    color: AppColors.secondary,
+                                    color: theme.colorScheme.secondary,
                                     fontWeight: FontWeight.w800,
                                     letterSpacing: 0.8,
                                   ),
@@ -273,7 +274,7 @@ class _ServiceCard extends StatelessWidget {
                               ? service.description
                               : 'Sin descripción',
                           style: AppTypography.bodySmall.copyWith(
-                            color: AppColors.onSurfaceVariant,
+                            color: theme.colorScheme.onSurfaceVariant,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -313,7 +314,7 @@ class _ServiceCard extends StatelessWidget {
                   const SizedBox(width: 8),
                   Icon(
                     Icons.chevron_right_rounded,
-                    color: AppColors.onSurfaceVariant.withValues(alpha: 0.5),
+                    color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
                     size: 20,
                   ),
                 ],
@@ -345,15 +346,16 @@ class _InfoChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 12, color: AppColors.onSurfaceVariant),
+        Icon(icon, size: 12, color: theme.colorScheme.onSurfaceVariant),
         const SizedBox(width: 3),
         Text(
           text,
           style: AppTypography.labelSmall.copyWith(
-            color: AppColors.onSurfaceVariant,
+            color: theme.colorScheme.onSurfaceVariant,
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -368,6 +370,7 @@ class _EmptyServicesState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -378,20 +381,20 @@ class _EmptyServicesState extends StatelessWidget {
               width: 80,
               height: 80,
               decoration: BoxDecoration(
-                color: AppColors.primaryContainer.withValues(alpha: 0.3),
+                color: theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
                 borderRadius: BorderRadius.circular(AppRadius.xl),
               ),
               child: Icon(
                 Icons.content_cut_rounded,
                 size: 40,
-                color: AppColors.primaryContainer,
+                color: theme.colorScheme.primaryContainer,
               ),
             ),
             const SizedBox(height: 24),
             Text(
               'Sin servicios todavía',
               style: AppTypography.titleLarge.copyWith(
-                color: AppColors.onSurface,
+                color: theme.colorScheme.onSurface,
                 fontWeight: FontWeight.w800,
               ),
             ),
@@ -400,15 +403,15 @@ class _EmptyServicesState extends StatelessWidget {
               'Agregá los servicios que ofrecés para que tus clientes puedan reservar.',
               textAlign: TextAlign.center,
               style: AppTypography.bodyMedium.copyWith(
-                color: AppColors.onSurfaceVariant,
+                color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
             const SizedBox(height: 32),
             FilledButton.icon(
               onPressed: onAddPressed,
               style: FilledButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: AppColors.onPrimary,
+                backgroundColor: theme.colorScheme.primary,
+                foregroundColor: theme.colorScheme.onPrimary,
                 padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(AppRadius.xl),
@@ -418,7 +421,7 @@ class _EmptyServicesState extends StatelessWidget {
               label: Text(
                 'Agregar mi primer servicio',
                 style: AppTypography.labelLarge.copyWith(
-                  color: AppColors.onPrimary,
+                  color: theme.colorScheme.onPrimary,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -446,11 +449,11 @@ class _ServiceBottomSheetState extends State<_ServiceBottomSheet> {
   late String _category;
   bool _isSubmitting = false;
 
-  static const _categories = [
-    _CategoryOption('corte', 'Corte', Icons.content_cut_rounded, AppColors.primary),
-    _CategoryOption('barba', 'Barba', Icons.face_rounded, AppColors.secondary),
-    _CategoryOption('combo', 'Combo', Icons.star_rounded, Color(0xFFFF8C00)),
-    _CategoryOption('tratamiento', 'Tratamiento', Icons.spa_rounded, Color(0xFF00A693)),
+  List<_CategoryOption> _categories(ThemeData theme) => [
+    _CategoryOption('corte', 'Corte', Icons.content_cut_rounded, theme.colorScheme.primary),
+    _CategoryOption('barba', 'Barba', Icons.face_rounded, theme.colorScheme.secondary),
+    _CategoryOption('combo', 'Combo', Icons.star_rounded, const Color(0xFFFF8C00)),
+    _CategoryOption('tratamiento', 'Tratamiento', Icons.spa_rounded, const Color(0xFF00A693)),
   ];
 
   @override
@@ -512,11 +515,13 @@ class _ServiceBottomSheetState extends State<_ServiceBottomSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final bottomPadding = MediaQuery.of(context).viewInsets.bottom;
+    final categories = _categories(theme);
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surfaceContainerLowest,
+        color: theme.colorScheme.surfaceContainerLowest,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
       ),
       padding: EdgeInsets.only(bottom: bottomPadding),
@@ -533,7 +538,7 @@ class _ServiceBottomSheetState extends State<_ServiceBottomSheet> {
                   width: 36,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: AppColors.outline.withValues(alpha: 0.3),
+                    color: theme.colorScheme.outline.withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -544,13 +549,13 @@ class _ServiceBottomSheetState extends State<_ServiceBottomSheet> {
                   Text(
                     widget.service == null ? 'Nuevo servicio' : 'Editar servicio',
                     style: AppTypography.titleLarge.copyWith(
-                      color: AppColors.onSurface,
+                      color: theme.colorScheme.onSurface,
                       fontWeight: FontWeight.w800,
                     ),
                   ),
                   IconButton(
                     onPressed: () => Navigator.pop(context),
-                    icon: Icon(Icons.close_rounded, color: AppColors.onSurfaceVariant),
+                    icon: Icon(Icons.close_rounded, color: theme.colorScheme.onSurfaceVariant),
                   ),
                 ],
               ),
@@ -558,7 +563,7 @@ class _ServiceBottomSheetState extends State<_ServiceBottomSheet> {
               Text(
                 'Nombre del servicio',
                 style: AppTypography.labelLarge.copyWith(
-                  color: AppColors.onSurfaceVariant,
+                  color: theme.colorScheme.onSurfaceVariant,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 0.8,
                 ),
@@ -573,7 +578,7 @@ class _ServiceBottomSheetState extends State<_ServiceBottomSheet> {
               Text(
                 'Descripción (opcional)',
                 style: AppTypography.labelLarge.copyWith(
-                  color: AppColors.onSurfaceVariant,
+                  color: theme.colorScheme.onSurfaceVariant,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 0.8,
                 ),
@@ -595,7 +600,7 @@ class _ServiceBottomSheetState extends State<_ServiceBottomSheet> {
                         Text(
                           'Precio (CRC)',
                           style: AppTypography.labelLarge.copyWith(
-                            color: AppColors.onSurfaceVariant,
+                            color: theme.colorScheme.onSurfaceVariant,
                             fontWeight: FontWeight.w700,
                             letterSpacing: 0.8,
                           ),
@@ -618,7 +623,7 @@ class _ServiceBottomSheetState extends State<_ServiceBottomSheet> {
                         Text(
                           'Duración (min)',
                           style: AppTypography.labelLarge.copyWith(
-                            color: AppColors.onSurfaceVariant,
+                            color: theme.colorScheme.onSurfaceVariant,
                             fontWeight: FontWeight.w700,
                             letterSpacing: 0.8,
                           ),
@@ -639,14 +644,14 @@ class _ServiceBottomSheetState extends State<_ServiceBottomSheet> {
               Text(
                 'Categoría',
                 style: AppTypography.labelLarge.copyWith(
-                  color: AppColors.onSurfaceVariant,
+                  color: theme.colorScheme.onSurfaceVariant,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 0.8,
                 ),
               ),
               const SizedBox(height: 12),
               Row(
-                children: _categories.map((cat) {
+                children: categories.map((cat) {
                   final isSelected = _category == cat.value;
                   return Expanded(
                     child: GestureDetector(
@@ -658,7 +663,7 @@ class _ServiceBottomSheetState extends State<_ServiceBottomSheet> {
                         decoration: BoxDecoration(
                           color: isSelected
                               ? cat.color.withValues(alpha: 0.15)
-                              : AppColors.surfaceContainerHighest,
+                              : theme.colorScheme.surfaceContainerHighest,
                           borderRadius: BorderRadius.circular(AppRadius.lg),
                           border: Border.all(
                             color: isSelected ? cat.color : Colors.transparent,
@@ -669,14 +674,14 @@ class _ServiceBottomSheetState extends State<_ServiceBottomSheet> {
                           children: [
                             Icon(
                               cat.icon,
-                              color: isSelected ? cat.color : AppColors.onSurfaceVariant,
+                              color: isSelected ? cat.color : theme.colorScheme.onSurfaceVariant,
                               size: 20,
                             ),
                             const SizedBox(height: 4),
                             Text(
                               cat.label,
                               style: AppTypography.labelSmall.copyWith(
-                                color: isSelected ? cat.color : AppColors.onSurfaceVariant,
+                                color: isSelected ? cat.color : theme.colorScheme.onSurfaceVariant,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
@@ -694,8 +699,8 @@ class _ServiceBottomSheetState extends State<_ServiceBottomSheet> {
                 child: FilledButton(
                   onPressed: _isSubmitting ? null : () => _save(context),
                   style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: AppColors.onPrimary,
+                    backgroundColor: theme.colorScheme.primary,
+                    foregroundColor: theme.colorScheme.onPrimary,
                     elevation: 0,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(AppRadius.xl),
@@ -712,7 +717,7 @@ class _ServiceBottomSheetState extends State<_ServiceBottomSheet> {
                       Text(
                         widget.service == null ? 'Agregar servicio' : 'Guardar cambios',
                         style: AppTypography.labelLarge.copyWith(
-                          color: AppColors.onPrimary,
+                          color: theme.colorScheme.onPrimary,
                           fontWeight: FontWeight.w800,
                         ),
                       ),
@@ -746,23 +751,24 @@ class _StyledTextField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return TextField(
       controller: controller,
       keyboardType: keyboardType,
       maxLines: maxLines,
       style: AppTypography.bodyLarge.copyWith(
-        color: AppColors.onSurface,
+        color: theme.colorScheme.onSurface,
         fontWeight: FontWeight.w600,
       ),
       decoration: InputDecoration(
         hintText: hintText,
         hintStyle: AppTypography.bodyLarge.copyWith(
-          color: AppColors.outline,
+          color: theme.colorScheme.outline,
           fontWeight: FontWeight.w500,
         ),
         filled: true,
-        fillColor: AppColors.surfaceContainerHighest,
-        prefixIcon: Icon(prefixIcon, color: AppColors.outline, size: 20),
+        fillColor: theme.colorScheme.surfaceContainerHighest,
+        prefixIcon: Icon(prefixIcon, color: theme.colorScheme.outline, size: 20),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.xl),
@@ -774,7 +780,7 @@ class _StyledTextField extends StatelessWidget {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.xl),
-          borderSide: BorderSide(color: AppColors.primary, width: 1.5),
+          borderSide: BorderSide(color: theme.colorScheme.primary, width: 1.5),
         ),
       ),
     );
@@ -789,21 +795,21 @@ class _CategoryOption {
   const _CategoryOption(this.value, this.label, this.icon, this.color);
 }
 
-_CategoryStyle _categoryStyle(String category) {
+_CategoryStyle _categoryStyle(String category, ThemeData theme) {
   switch (category) {
     case 'corte':
       return _CategoryStyle(
         label: 'Corte',
         icon: Icons.content_cut_rounded,
-        bgColor: AppColors.primary.withValues(alpha: 0.12),
-        iconColor: AppColors.primary,
+        bgColor: theme.colorScheme.primary.withValues(alpha: 0.12),
+        iconColor: theme.colorScheme.primary,
       );
     case 'barba':
       return _CategoryStyle(
         label: 'Barba',
         icon: Icons.face_rounded,
-        bgColor: AppColors.secondary.withValues(alpha: 0.12),
-        iconColor: AppColors.secondary,
+        bgColor: theme.colorScheme.secondary.withValues(alpha: 0.12),
+        iconColor: theme.colorScheme.secondary,
       );
     case 'combo':
       return _CategoryStyle(
@@ -823,8 +829,8 @@ _CategoryStyle _categoryStyle(String category) {
       return _CategoryStyle(
         label: category,
         icon: Icons.content_cut_rounded,
-        bgColor: AppColors.surfaceContainerHighest,
-        iconColor: AppColors.onSurfaceVariant,
+        bgColor: theme.colorScheme.surfaceContainerHighest,
+        iconColor: theme.colorScheme.onSurfaceVariant,
       );
   }
 }

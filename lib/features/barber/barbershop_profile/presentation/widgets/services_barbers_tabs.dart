@@ -10,6 +10,7 @@ class ServicesBarbersTabs extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final activeTab = context.select<BookingCubit, ProfileTab>(
       (c) => c.state.activeTab,
     );
@@ -18,7 +19,7 @@ class ServicesBarbersTabs extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(4),
         decoration: BoxDecoration(
-          color: AppColors.surfaceContainer,
+          color: theme.colorScheme.surfaceContainer,
           borderRadius: BorderRadius.circular(AppRadius.xl),
         ),
         child: Row(
@@ -55,6 +56,7 @@ class _TabButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Expanded(
       child: AppPressable(
         onTap: onTap,
@@ -64,7 +66,7 @@ class _TabButton extends StatelessWidget {
           padding: const EdgeInsets.symmetric(vertical: 12),
           decoration: BoxDecoration(
             color: selected
-                ? AppColors.surfaceContainerLowest
+                ? theme.colorScheme.surfaceContainerLowest
                 : Colors.transparent,
             borderRadius: BorderRadius.circular(AppRadius.lg),
           ),
@@ -72,7 +74,7 @@ class _TabButton extends StatelessWidget {
           child: Text(
             label,
             style: AppTypography.titleSmall.copyWith(
-              color: selected ? AppColors.onSurface : AppColors.outline,
+              color: selected ? theme.colorScheme.onSurface : theme.colorScheme.outline,
               fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
             ),
           ),

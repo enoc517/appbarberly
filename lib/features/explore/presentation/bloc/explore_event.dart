@@ -135,3 +135,13 @@ class _FavoritesUpdated extends ExploreEvent {
   @override
   List<Object?> get props => [favoriteIds];
 }
+
+/// El usuario cambió el radio de búsqueda en kilómetros.
+class ExploreRadiusChanged extends ExploreEvent {
+  const ExploreRadiusChanged(this.radiusKm);
+
+  final double radiusKm;
+
+  @override
+  List<Object?> get props => [radiusKm];
+}

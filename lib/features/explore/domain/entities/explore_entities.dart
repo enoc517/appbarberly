@@ -43,6 +43,7 @@ class BarbershopEntity extends Equatable {
     required this.imageUrl,
     required this.hasActivePromotion,
     required this.tags,
+    this.barberNames = const [],
     this.distanceKm,
   });
 
@@ -61,6 +62,7 @@ class BarbershopEntity extends Equatable {
   final bool hasActivePromotion;
 
   final List<String> tags;
+  final List<String> barberNames;
 
   /// Distancia calculada en cliente respecto a la posición del usuario.
   /// Es null si aún no se conoce la ubicación del usuario.
@@ -79,6 +81,7 @@ class BarbershopEntity extends Equatable {
     String? imageUrl,
     bool? hasActivePromotion,
     List<String>? tags,
+    List<String>? barberNames,
     double? distanceKm,
   }) {
     return BarbershopEntity(
@@ -94,26 +97,28 @@ class BarbershopEntity extends Equatable {
       imageUrl: imageUrl ?? this.imageUrl,
       hasActivePromotion: hasActivePromotion ?? this.hasActivePromotion,
       tags: tags ?? this.tags,
+      barberNames: barberNames ?? this.barberNames,
       distanceKm: distanceKm ?? this.distanceKm,
     );
   }
 
   @override
   List<Object?> get props => [
-        id,
-        name,
-        ownerName,
-        phone,
-        address,
-        lat,
-        lng,
-        rating,
-        reviewCount,
-        imageUrl,
-        hasActivePromotion,
-        tags,
-        distanceKm,
-      ];
+    id,
+    name,
+    ownerName,
+    phone,
+    address,
+    lat,
+    lng,
+    rating,
+    reviewCount,
+    imageUrl,
+    hasActivePromotion,
+    tags,
+    barberNames,
+    distanceKm,
+  ];
 }
 
 // ---------------------------------------------------------------------------
@@ -183,16 +188,16 @@ class ServiceExploreEntity extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        barbershopId,
-        barbershopSnapshot,
-        serviceName,
-        description,
-        price,
-        durationMinutes,
-        category,
-        lat,
-        lng,
-        distanceKm,
-      ];
+    id,
+    barbershopId,
+    barbershopSnapshot,
+    serviceName,
+    description,
+    price,
+    durationMinutes,
+    category,
+    lat,
+    lng,
+    distanceKm,
+  ];
 }

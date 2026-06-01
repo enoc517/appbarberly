@@ -6,6 +6,12 @@ abstract class BookingsRepository {
   Future<void> cancelBooking({
     required String bookingId,
     required String clientId,
+    required BookingCancellationActor cancelledBy,
+  });
+
+  Future<void> completeBooking({
+    required String bookingId,
+    required String clientId,
   });
 
   Stream<List<Booking>> watchClientBookings(String clientId);

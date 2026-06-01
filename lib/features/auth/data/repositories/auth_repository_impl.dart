@@ -55,4 +55,19 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<void> sendEmailVerification() {
     return remoteDatasource.sendEmailVerification();
   }
+
+  @override
+  Future<void> updateUserProfile({
+    required String uid,
+    String? fullName,
+    String? phone,
+    String? profileImageUrl,
+  }) {
+    return remoteDatasource.updateUserProfile(
+      uid: uid,
+      fullName: fullName,
+      phone: phone,
+      profileImageUrl: profileImageUrl,
+    );
+  }
 }

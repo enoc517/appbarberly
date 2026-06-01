@@ -20,4 +20,11 @@ abstract class AuthRepository {
   Future<void> signOut();
 
   Future<void> sendEmailVerification();
+
+  Future<void> updateUserProfile({
+    required String uid,
+    String? fullName,
+    String? phone,
+    String? profileImageUrl,
+  });
 }

@@ -11,8 +11,9 @@ class ClientBookingsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
         bottom: false,
         child: BlocBuilder<ClientBookingsCubit, ClientBookingsState>(
@@ -50,7 +51,12 @@ class _LoadedView extends StatelessWidget {
         if (activeBooking != null)
           AppFadeSlideIn(
             delay: AppMotion.delay(1),
-            child: _NextBookingCard(booking: activeBooking!),
+            child: _NextBookingCard(
+              booking: activeBooking!,
+              onCancel: () => context
+                  .read<ClientBookingsCubit>()
+                  .cancelBooking(activeBooking!),
+            ),
           ),
         if (activeBooking == null) const _NoActiveBookingCard(),
         const SizedBox(height: 24),
@@ -81,6 +87,7 @@ class _Header extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -89,7 +96,7 @@ class _Header extends StatelessWidget {
         Text(
           'Administra tus reservas, reprograma o revisa tu historial.',
           style: AppTypography.bodyMedium.copyWith(
-            color: AppColors.onSurfaceVariant,
+            color: theme.colorScheme.onSurfaceVariant,
           ),
         ),
       ],
@@ -98,50 +105,110 @@ class _Header extends StatelessWidget {
 }
 
 class _NextBookingCard extends StatelessWidget {
-  const _NextBookingCard({required this.booking});
+  const _NextBookingCard({required this.booking, required this.onCancel});
 
   final Booking booking;
+  final VoidCallback onCancel;
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.primary,
+        color: colorScheme.surfaceContainerLowest,
         borderRadius: BorderRadius.circular(AppRadius.xl),
+        border: Border.all(
+          color: colorScheme.outlineVariant.withValues(alpha: 0.18),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: colorScheme.shadow.withValues(alpha: 0.08),
+            blurRadius: 24,
+            offset: const Offset(0, 14),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'CITA ACTIVA',
-            style: AppTypography.labelMedium.copyWith(
-              color: AppColors.onPrimaryContainer,
-              letterSpacing: 1.2,
-            ),
+          Row(
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: colorScheme.primaryContainer,
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
+                ),
+                child: Icon(
+                  Icons.event_available_rounded,
+                  color: colorScheme.onPrimaryContainer,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: colorScheme.secondary.withValues(alpha: 0.14),
+                  borderRadius: BorderRadius.circular(AppRadius.xl),
+                ),
+                child: Text(
+                  'CITA ACTIVA',
+                  style: AppTypography.labelSmall.copyWith(
+                    color: colorScheme.secondary,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 1.1,
+                  ),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 18),
           Text(
             booking.serviceSnapshot.name,
             style: AppTypography.headlineSmall.copyWith(
-              color: AppColors.onPrimary,
+              color: colorScheme.onSurface,
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 6),
           Text(
             '${_formatDateTime(booking.slotStart)} · ${booking.shopSnapshot.name}',
             style: AppTypography.bodyMedium.copyWith(
-              color: AppColors.onPrimaryContainer,
+              color: colorScheme.onSurfaceVariant,
             ),
           ),
           const SizedBox(height: 18),
-          FilledButton(
-            onPressed: () {},
-            style: FilledButton.styleFrom(
-              backgroundColor: AppColors.secondary,
-              foregroundColor: AppColors.onSecondary,
-            ),
-            child: const Text('Ver detalle'),
+          Row(
+            children: [
+              Expanded(
+                child: FilledButton(
+                  onPressed: () {},
+                  style: FilledButton.styleFrom(
+                    backgroundColor: colorScheme.primaryContainer,
+                    foregroundColor: colorScheme.onPrimaryContainer,
+                  ),
+                  child: const Text('Ver detalle'),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: onCancel,
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: colorScheme.secondary,
+                    side: BorderSide(
+                      color: colorScheme.secondary.withValues(alpha: 0.55),
+                    ),
+                  ),
+                  child: const Text('Cancelar'),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -154,16 +221,17 @@ class _NoActiveBookingCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: AppColors.surfaceContainerLowest,
+        color: theme.colorScheme.surfaceContainerLowest,
         borderRadius: BorderRadius.circular(AppRadius.xl),
       ),
       child: Text(
         'No tienes una cita activa. Puedes reservar desde Explorar.',
         style: AppTypography.bodyMedium.copyWith(
-          color: AppColors.onSurfaceVariant,
+          color: theme.colorScheme.onSurfaceVariant,
         ),
       ),
     );
@@ -178,12 +246,13 @@ class _BookingTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.surfaceContainerLowest,
+        color: theme.colorScheme.surfaceContainerLowest,
         borderRadius: BorderRadius.circular(AppRadius.xl),
-        border: Border.all(color: AppColors.ghostBorder),
+        border: Border.all(color: theme.colorScheme.outlineVariant.withValues(alpha: 0.15)),
       ),
       child: Row(
         children: [
@@ -191,12 +260,12 @@ class _BookingTile extends StatelessWidget {
             width: 48,
             height: 48,
             decoration: BoxDecoration(
-              color: muted ? AppColors.surfaceContainerHigh : AppColors.primary,
+              color: muted ? theme.colorScheme.surfaceContainerHigh : theme.colorScheme.primary,
               borderRadius: BorderRadius.circular(AppRadius.md),
             ),
             child: Icon(
               Icons.calendar_today_outlined,
-              color: muted ? AppColors.onSurfaceVariant : AppColors.onPrimary,
+              color: muted ? theme.colorScheme.onSurfaceVariant : theme.colorScheme.onPrimary,
             ),
           ),
           const SizedBox(width: 14),
@@ -212,7 +281,7 @@ class _BookingTile extends StatelessWidget {
                 Text(
                   '${booking.shopSnapshot.name} · ${_formatDateTime(booking.slotStart)}',
                   style: AppTypography.bodySmall.copyWith(
-                    color: AppColors.onSurfaceVariant,
+                    color: theme.colorScheme.onSurfaceVariant,
                   ),
                 ),
               ],
@@ -222,7 +291,7 @@ class _BookingTile extends StatelessWidget {
           Text(
             booking.status.label,
             style: AppTypography.labelSmall.copyWith(
-              color: muted ? AppColors.onSurfaceVariant : AppColors.secondary,
+              color: muted ? theme.colorScheme.onSurfaceVariant : theme.colorScheme.secondary,
               fontWeight: FontWeight.w700,
             ),
           ),
@@ -250,10 +319,11 @@ class _InlineEmpty extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Text(
       message,
       style: AppTypography.bodyMedium.copyWith(
-        color: AppColors.onSurfaceVariant,
+        color: theme.colorScheme.onSurfaceVariant,
       ),
     );
   }

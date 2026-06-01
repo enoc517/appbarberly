@@ -30,6 +30,7 @@ class BarbershopModel {
     required this.imageUrl,
     required this.hasActivePromotion,
     required this.tags,
+    required this.barberNames,
   });
 
   final String id;
@@ -44,6 +45,7 @@ class BarbershopModel {
   final String imageUrl;
   final bool hasActivePromotion;
   final List<String> tags;
+  final List<String> barberNames;
 
   // ── Constructor desde Firestore ──────────────────────────────────────────
 
@@ -67,25 +69,40 @@ class BarbershopModel {
       imageUrl: data['imageUrl'] as String? ?? '',
       hasActivePromotion: data['hasActivePromotion'] as bool? ?? false,
       tags: List<String>.from(data['tags'] as List? ?? []),
+      barberNames: _barberNamesFromData(data),
     );
+  }
+
+  static List<String> _barberNamesFromData(Map<String, dynamic> data) {
+    final names = <String>{
+      ...List<String>.from(data['barberNames'] as List? ?? []),
+    };
+
+    final ownerName = data['ownerName'] as String?;
+    if (ownerName != null && ownerName.trim().isNotEmpty) {
+      names.add(ownerName.trim());
+    }
+
+    return names.toList();
   }
 
   // ── Conversión a entidad de dominio ─────────────────────────────────────
 
   BarbershopEntity toEntity() => BarbershopEntity(
-        id: id,
-        name: name,
-        ownerName: ownerName,
-        phone: phone,
-        address: address,
-        lat: lat,
-        lng: lng,
-        rating: rating,
-        reviewCount: reviewCount,
-        imageUrl: imageUrl,
-        hasActivePromotion: hasActivePromotion,
-        tags: tags,
-      );
+    id: id,
+    name: name,
+    ownerName: ownerName,
+    phone: phone,
+    address: address,
+    lat: lat,
+    lng: lng,
+    rating: rating,
+    reviewCount: reviewCount,
+    imageUrl: imageUrl,
+    hasActivePromotion: hasActivePromotion,
+    tags: tags,
+    barberNames: barberNames,
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -116,11 +133,11 @@ class BarbershopSnapshotModel {
   }
 
   BarbershopSnapshotEntity toEntity() => BarbershopSnapshotEntity(
-        name: name,
-        imageUrl: imageUrl,
-        rating: rating,
-        address: address,
-      );
+    name: name,
+    imageUrl: imageUrl,
+    rating: rating,
+    address: address,
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -182,15 +199,15 @@ class ServiceExploreModel {
   // ── Conversión a entidad de dominio ─────────────────────────────────────
 
   ServiceExploreEntity toEntity() => ServiceExploreEntity(
-        id: id,
-        barbershopId: barbershopId,
-        barbershopSnapshot: barbershopSnapshot.toEntity(),
-        serviceName: serviceName,
-        description: description,
-        price: price,
-        durationMinutes: durationMinutes,
-        category: category,
-        lat: lat,
-        lng: lng,
-      );
+    id: id,
+    barbershopId: barbershopId,
+    barbershopSnapshot: barbershopSnapshot.toEntity(),
+    serviceName: serviceName,
+    description: description,
+    price: price,
+    durationMinutes: durationMinutes,
+    category: category,
+    lat: lat,
+    lng: lng,
+  );
 }

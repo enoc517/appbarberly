@@ -6,6 +6,10 @@
         <string>Necesitamos tu ubicación para mostrarte barberías cercanas en Ciudad Neily.</string>
         <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
         <string>Necesitamos tu ubicación para mostrarte barberías cercanas en Ciudad Neily.</string>
+        <key>NSCameraUsageDescription</key>
+        <string>Necesitamos acceso a la cámara para tomar tu foto de perfil.</string>
+        <key>NSPhotoLibraryUsageDescription</key>
+        <string>Necesitamos acceso a tu galería para elegir tu foto de perfil.</string>
         <key>CADisableMinimumFrameDurationOnPhone</key>
         <true/>
         <key>CFBundleDevelopmentRegion</key>

@@ -14,6 +14,7 @@ class BarbershopHero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: ClipRRect(
@@ -23,11 +24,11 @@ class BarbershopHero extends StatelessWidget {
             Container(
               height: 180,
               width: double.infinity,
-              color: AppColors.inverseSurface,
-              child: const Icon(
+              color: theme.colorScheme.inverseSurface,
+              child: Icon(
                 Icons.storefront,
                 size: 64,
-                color: AppColors.onPrimaryContainer,
+                color: theme.colorScheme.onPrimaryContainer,
               ),
             ),
             Positioned.fill(
@@ -38,7 +39,7 @@ class BarbershopHero extends StatelessWidget {
                     end: Alignment.bottomCenter,
                     colors: [
                       Colors.transparent,
-                      AppColors.primary.withValues(alpha: 0.55),
+                      theme.colorScheme.primary.withValues(alpha: 0.55),
                     ],
                   ),
                 ),
@@ -54,22 +55,22 @@ class BarbershopHero extends StatelessWidget {
                   Text(
                     barbershop.name,
                     style: AppTypography.headlineMedium.copyWith(
-                      color: AppColors.onPrimary,
+                      color: theme.colorScheme.onPrimary,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Row(
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.location_on_outlined,
-                        color: AppColors.onPrimary,
+                        color: theme.colorScheme.onPrimary,
                         size: 16,
                       ),
                       const SizedBox(width: 4),
                       Text(
                         barbershop.district,
                         style: AppTypography.bodySmall.copyWith(
-                          color: AppColors.onPrimary,
+                          color: theme.colorScheme.onPrimary,
                         ),
                       ),
                     ],
@@ -83,8 +84,8 @@ class BarbershopHero extends StatelessWidget {
               child: FilledButton.icon(
                 onPressed: onCheckIn,
                 style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.secondary,
-                  foregroundColor: AppColors.onSecondary,
+                  backgroundColor: theme.colorScheme.secondary,
+                  foregroundColor: theme.colorScheme.onSecondary,
                   padding: const EdgeInsets.symmetric(
                     horizontal: 16,
                     vertical: 12,

@@ -11,15 +11,16 @@ class ResetPasswordScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: AppColors.surface,
+      backgroundColor: theme.colorScheme.surface,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(
+          icon: Icon(
             Icons.arrow_back_ios_new,
-            color: AppColors.onSurface,
+            color: theme.colorScheme.onSurface,
             size: 20,
           ),
           onPressed: () => GoRouter.of(context).go('/login'),
@@ -33,7 +34,7 @@ class ResetPasswordScreen extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: AppColors.primaryContainer,
+                color: theme.colorScheme.primaryContainer,
                 borderRadius: BorderRadius.circular(28),
               ),
               child: const Icon(
@@ -47,7 +48,7 @@ class ResetPasswordScreen extends StatelessWidget {
               'Restablecimiento externo',
               textAlign: TextAlign.center,
               style: AppTypography.headlineMedium.copyWith(
-                color: AppColors.onSurface,
+                color: theme.colorScheme.onSurface,
                 fontWeight: FontWeight.w800,
               ),
             ),
@@ -56,7 +57,7 @@ class ResetPasswordScreen extends StatelessWidget {
               'Esta pantalla se conserva, pero el cambio de contraseña se realiza desde el enlace enviado por Firebase.',
               textAlign: TextAlign.center,
               style: AppTypography.bodyMedium.copyWith(
-                color: AppColors.onSurfaceVariant,
+                color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
             const SizedBox(height: 40),
@@ -66,7 +67,7 @@ class ResetPasswordScreen extends StatelessWidget {
               child: FilledButton(
                 onPressed: () => GoRouter.of(context).go('/login'),
                 style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.primaryContainer,
+                  backgroundColor: theme.colorScheme.primaryContainer,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),
                   ),

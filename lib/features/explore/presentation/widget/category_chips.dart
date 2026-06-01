@@ -51,6 +51,7 @@ class _CategoryChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return AppPressable(
       onTap: onTap,
       child: AnimatedContainer(
@@ -59,14 +60,13 @@ class _CategoryChip extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppColors.primaryContainer
-              : AppColors.surfaceContainerLowest,
+              ? theme.colorScheme.primaryContainer
+              : theme.colorScheme.surfaceContainerLowest,
           borderRadius: BorderRadius.circular(AppRadius.xl),
-          // Tonal layering: selected chip gets a soft ambient shadow
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: AppColors.primaryContainer.withValues(alpha: 0.30),
+                    color: theme.colorScheme.primaryContainer.withValues(alpha: 0.30),
                     blurRadius: 12,
                     offset: const Offset(0, 4),
                   ),
@@ -77,8 +77,8 @@ class _CategoryChip extends StatelessWidget {
           label,
           style: AppTypography.labelMedium.copyWith(
             color: isSelected
-                ? AppColors.onPrimary
-                : AppColors.onSurfaceVariant,
+                ? theme.colorScheme.onPrimary
+                : theme.colorScheme.onSurfaceVariant,
             fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
           ),
         ),

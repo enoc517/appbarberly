@@ -5,24 +5,28 @@ import '../theme/app_theme.dart';
 /// Útil para estados "vacío", "agregar", "lista de espera", etc.
 class DottedBorderContainer extends StatelessWidget {
   final Widget child;
-  final Color color;
+  final Color? color;
   final double radius;
   final VoidCallback? onTap;
 
   const DottedBorderContainer({
     super.key,
     required this.child,
-    this.color = AppColors.secondary,
+    this.color,
     this.radius = AppRadius.lg,
     this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return GestureDetector(
       onTap: onTap,
       child: CustomPaint(
-        painter: _DashedBorderPainter(color: color, radius: radius),
+        painter: _DashedBorderPainter(
+          color: color ?? theme.colorScheme.secondary,
+          radius: radius,
+        ),
         child: child,
       ),
     );

@@ -16,9 +16,15 @@ class MainShell extends StatefulWidget {
   State<MainShell> createState() => _MainShellState();
 }
 
-class _MainShellState extends State<MainShell> {
+class _MainShellState extends State<MainShell> with TickerProviderStateMixin {
   DateTime? _lastBackPressedAt;
   static const _swipeVelocityThreshold = 300.0;
+
+  late AnimationController _transitionController;
+  late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
+  int _previousIndex = 0;
+  int _swipeDirection = 0;
 
   static const _clientItems = [
     _ShellItem(Icons.explore_outlined, 'EXPLORAR', 0),
@@ -40,6 +46,51 @@ class _MainShellState extends State<MainShell> {
 
   int get _homeBranchIndex => _isBarberShell ? 4 : 0;
 
+  @override
+  void initState() {
+    super.initState();
+    _previousIndex = widget.navigationShell.currentIndex;
+
+    _transitionController = AnimationController(
+      vsync: this,
+      duration: AppMotion.normal,
+    );
+
+    _fadeAnimation = CurvedAnimation(
+      parent: _transitionController,
+      curve: AppMotion.standard,
+    );
+
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0.08, 0),
+      end: Offset.zero,
+    ).animate(_fadeAnimation);
+
+    _transitionController.value = 1;
+  }
+
+  @override
+  void didUpdateWidget(MainShell oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    final newIndex = widget.navigationShell.currentIndex;
+    if (newIndex != _previousIndex) {
+      _swipeDirection = newIndex > _previousIndex ? -1 : 1;
+      _previousIndex = newIndex;
+
+      if (!AppMotion.reduceMotion(context)) {
+        _transitionController.reset();
+        _transitionController.forward();
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _transitionController.dispose();
+    super.dispose();
+  }
+
   void _onTap(int index) {
     // initialLocation: true -> vuelve a la raiz de la tab si ya estas en ella.
     widget.navigationShell.goBranch(
@@ -59,16 +110,15 @@ class _MainShellState extends State<MainShell> {
     var targetIndex = currentIndex;
     if (velocity < 0 && currentIndex < maxIndex) {
       targetIndex = currentIndex + 1;
+      _swipeDirection = -1;
     } else if (velocity > 0 && currentIndex > minIndex) {
       targetIndex = currentIndex - 1;
+      _swipeDirection = 1;
     }
 
     if (targetIndex == currentIndex) return;
 
-    widget.navigationShell.goBranch(
-      targetIndex,
-      initialLocation: false,
-    );
+    widget.navigationShell.goBranch(targetIndex, initialLocation: false);
   }
 
   Future<bool> _onBackPressed(BuildContext context) async {
@@ -94,17 +144,23 @@ class _MainShellState extends State<MainShell> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return BackButtonListener(
       onBackButtonPressed: () => _onBackPressed(context),
       child: GestureDetector(
         behavior: HitTestBehavior.translucent,
         onHorizontalDragEnd: _onHorizontalDragEnd,
         child: Scaffold(
-          body: widget.navigationShell,
+          body: _BranchTransition(
+            fadeAnimation: _fadeAnimation,
+            slideAnimation: _slideAnimation,
+            direction: _swipeDirection,
+            child: widget.navigationShell,
+          ),
           bottomNavigationBar: Container(
             padding: const EdgeInsets.fromLTRB(8, 8, 8, 16),
-            decoration: const BoxDecoration(
-              color: AppColors.surfaceContainerLowest,
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surfaceContainerLowest,
             ),
             child: SafeArea(
               top: false,
@@ -124,7 +180,9 @@ class _MainShellState extends State<MainShell> {
                         vertical: 10,
                       ),
                       decoration: BoxDecoration(
-                        color: selected ? AppColors.primary : Colors.transparent,
+                        color: selected
+                            ? theme.colorScheme.primary
+                            : Colors.transparent,
                         borderRadius: BorderRadius.circular(AppRadius.lg),
                       ),
                       child: AnimatedScale(
@@ -138,16 +196,16 @@ class _MainShellState extends State<MainShell> {
                               item.icon,
                               size: 22,
                               color: selected
-                                  ? AppColors.onPrimary
-                                  : AppColors.onSurfaceVariant,
+                                  ? theme.colorScheme.onPrimary
+                                  : theme.colorScheme.onSurfaceVariant,
                             ),
                             const SizedBox(height: 4),
                             Text(
                               item.label,
                               style: AppTypography.labelSmall.copyWith(
                                 color: selected
-                                    ? AppColors.onPrimary
-                                    : AppColors.onSurfaceVariant,
+                                    ? theme.colorScheme.onPrimary
+                                    : theme.colorScheme.onSurfaceVariant,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
@@ -172,4 +230,35 @@ class _ShellItem {
   final IconData icon;
   final String label;
   final int branchIndex;
+}
+
+class _BranchTransition extends StatelessWidget {
+  const _BranchTransition({
+    required this.child,
+    required this.fadeAnimation,
+    required this.slideAnimation,
+    required this.direction,
+  });
+
+  final Widget child;
+  final Animation<double> fadeAnimation;
+  final Animation<Offset> slideAnimation;
+  final int direction;
+
+  @override
+  Widget build(BuildContext context) {
+    if (AppMotion.reduceMotion(context)) {
+      return child;
+    }
+
+    final adjustedSlide = Tween<Offset>(
+      begin: Offset(slideAnimation.value.dx * direction, 0),
+      end: Offset.zero,
+    ).animate(fadeAnimation);
+
+    return FadeTransition(
+      opacity: fadeAnimation,
+      child: SlideTransition(position: adjustedSlide, child: child),
+    );
+  }
 }

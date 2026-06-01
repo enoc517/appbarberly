@@ -5,6 +5,26 @@ import 'package:google_sign_in/google_sign_in.dart';
 import '../../domain/entities/app_user.dart';
 import '../models/app_user_model.dart';
 
+AppUserModel reconstructAuthProfile(
+  AppUserModel profile, {
+  required bool emailVerified,
+}) {
+  return AppUserModel(
+    id: profile.id,
+    email: profile.email,
+    fullName: profile.fullName,
+    phone: profile.phone,
+    profileImageUrl: profile.profileImageUrl,
+    role: profile.role,
+    isProfessional: profile.isProfessional,
+    professionalStatus: profile.professionalStatus,
+    emailVerified: emailVerified,
+    barbershopId: profile.barbershopId,
+    activeBookingId: profile.activeBookingId,
+    activeBookingStatus: profile.activeBookingStatus,
+  );
+}
+
 abstract class AuthRemoteDatasource {
   Future<AppUserModel> signIn({
     required String email,
@@ -28,6 +48,13 @@ abstract class AuthRemoteDatasource {
   Future<void> signOut();
 
   Future<void> sendEmailVerification();
+
+  Future<void> updateUserProfile({
+    required String uid,
+    String? fullName,
+    String? phone,
+    String? profileImageUrl,
+  });
 }
 
 class AuthRemoteDatasourceImpl implements AuthRemoteDatasource {
@@ -77,18 +104,9 @@ class AuthRemoteDatasourceImpl implements AuthRemoteDatasource {
 
     final profile = await _readUserProfile(currentUser.uid);
     if (profile != null) {
-      final updatedProfile = AppUserModel(
-        id: profile.id,
-        email: profile.email,
-        fullName: profile.fullName,
-        phone: profile.phone,
-        role: profile.role,
-        isProfessional: profile.isProfessional,
-        professionalStatus: profile.professionalStatus,
+      final updatedProfile = reconstructAuthProfile(
+        profile,
         emailVerified: verified,
-        barbershopId: profile.barbershopId,
-        activeBookingId: profile.activeBookingId,
-        activeBookingStatus: profile.activeBookingStatus,
       );
 
       if (profile.emailVerified != verified) {
@@ -151,19 +169,7 @@ class AuthRemoteDatasourceImpl implements AuthRemoteDatasource {
       }, SetOptions(merge: true));
     }
 
-    return AppUserModel(
-      id: profile.id,
-      email: profile.email,
-      fullName: profile.fullName,
-      phone: profile.phone,
-      role: profile.role,
-      isProfessional: profile.isProfessional,
-      professionalStatus: profile.professionalStatus,
-      emailVerified: true,
-      barbershopId: profile.barbershopId,
-      activeBookingId: profile.activeBookingId,
-      activeBookingStatus: profile.activeBookingStatus,
-    );
+    return reconstructAuthProfile(profile, emailVerified: true);
   }
 
   @override
@@ -259,18 +265,9 @@ class AuthRemoteDatasourceImpl implements AuthRemoteDatasource {
 
     final profile = await _readUserProfile(currentUser.uid);
     if (profile != null) {
-      final updatedProfile = AppUserModel(
-        id: profile.id,
-        email: profile.email,
-        fullName: profile.fullName,
-        phone: profile.phone,
-        role: profile.role,
-        isProfessional: profile.isProfessional,
-        professionalStatus: profile.professionalStatus,
+      final updatedProfile = reconstructAuthProfile(
+        profile,
         emailVerified: verified,
-        barbershopId: profile.barbershopId,
-        activeBookingId: profile.activeBookingId,
-        activeBookingStatus: profile.activeBookingStatus,
       );
 
       if (profile.emailVerified != verified) {
@@ -325,6 +322,23 @@ class AuthRemoteDatasourceImpl implements AuthRemoteDatasource {
       snapshot.id,
       snapshot.data() ?? <String, dynamic>{},
     );
+  }
+
+  @override
+  Future<void> updateUserProfile({
+    required String uid,
+    String? fullName,
+    String? phone,
+    String? profileImageUrl,
+  }) async {
+    final updates = <String, dynamic>{
+      'updatedAt': FieldValue.serverTimestamp(),
+    };
+    if (fullName != null) updates['fullName'] = fullName;
+    if (phone != null) updates['phone'] = phone;
+    if (profileImageUrl != null) updates['profileImageUrl'] = profileImageUrl;
+
+    await _userDoc(uid).set(updates, SetOptions(merge: true));
   }
 
   Future<void> _createProfessionalRequest(AppUserModel user) async {

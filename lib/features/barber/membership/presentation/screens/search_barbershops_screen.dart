@@ -44,8 +44,9 @@ class _SearchBarbershopsScreenState extends State<SearchBarbershopsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
@@ -54,7 +55,7 @@ class _SearchBarbershopsScreenState extends State<SearchBarbershopsScreen> {
         title: Text(
           'Buscar barberías',
           style: AppTypography.titleLarge.copyWith(
-            color: AppColors.onSurface,
+            color: theme.colorScheme.onSurface,
             fontWeight: FontWeight.w700,
           ),
         ),
@@ -72,7 +73,7 @@ class _SearchBarbershopsScreenState extends State<SearchBarbershopsScreen> {
                 hintText: 'Buscar por nombre...',
                 prefixIcon: const Icon(Icons.search_rounded),
                 filled: true,
-                fillColor: AppColors.surfaceContainerHighest,
+                fillColor: theme.colorScheme.surfaceContainerHighest,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(AppRadius.xl),
                   borderSide: BorderSide.none,
@@ -105,7 +106,7 @@ class _SearchBarbershopsScreenState extends State<SearchBarbershopsScreen> {
                       child: Text(
                         'No se encontraron barberías',
                         style: AppTypography.bodyLarge.copyWith(
-                          color: AppColors.onSurfaceVariant,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
                       ),
                     );
@@ -153,6 +154,7 @@ class _BarbershopTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: Padding(
@@ -164,7 +166,7 @@ class _BarbershopTile extends StatelessWidget {
               height: 56,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(AppRadius.md),
-                color: AppColors.surfaceContainerHighest,
+                color: theme.colorScheme.surfaceContainerHighest,
               ),
               child: shop.imageUrl.isNotEmpty
                   ? ClipRRect(
@@ -173,7 +175,7 @@ class _BarbershopTile extends StatelessWidget {
                     )
                   : Icon(
                       Icons.storefront_rounded,
-                      color: AppColors.outline,
+                      color: theme.colorScheme.outline,
                     ),
             ),
             const SizedBox(width: 16),
@@ -184,24 +186,24 @@ class _BarbershopTile extends StatelessWidget {
                   Text(
                     shop.name,
                     style: AppTypography.titleMedium.copyWith(
-                      color: AppColors.onSurface,
+                      color: theme.colorScheme.onSurface,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     shop.address,
                     style: AppTypography.bodySmall.copyWith(
-                      color: AppColors.onSurfaceVariant,
+                      color: theme.colorScheme.onSurfaceVariant,
                     ),
                   ),
                   Row(
                     children: [
-                      Icon(Icons.star_rounded, size: 16, color: AppColors.secondary),
+                      Icon(Icons.star_rounded, size: 16, color: theme.colorScheme.secondary),
                       const SizedBox(width: 4),
                       Text(
                         '${shop.rating}',
                         style: AppTypography.labelMedium.copyWith(
-                          color: AppColors.onSurfaceVariant,
+                          color: theme.colorScheme.onSurfaceVariant,
                         ),
                       ),
                     ],
@@ -212,8 +214,8 @@ class _BarbershopTile extends StatelessWidget {
             ElevatedButton(
               onPressed: onRequest,
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primaryContainer,
-                foregroundColor: AppColors.onPrimary,
+                backgroundColor: theme.colorScheme.primaryContainer,
+                foregroundColor: theme.colorScheme.onPrimaryContainer,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(AppRadius.md),
                 ),

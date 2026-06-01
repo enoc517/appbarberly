@@ -2,6 +2,7 @@
 // ===========================================================================
 
 // Flutter & External Packages
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -39,6 +40,7 @@ import 'package:barberly/features/barber/dashboard/presentation/screens/dashboar
 // Features: Barber (Membership)
 import 'package:barberly/features/barber/membership/presentation/screens/search_barbershops_screen.dart';
 import 'package:barberly/features/barber/membership/presentation/screens/membership_requests_screen.dart';
+import 'package:barberly/features/barber/penalties/presentation/screens/penalties_screen.dart';
 
 // Features: Barber (Services & Schedule)
 import 'package:barberly/features/barber/services/presentation/screens/manage_services_screen.dart';
@@ -48,6 +50,9 @@ import 'package:barberly/features/barber/services/presentation/screens/manage_sc
 import 'package:barberly/features/explore/presentation/screens/explore_screen.dart';
 import 'package:barberly/features/explore/presentation/screens/barbershop_detail_screen.dart';
 import 'package:barberly/features/explore/presentation/screens/barber_booking_screen.dart';
+
+// Features: Notifications
+import 'package:barberly/features/notifications/presentation/screens/notifications_screen.dart';
 
 // Features: Welcome
 import 'package:barberly/features/welcome/presentation/screens/welcome_screen.dart';
@@ -72,11 +77,40 @@ class AppRouter {
   static const String cuentaBarbero = '/cuenta-barbero';
   static const String crearBarberia = '/crear-barberia';
   static const String forgotPassword = '/forgot_password';
+  static const String notifications = '/notificaciones';
+
+  // ── Auth guard helpers ───────────────────────────────────────────────────────
+  static bool _isProtectedRoute(String path) {
+    const protected = [
+      explorar,
+      citas,
+      favoritos,
+      perfil,
+      panel,
+      agenda,
+      barberia,
+      cuentaBarbero,
+      notifications,
+    ];
+    for (final p in protected) {
+      if (path == p || path.startsWith('$p/')) return true;
+    }
+    return false;
+  }
 
   // ── Router ───────────────────────────────────────────────────────────────────
   static final GoRouter router = GoRouter(
     initialLocation: welcome,
     debugLogDiagnostics: true,
+    redirect: (context, state) {
+      final path = state.uri.path;
+      if (!_isProtectedRoute(path)) return null;
+
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) return login;
+      if (!user.emailVerified) return verifyEmail;
+      return null;
+    },
     routes: [
       GoRoute(
         path: welcome,
@@ -148,7 +182,11 @@ class AppRouter {
         name: 'barbershopDetail',
         builder: (context, state) {
           final shopId = state.pathParameters['shopId'] ?? '';
-          return BarbershopDetailScreen(shopId: shopId);
+          return BlocProvider(
+            create: (_) =>
+                AppDependencies.buildBarbershopDetailCubit(shopId)..loadData(),
+            child: const BarbershopDetailScreen(),
+          );
         },
         routes: [
           GoRoute(
@@ -158,14 +196,29 @@ class AppRouter {
               final shopId = state.pathParameters['shopId'] ?? '';
               final barberId = state.pathParameters['barberId'] ?? '';
               final clientId = AppDependencies.getCurrentUserId();
-              return BarberBookingScreen(
-                shopId: shopId,
-                barberId: barberId,
-                clientId: clientId,
+              return BlocProvider(
+                create: (_) => AppDependencies.buildBarberBookingCubit(
+                  shopId: shopId,
+                  barberId: barberId,
+                  clientId: clientId,
+                )..loadData(),
+                child: const BarberBookingScreen(),
               );
             },
           ),
         ],
+      ),
+
+      GoRoute(
+        path: notifications,
+        name: 'notifications',
+        builder: (context, state) {
+          final userId = AppDependencies.getCurrentUserId() ?? '';
+          return BlocProvider(
+            create: (_) => AppDependencies.buildNotificationsCubit(userId),
+            child: const NotificationsScreen(),
+          );
+        },
       ),
 
       // ── Shell con bottom nav por rol ─────────────────────────────────────────
@@ -196,7 +249,8 @@ class AppRouter {
                 builder: (context, state) {
                   final userId = AppDependencies.getCurrentUserId() ?? '';
                   return BlocProvider(
-                    create: (_) => AppDependencies.buildClientBookingsCubit(userId),
+                    create: (_) =>
+                        AppDependencies.buildClientBookingsCubit(userId),
                     child: const ClientBookingsScreen(),
                   );
                 },
@@ -227,7 +281,11 @@ class AppRouter {
               GoRoute(
                 path: perfil,
                 name: 'perfil',
-                builder: (context, state) => const ClientProfileScreen(),
+                builder: (context, state) => BlocProvider(
+                  create: (_) =>
+                      AppDependencies.buildClientProfileCubit()..loadData(),
+                  child: const ClientProfileScreen(),
+                ),
               ),
             ],
           ),
@@ -258,7 +316,8 @@ class AppRouter {
                 builder: (context, state) {
                   final userId = AppDependencies.getCurrentUserId() ?? '';
                   return BlocProvider(
-                    create: (_) => AppDependencies.buildBarberAgendaCubit(userId),
+                    create: (_) =>
+                        AppDependencies.buildBarberAgendaCubit(userId),
                     child: const BarberAgendaScreen(),
                   );
                 },
@@ -274,7 +333,8 @@ class AppRouter {
                 name: 'barberia',
                 builder: (context, state) {
                   return BlocProvider(
-                    create: (_) => AppDependencies.buildBarbershopManagementHubCubit(),
+                    create: (_) =>
+                        AppDependencies.buildBarbershopManagementHubCubit(),
                     child: const BarbershopManagementScreen(),
                   );
                 },
@@ -288,16 +348,22 @@ class AppRouter {
               GoRoute(
                 path: cuentaBarbero,
                 name: 'cuentaBarbero',
-                builder: (context, state) => const BarberAccountScreen(),
+                builder: (context, state) => BlocProvider(
+                  create: (_) =>
+                      AppDependencies.buildBarberProfileCubit()..loadData(),
+                  child: const BarberAccountScreen(),
+                ),
                 routes: [
                   GoRoute(
                     path: 'crear-barberia',
                     name: 'crearBarberia',
                     builder: (context, state) {
                       final userId = AppDependencies.getCurrentUserId() ?? '';
-                      final userName = AppDependencies.getCurrentUserName() ?? '';
+                      final userName =
+                          AppDependencies.getCurrentUserName() ?? '';
                       return BlocProvider(
-                        create: (_) => AppDependencies.buildBarbershopManagementCubit(),
+                        create: (_) =>
+                            AppDependencies.buildBarbershopManagementCubit(),
                         child: CreateBarbershopScreen(
                           userId: userId,
                           userName: userName,
@@ -306,14 +372,29 @@ class AppRouter {
                     },
                   ),
                   GoRoute(
+                    path: 'editar-barberia',
+                    name: 'editarBarberia',
+                    builder: (context, state) {
+                      final userId = AppDependencies.getCurrentUserId() ?? '';
+                      return BlocProvider(
+                        create: (_) =>
+                            AppDependencies.buildBarbershopManagementCubit(),
+                        child: EditBarbershopScreen(userId: userId),
+                      );
+                    },
+                  ),
+                  GoRoute(
                     path: 'buscar-barberias',
                     name: 'buscarBarberias',
                     builder: (context, state) {
                       final userId = AppDependencies.getCurrentUserId() ?? '';
-                      final userName = AppDependencies.getCurrentUserName() ?? '';
-                      final userEmail = AppDependencies.getCurrentUserEmail() ?? '';
+                      final userName =
+                          AppDependencies.getCurrentUserName() ?? '';
+                      final userEmail =
+                          AppDependencies.getCurrentUserEmail() ?? '';
                       return BlocProvider(
-                        create: (_) => AppDependencies.buildSearchBarbershopsCubit(),
+                        create: (_) =>
+                            AppDependencies.buildSearchBarbershopsCubit(),
                         child: SearchBarbershopsScreen(
                           barberId: userId,
                           barberName: userName,
@@ -332,11 +413,31 @@ class AppRouter {
                         builder: (context, snapshot) {
                           final barbershopId = snapshot.data ?? '';
                           return BlocProvider(
-                            create: (_) => AppDependencies.buildMembershipRequestsCubit(),
+                            create: (_) =>
+                                AppDependencies.buildMembershipRequestsCubit(),
                             child: MembershipRequestsScreen(
                               barbershopId: barbershopId,
                               reviewerId: userId,
                             ),
+                          );
+                        },
+                      );
+                    },
+                  ),
+                  GoRoute(
+                    path: 'penalizaciones',
+                    name: 'penalizaciones',
+                    builder: (context, state) {
+                      final userId = AppDependencies.getCurrentUserId() ?? '';
+                      return FutureBuilder<String>(
+                        future: AppDependencies.getCurrentBarbershopId(userId),
+                        builder: (context, snapshot) {
+                          final barbershopId = snapshot.data ?? '';
+                          return BlocProvider(
+                            create: (_) => AppDependencies.buildPenaltiesCubit(
+                              barbershopId,
+                            ),
+                            child: const PenaltiesScreen(),
                           );
                         },
                       );
@@ -352,7 +453,8 @@ class AppRouter {
                         builder: (context, snapshot) {
                           final barbershopId = snapshot.data ?? '';
                           return BlocProvider(
-                            create: (_) => AppDependencies.buildBarberServicesCubit(),
+                            create: (_) =>
+                                AppDependencies.buildBarberServicesCubit(),
                             child: ManageServicesScreen(
                               barbershopId: barbershopId,
                               barberId: userId,
@@ -372,7 +474,8 @@ class AppRouter {
                         builder: (context, snapshot) {
                           final barbershopId = snapshot.data ?? '';
                           return BlocProvider(
-                            create: (_) => AppDependencies.buildBarberScheduleCubit(),
+                            create: (_) =>
+                                AppDependencies.buildBarberScheduleCubit(),
                             child: ManageScheduleScreen(
                               barbershopId: barbershopId,
                               barberId: userId,

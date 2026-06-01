@@ -11,8 +11,9 @@ class FavoritesScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
         bottom: false,
         child: BlocBuilder<FavoritesCubit, FavoritesState>(
@@ -56,6 +57,7 @@ class _Header extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -64,7 +66,7 @@ class _Header extends StatelessWidget {
         Text(
           'Tus barberías guardadas para reservar más rápido.',
           style: AppTypography.bodyMedium.copyWith(
-            color: AppColors.onSurfaceVariant,
+            color: theme.colorScheme.onSurfaceVariant,
           ),
         ),
       ],
@@ -79,14 +81,15 @@ class _FavoriteBarbershopCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: AppColors.surfaceContainerLowest,
+        color: theme.colorScheme.surfaceContainerLowest,
         borderRadius: BorderRadius.circular(AppRadius.xl),
         boxShadow: [
           BoxShadow(
-            color: AppColors.ambientShadow,
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.06),
             blurRadius: 18,
             offset: const Offset(0, 8),
           ),
@@ -98,12 +101,12 @@ class _FavoriteBarbershopCard extends StatelessWidget {
             width: 72,
             height: 72,
             decoration: BoxDecoration(
-              color: AppColors.primary,
+              color: theme.colorScheme.primary,
               borderRadius: BorderRadius.circular(AppRadius.xl),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.storefront_rounded,
-              color: AppColors.onPrimary,
+              color: theme.colorScheme.onPrimary,
               size: 34,
             ),
           ),
@@ -117,7 +120,7 @@ class _FavoriteBarbershopCard extends StatelessWidget {
                 Text(
                   '${shop.rating.toStringAsFixed(1)} · ${shop.reviewCount} reseñas',
                   style: AppTypography.bodySmall.copyWith(
-                    color: AppColors.onSurfaceVariant,
+                    color: theme.colorScheme.onSurfaceVariant,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -126,13 +129,13 @@ class _FavoriteBarbershopCard extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: AppTypography.bodySmall.copyWith(
-                    color: AppColors.onSurfaceVariant,
+                    color: theme.colorScheme.onSurfaceVariant,
                   ),
                 ),
               ],
             ),
           ),
-          const Icon(Icons.favorite_rounded, color: AppColors.secondary),
+          Icon(Icons.favorite_rounded, color: theme.colorScheme.secondary),
         ],
       ),
     );

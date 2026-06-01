@@ -87,6 +87,19 @@ class BarberAgendaCubit extends Cubit<BarberAgendaState> {
 
   Future<void> selectDay(DateTime day) => load(day: day);
 
+  Future<void> completeBooking(Booking booking) async {
+    if (!booking.isActive) return;
+
+    try {
+      await _bookingsRepository.completeBooking(
+        bookingId: booking.id,
+        clientId: booking.clientId,
+      );
+    } catch (_) {
+      emit(const BarberAgendaError('No se pudo completar la cita'));
+    }
+  }
+
   @override
   Future<void> close() async {
     await _subscription?.cancel();
