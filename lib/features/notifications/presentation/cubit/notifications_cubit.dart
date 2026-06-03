@@ -7,6 +7,8 @@ import '../../domain/repositories/notifications_repository.dart';
 
 sealed class NotificationsState {
   const NotificationsState();
+
+  int get unreadCount => 0;
 }
 
 class NotificationsLoading extends NotificationsState {
@@ -17,6 +19,9 @@ class NotificationsLoaded extends NotificationsState {
   const NotificationsLoaded(this.notifications);
 
   final List<AppNotification> notifications;
+
+  @override
+  int get unreadCount => notifications.where((n) => !n.isRead).length;
 }
 
 class NotificationsEmpty extends NotificationsState {

@@ -10,6 +10,7 @@ import '../widgets/completed_card.dart';
 import '../widgets/dashboard_header.dart';
 import '../widgets/income_card.dart';
 import '../widgets/weekly_chart.dart';
+import 'package:barberly/features/notifications/presentation/cubit/notifications_cubit.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -45,7 +46,14 @@ class _Content extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.only(bottom: 24),
       children: [
-        AppFadeSlideIn(child: DashboardHeader(today: DateTime.now())),
+        AppFadeSlideIn(
+          child: BlocBuilder<NotificationsCubit, NotificationsState>(
+            builder: (context, notificationState) => DashboardHeader(
+              today: DateTime.now(),
+              unreadNotifications: notificationState.unreadCount,
+            ),
+          ),
+        ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: AppFadeSlideIn(

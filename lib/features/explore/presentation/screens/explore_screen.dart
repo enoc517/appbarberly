@@ -9,6 +9,7 @@ import 'package:barberly/shared/motion/app_motion.dart';
 import 'package:barberly/shared/theme/app_theme.dart';
 import 'package:barberly/features/explore/domain/entities/explore_entities.dart';
 import 'package:barberly/features/explore/presentation/bloc/explore_bloc.dart';
+import 'package:barberly/features/notifications/presentation/cubit/notifications_cubit.dart';
 
 import '../widget/explore_header.dart';
 import '../widget/explore_search_bar.dart';
@@ -79,9 +80,13 @@ class _LoadedView extends StatelessWidget {
                 children: [
                   // 1. Header
                   AppFadeSlideIn(
-                    child: ExploreHeader(
-                      userName: state.userName,
-                      onNotificationTap: () => context.push('/notificaciones'),
+                    child: BlocBuilder<NotificationsCubit, NotificationsState>(
+                      builder: (context, notificationState) => ExploreHeader(
+                        userName: state.userName,
+                        unreadNotifications: notificationState.unreadCount,
+                        onNotificationTap: () =>
+                            context.push('/notificaciones'),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 20),

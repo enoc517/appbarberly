@@ -1,5 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../barber/services/domain/entities/barber_schedule.dart';
 import '../../domain/repositories/barber_booking_repository.dart';
 import '../../../bookings/domain/entities/booking.dart';
 import 'barber_booking_state.dart';
@@ -15,8 +16,8 @@ class BarberBookingCubit extends Cubit<BarberBookingState> {
     required this.barberId,
     this.clientId,
     required BarberBookingRepository repository,
-  })  : _repository = repository,
-        super(const BarberBookingState());
+  }) : _repository = repository,
+       super(const BarberBookingState());
 
   Future<void> loadData() async {
     emit(state.copyWith(isLoading: true, errorMessage: null));
@@ -26,24 +27,57 @@ class BarberBookingCubit extends Cubit<BarberBookingState> {
 
       final availableDays = _computeAvailableDays(result.schedule);
 
-      emit(state.copyWith(
-        isLoading: false,
-        barberName: result.barberName,
-        services: result.services,
-        schedule: result.schedule,
-        availableDays: availableDays,
-      ));
+      emit(
+        state.copyWith(
+          isLoading: false,
+          barberName: result.barberName,
+          services: result.services,
+          schedule: result.schedule,
+          availableDays: availableDays,
+          errorMessage: null,
+        ),
+      );
+
+      if (availableDays.isNotEmpty) {
+        emit(
+          state.copyWith(
+            selectedDay: availableDays.first,
+            clearSelectedTime: true,
+            errorMessage: null,
+          ),
+        );
+      }
+
+      await _loadAvailableTimes();
     } catch (e) {
       emit(state.copyWith(isLoading: false, errorMessage: e.toString()));
     }
   }
 
   void selectService(Map<String, dynamic> service) {
-    emit(state.copyWith(selectedService: service));
+    emit(
+      state.copyWith(
+        selectedService: service,
+        clearSelectedTime: true,
+        availableTimes: const [],
+        isLoadingSlots: false,
+        errorMessage: null,
+      ),
+    );
+    _loadAvailableTimes();
   }
 
   void selectDay(DateTime day) {
-    emit(state.copyWith(selectedDay: day, clearSelectedTime: true));
+    emit(
+      state.copyWith(
+        selectedDay: day,
+        clearSelectedTime: true,
+        availableTimes: const [],
+        isLoadingSlots: false,
+        errorMessage: null,
+      ),
+    );
+    _loadAvailableTimes();
   }
 
   void selectTime(String time) {
@@ -56,8 +90,7 @@ class BarberBookingCubit extends Cubit<BarberBookingState> {
     emit(state.copyWith(isBooking: true, errorMessage: null));
 
     try {
-      final clientName =
-          await _repository.getClientName(clientId!);
+      final clientName = await _repository.getClientName(clientId!);
       final shopName = await _repository.getShopName(shopId);
 
       final serviceName = state.selectedService!['name'] as String;
@@ -87,8 +120,7 @@ class BarberBookingCubit extends Cubit<BarberBookingState> {
           price: price,
           durationMinutes: durationMin,
           clientSnapshot: BookingSnapshot(name: clientName),
-          barberSnapshot:
-              BookingSnapshot(name: state.barberName ?? 'Barbero'),
+          barberSnapshot: BookingSnapshot(name: state.barberName ?? 'Barbero'),
           shopSnapshot: BookingSnapshot(name: shopName),
           serviceSnapshot: BookingSnapshot(name: serviceName),
         ),
@@ -100,16 +132,46 @@ class BarberBookingCubit extends Cubit<BarberBookingState> {
     }
   }
 
-  List<DateTime> _computeAvailableDays(Map<int, bool> schedule) {
+  List<DateTime> _computeAvailableDays(Map<int, BarberSchedule> schedule) {
     final today = DateTime.now();
     final days = <DateTime>[];
     for (var i = 0; i < 14; i++) {
       final day = today.add(Duration(days: i));
       final dow = day.weekday;
-      if (schedule[dow] == true) {
+      if (schedule[dow]?.isActive == true) {
         days.add(DateTime(day.year, day.month, day.day));
       }
     }
     return days;
+  }
+
+  Future<void> _loadAvailableTimes() async {
+    final selectedService = state.selectedService;
+    final selectedDay = state.selectedDay;
+    if (selectedService == null || selectedDay == null) return;
+
+    final durationMinutes = (selectedService['durationMinutes'] as int?) ?? 0;
+    if (durationMinutes <= 0) return;
+
+    emit(state.copyWith(isLoadingSlots: true, availableTimes: const []));
+
+    try {
+      final availableTimes = await _repository.loadAvailableTimeSlots(
+        shopId: shopId,
+        barberId: barberId,
+        day: selectedDay,
+        durationMinutes: durationMinutes,
+      );
+
+      emit(
+        state.copyWith(
+          isLoadingSlots: false,
+          availableTimes: availableTimes,
+          clearSelectedTime: true,
+        ),
+      );
+    } catch (e) {
+      emit(state.copyWith(isLoadingSlots: false, errorMessage: e.toString()));
+    }
   }
 }

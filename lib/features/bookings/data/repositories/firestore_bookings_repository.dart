@@ -19,6 +19,30 @@ class FirestoreBookingsRepository implements BookingsRepository {
     final userRef = _db.collection('users').doc(draft.clientId);
     final slotRef = draft.slotPath == null ? null : _db.doc(draft.slotPath!);
 
+    final sameDaySnapshot = await _bookings
+        .where('barbershopId', isEqualTo: draft.barbershopId)
+        .where('dateKey', isEqualTo: draft.dateKey)
+        .orderBy('slotStart')
+        .get();
+    final hasConflict = sameDaySnapshot.docs.any((doc) {
+      final data = doc.data();
+      if (data['barberId'] != draft.barberId) return false;
+      final status = _bookingStatus(data['status'] as String?);
+      if (!status.isActive) return false;
+      final existingStart = _dateTime(data['slotStart']);
+      final existingEnd = _dateTime(data['slotEnd']);
+      return _overlaps(
+        draft.slotStart,
+        draft.slotEnd,
+        existingStart,
+        existingEnd,
+      );
+    });
+
+    if (hasConflict) {
+      throw StateError('El horario ya no está disponible.');
+    }
+
     await _db.runTransaction((transaction) async {
       final userSnapshot = await transaction.get(userRef);
       final userData = userSnapshot.data() ?? <String, dynamic>{};
@@ -287,6 +311,22 @@ class FirestoreBookingsRepository implements BookingsRepository {
     if (value is Timestamp) return value.toDate();
     if (value is DateTime) return value;
     return DateTime.fromMillisecondsSinceEpoch(0);
+  }
+
+  static AppointmentBookingStatus _bookingStatus(String? value) {
+    return AppointmentBookingStatus.values.firstWhere(
+      (status) => status.name == value,
+      orElse: () => AppointmentBookingStatus.cancelled,
+    );
+  }
+
+  static bool _overlaps(
+    DateTime aStart,
+    DateTime aEnd,
+    DateTime bStart,
+    DateTime bEnd,
+  ) {
+    return aStart.isBefore(bEnd) && bStart.isBefore(aEnd);
   }
 
   static String _cancellationNotificationBody(

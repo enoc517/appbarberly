@@ -21,8 +21,18 @@ class BarberAgendaScreen extends StatelessWidget {
             BarberAgendaLoading() => const _LoadingView(),
             BarberAgendaEmpty(:final message) => _EmptyView(message: message),
             BarberAgendaError(:final message) => _ErrorView(message: message),
-            BarberAgendaLoaded(:final bookings, :final selectedDay) =>
-              _LoadedView(bookings: bookings, selectedDay: selectedDay),
+            BarberAgendaLoaded(
+              :final bookings,
+              :final selectedDay,
+              :final visibleDays,
+              :final isLoadingBookings,
+            ) =>
+              _LoadedView(
+                bookings: bookings,
+                selectedDay: selectedDay,
+                visibleDays: visibleDays,
+                isLoadingBookings: isLoadingBookings,
+              ),
           },
         ),
       ),
@@ -31,10 +41,17 @@ class BarberAgendaScreen extends StatelessWidget {
 }
 
 class _LoadedView extends StatelessWidget {
-  const _LoadedView({required this.bookings, required this.selectedDay});
+  const _LoadedView({
+    required this.bookings,
+    required this.selectedDay,
+    required this.visibleDays,
+    required this.isLoadingBookings,
+  });
 
   final List<Booking> bookings;
   final DateTime selectedDay;
+  final List<DateTime> visibleDays;
+  final bool isLoadingBookings;
 
   @override
   Widget build(BuildContext context) {
@@ -45,10 +62,15 @@ class _LoadedView extends StatelessWidget {
         const SizedBox(height: 18),
         AppFadeSlideIn(
           delay: AppMotion.delay(1),
-          child: _DayStrip(selectedDay: selectedDay),
+          child: _DayStrip(selectedDay: selectedDay, days: visibleDays),
         ),
         const SizedBox(height: 22),
-        if (bookings.isEmpty)
+        if (isLoadingBookings)
+          const Padding(
+            padding: EdgeInsets.only(top: 32),
+            child: Center(child: CircularProgressIndicator()),
+          )
+        else if (bookings.isEmpty)
           const _InlineEmpty(message: 'No hay citas para este día.')
         else
           for (final booking in bookings) _AgendaBlock(booking: booking),
@@ -86,27 +108,47 @@ class _Header extends StatelessWidget {
 }
 
 class _DayStrip extends StatelessWidget {
-  const _DayStrip({required this.selectedDay});
+  const _DayStrip({required this.selectedDay, required this.days});
 
   final DateTime selectedDay;
+  final List<DateTime> days;
+  static const double _minPillWidth = 56;
+  static const double _gap = 8;
 
   @override
   Widget build(BuildContext context) {
-    final start = selectedDay.subtract(Duration(days: selectedDay.weekday - 1));
-    final days = List.generate(5, (index) => start.add(Duration(days: index)));
-    return Row(
-      children: [
-        for (var i = 0; i < days.length; i++) ...[
-          Expanded(
-            child: _DayPill(
-              date: days[i],
-              selected: _sameDay(days[i], selectedDay),
-              onTap: () => context.read<BarberAgendaCubit>().selectDay(days[i]),
-            ),
-          ),
-          if (i != days.length - 1) const SizedBox(width: 8),
-        ],
-      ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final totalGap = _gap * (days.length - 1);
+        final rawItemWidth = (constraints.maxWidth - totalGap) / days.length;
+        final fits = rawItemWidth >= _minPillWidth;
+        final itemWidth = fits ? rawItemWidth : _minPillWidth;
+        final pillWidth = fits ? itemWidth : _minPillWidth;
+
+        final strip = Row(
+          children: [
+            for (var i = 0; i < days.length; i++) ...[
+              _DayPill(
+                width: pillWidth,
+                date: days[i],
+                selected: _sameDay(days[i], selectedDay),
+                onTap: () =>
+                    context.read<BarberAgendaCubit>().selectDay(days[i]),
+              ),
+              if (i != days.length - 1) const SizedBox(width: _gap),
+            ],
+          ],
+        );
+
+        if (fits) {
+          return strip;
+        }
+
+        return SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: strip,
+        );
+      },
     );
   }
 
@@ -117,11 +159,13 @@ class _DayStrip extends StatelessWidget {
 
 class _DayPill extends StatelessWidget {
   const _DayPill({
+    required this.width,
     required this.date,
     required this.selected,
     required this.onTap,
   });
 
+  final double width;
   final DateTime date;
   final bool selected;
   final VoidCallback onTap;
@@ -130,34 +174,40 @@ class _DayPill extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     const labels = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        decoration: BoxDecoration(
-          color: selected
-              ? theme.colorScheme.primary
-              : theme.colorScheme.surfaceContainerLowest,
-          borderRadius: BorderRadius.circular(AppRadius.xl),
-        ),
-        child: Column(
-          children: [
-            Text(
-              labels[date.weekday - 1],
-              style: AppTypography.labelSmall.copyWith(
-                color: selected
-                    ? theme.colorScheme.onPrimary
-                    : theme.colorScheme.onSurfaceVariant,
-              ),
+    return Material(
+      color: selected
+          ? theme.colorScheme.primary
+          : theme.colorScheme.surfaceContainerLowest,
+      borderRadius: BorderRadius.circular(AppRadius.xl),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(AppRadius.xl),
+        onTap: onTap,
+        child: SizedBox(
+          width: width,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            child: Column(
+              children: [
+                Text(
+                  labels[date.weekday - 1],
+                  style: AppTypography.labelSmall.copyWith(
+                    color: selected
+                        ? theme.colorScheme.onPrimary
+                        : theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  date.day.toString().padLeft(2, '0'),
+                  style: AppTypography.titleSmall.copyWith(
+                    color: selected
+                        ? theme.colorScheme.onPrimary
+                        : theme.colorScheme.onSurface,
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 4),
-            Text(
-              date.day.toString().padLeft(2, '0'),
-              style: AppTypography.titleSmall.copyWith(
-                color: selected ? theme.colorScheme.onPrimary : theme.colorScheme.onSurface,
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -282,6 +332,7 @@ class _EmptyView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final noSchedule = message.contains('días activos');
     final isNoBarbershop = message.contains('barbería');
 
     return Center(
@@ -293,13 +344,19 @@ class _EmptyView extends StatelessWidget {
             Icon(
               isNoBarbershop
                   ? Icons.storefront_rounded
+                  : noSchedule
+                  ? Icons.schedule_outlined
                   : Icons.calendar_today_outlined,
               size: 72,
               color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
             ),
             const SizedBox(height: 20),
             Text(
-              isNoBarbershop ? 'Sin barbería asignada' : 'Sin citas',
+              isNoBarbershop
+                  ? 'Sin barbería asignada'
+                  : noSchedule
+                  ? 'Sin días activos'
+                  : 'Sin citas',
               style: AppTypography.titleLarge.copyWith(
                 color: theme.colorScheme.onSurface,
                 fontWeight: FontWeight.w700,
@@ -313,16 +370,22 @@ class _EmptyView extends StatelessWidget {
                 color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
-            if (isNoBarbershop) ...[
+            if (isNoBarbershop || noSchedule) ...[
               const SizedBox(height: 32),
               AppFadeSlideIn(
                 delay: AppMotion.delay(1),
                 child: SizedBox(
                   width: double.infinity,
                   child: FilledButton.icon(
-                    onPressed: () => context.go('/barberia'),
-                    icon: const Icon(Icons.storefront_rounded),
-                    label: const Text('Ir a Barbería'),
+                    onPressed: () => context.go('/cuenta-barbero/mi-horario'),
+                    icon: Icon(
+                      isNoBarbershop
+                          ? Icons.storefront_rounded
+                          : Icons.schedule_outlined,
+                    ),
+                    label: Text(
+                      isNoBarbershop ? 'Ir a Barbería' : 'Configurar horario',
+                    ),
                     style: FilledButton.styleFrom(
                       backgroundColor: theme.colorScheme.primaryContainer,
                       foregroundColor: theme.colorScheme.onPrimaryContainer,

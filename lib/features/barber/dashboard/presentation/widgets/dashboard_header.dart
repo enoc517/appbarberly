@@ -4,7 +4,12 @@ import '/../../../shared/theme/app_theme.dart';
 
 class DashboardHeader extends StatelessWidget {
   final DateTime today;
-  const DashboardHeader({super.key, required this.today});
+  final int unreadNotifications;
+  const DashboardHeader({
+    super.key,
+    required this.today,
+    this.unreadNotifications = 0,
+  });
 
   static const _months = [
     'Enero',
@@ -47,9 +52,44 @@ class DashboardHeader extends StatelessWidget {
               const SizedBox(width: 10),
               Text('Barberly', style: AppTypography.titleLarge),
               const Spacer(),
-              IconButton(
-                onPressed: () => context.push('/notificaciones'),
-                icon: const Icon(Icons.notifications_outlined),
+              Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  IconButton(
+                    onPressed: () => context.push('/notificaciones'),
+                    icon: const Icon(Icons.notifications_outlined),
+                  ),
+                  if (unreadNotifications > 0)
+                    Positioned(
+                      right: 8,
+                      top: 8,
+                      child: Container(
+                        constraints: const BoxConstraints(
+                          minWidth: 18,
+                          minHeight: 18,
+                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.secondary,
+                          borderRadius: BorderRadius.circular(999),
+                          border: Border.all(
+                            color: theme.colorScheme.surface,
+                            width: 1.5,
+                          ),
+                        ),
+                        child: Text(
+                          unreadNotifications > 9
+                              ? '9+'
+                              : '$unreadNotifications',
+                          textAlign: TextAlign.center,
+                          style: AppTypography.labelSmall.copyWith(
+                            color: theme.colorScheme.onSecondary,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
               ),
             ],
           ),

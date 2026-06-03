@@ -319,6 +319,7 @@ class AppDependencies {
     return BarberAgendaCubit(
       bookingsRepository: FirestoreBookingsRepository(firestore: firestore),
       firestore: firestore,
+      getBarberSchedule: getBarberScheduleUseCase,
       userId: userId,
     )..load();
   }

@@ -232,10 +232,21 @@ class AppRouter {
               GoRoute(
                 path: explorar,
                 name: 'explorar',
-                builder: (context, state) => BlocProvider(
-                  create: (_) => AppDependencies.buildExploreBloc(),
-                  child: const ExploreScreen(),
-                ),
+                builder: (context, state) {
+                  final userId = AppDependencies.getCurrentUserId() ?? '';
+                  return MultiBlocProvider(
+                    providers: [
+                      BlocProvider(
+                        create: (_) => AppDependencies.buildExploreBloc(),
+                      ),
+                      BlocProvider(
+                        create: (_) =>
+                            AppDependencies.buildNotificationsCubit(userId),
+                      ),
+                    ],
+                    child: const ExploreScreen(),
+                  );
+                },
               ),
             ],
           ),
@@ -298,8 +309,17 @@ class AppRouter {
                 name: 'panel',
                 builder: (context, state) {
                   final userId = AppDependencies.getCurrentUserId() ?? '';
-                  return BlocProvider(
-                    create: (_) => AppDependencies.buildDashboardCubit(userId),
+                  return MultiBlocProvider(
+                    providers: [
+                      BlocProvider(
+                        create: (_) =>
+                            AppDependencies.buildDashboardCubit(userId),
+                      ),
+                      BlocProvider(
+                        create: (_) =>
+                            AppDependencies.buildNotificationsCubit(userId),
+                      ),
+                    ],
                     child: const DashboardScreen(),
                   );
                 },

@@ -5,12 +5,14 @@ class ExploreHeader extends StatelessWidget {
   final String userName;
   final String? avatarUrl;
   final VoidCallback onNotificationTap;
+  final int unreadNotifications;
 
   const ExploreHeader({
     super.key,
     required this.userName,
     this.avatarUrl,
     required this.onNotificationTap,
+    this.unreadNotifications = 0,
   });
 
   @override
@@ -21,7 +23,10 @@ class ExploreHeader extends StatelessWidget {
         _Avatar(url: avatarUrl),
         const SizedBox(width: 12),
         Expanded(child: _Greeting(userName: userName)),
-        _NotificationButton(onTap: onNotificationTap),
+        _NotificationButton(
+          onTap: onNotificationTap,
+          unreadNotifications: unreadNotifications,
+        ),
       ],
     );
   }
@@ -106,7 +111,12 @@ class _Greeting extends StatelessWidget {
 
 class _NotificationButton extends StatelessWidget {
   final VoidCallback onTap;
-  const _NotificationButton({required this.onTap});
+  final int unreadNotifications;
+
+  const _NotificationButton({
+    required this.onTap,
+    required this.unreadNotifications,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -130,18 +140,31 @@ class _NotificationButton extends StatelessWidget {
             ),
           ),
         ),
-        Positioned(
-          top: 8,
-          right: 8,
-          child: Container(
-            width: 8,
-            height: 8,
-            decoration: BoxDecoration(
-              color: theme.colorScheme.secondary,
-              shape: BoxShape.circle,
+        if (unreadNotifications > 0)
+          Positioned(
+            top: 4,
+            right: 4,
+            child: Container(
+              constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.secondary,
+                borderRadius: BorderRadius.circular(999),
+                border: Border.all(
+                  color: theme.colorScheme.surface,
+                  width: 1.5,
+                ),
+              ),
+              child: Text(
+                unreadNotifications > 9 ? '9+' : '$unreadNotifications',
+                textAlign: TextAlign.center,
+                style: AppTypography.labelSmall.copyWith(
+                  color: theme.colorScheme.onSecondary,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
             ),
           ),
-        ),
       ],
     );
   }
