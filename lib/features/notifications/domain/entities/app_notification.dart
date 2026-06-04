@@ -1,4 +1,5 @@
 enum AppNotificationType {
+  bookingCreated,
   bookingReminder,
   bookingCancelled,
   lateCancellationPenalty,

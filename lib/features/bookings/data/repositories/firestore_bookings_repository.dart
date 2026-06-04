@@ -18,6 +18,7 @@ class FirestoreBookingsRepository implements BookingsRepository {
     final bookingRef = _bookings.doc();
     final userRef = _db.collection('users').doc(draft.clientId);
     final slotRef = draft.slotPath == null ? null : _db.doc(draft.slotPath!);
+    final notificationRef = _db.collection('notifications').doc();
 
     final sameDaySnapshot = await _bookings
         .where('barbershopId', isEqualTo: draft.barbershopId)
@@ -94,6 +95,24 @@ class FirestoreBookingsRepository implements BookingsRepository {
         'activeBookingStatus': AppointmentBookingStatus.confirmed.name,
         'updatedAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
+
+      transaction.set(notificationRef, {
+        'recipientId': draft.barberId,
+        'recipientRole': 'barber',
+        'type': 'bookingCreated',
+        'title': 'Nueva reserva',
+        'body': _bookingCreatedNotificationBody(draft),
+        'bookingId': bookingRef.id,
+        'barbershopId': draft.barbershopId,
+        'penaltyId': null,
+        'readAt': null,
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+        'data': {
+          'serviceName': draft.serviceSnapshot.name,
+          'clientName': draft.clientSnapshot.name,
+        },
+      });
     });
 
     return bookingRef.id;
@@ -274,10 +293,12 @@ class FirestoreBookingsRepository implements BookingsRepository {
   @override
   Stream<List<Booking>> watchBarberAgenda({
     required String barbershopId,
+    required String barberId,
     required String dateKey,
   }) {
     return _bookings
         .where('barbershopId', isEqualTo: barbershopId)
+        .where('barberId', isEqualTo: barberId)
         .where('dateKey', isEqualTo: dateKey)
         .orderBy('slotStart')
         .snapshots()
@@ -369,6 +390,15 @@ class FirestoreBookingsRepository implements BookingsRepository {
       if (name != null && name.trim().isNotEmpty) return name.trim();
     }
     return fallback;
+  }
+
+  static String _bookingCreatedNotificationBody(BookingDraft draft) {
+    final date = draft.slotStart;
+    final day = date.day.toString().padLeft(2, '0');
+    final month = date.month.toString().padLeft(2, '0');
+    final hour = date.hour.toString().padLeft(2, '0');
+    final minute = date.minute.toString().padLeft(2, '0');
+    return '${draft.clientSnapshot.name} reservó ${draft.serviceSnapshot.name} para el $day/$month a las $hour:$minute.';
   }
 
   static const _activeStatusNames = {'pending', 'confirmed', 'inProgress'};

@@ -4,4 +4,6 @@ abstract class NotificationsRepository {
   Stream<List<AppNotification>> watchUserNotifications(String userId);
 
   Future<void> markAsRead(String notificationId);
+
+  Future<void> markAllAsRead(String userId);
 }

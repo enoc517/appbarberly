@@ -33,6 +33,29 @@ class FirestoreNotificationsRepository implements NotificationsRepository {
       'updatedAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
   }
+
+  @override
+  Future<void> markAllAsRead(String userId) async {
+    final snapshot = await _notifications
+        .where('recipientId', isEqualTo: userId)
+        .get();
+    final unread = snapshot.docs
+        .map(_AppNotificationModel.fromDocument)
+        .where((notification) => !notification.isRead)
+        .toList();
+
+    if (unread.isEmpty) return;
+
+    final batch = _db.batch();
+    for (final notification in unread) {
+      batch.set(_notifications.doc(notification.id), {
+        'readAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+    }
+
+    await batch.commit();
+  }
 }
 
 class _AppNotificationModel extends AppNotification {

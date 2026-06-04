@@ -222,6 +222,8 @@ class _AgendaBlock extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final agendaCubit = context.read<BarberAgendaCubit>();
+    final canComplete = agendaCubit.canCompleteBooking(booking);
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
@@ -271,21 +273,117 @@ class _AgendaBlock extends StatelessWidget {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      Text(
-                        booking.status.label,
-                        style: AppTypography.labelSmall.copyWith(
-                          color: theme.colorScheme.secondary,
-                          fontWeight: FontWeight.w700,
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: _statusStyle(
+                            booking.status,
+                            theme.colorScheme,
+                          ).background,
+                          borderRadius: BorderRadius.circular(AppRadius.full),
+                        ),
+                        child: Text(
+                          booking.status.label,
+                          style: AppTypography.labelSmall.copyWith(
+                            color: _statusStyle(
+                              booking.status,
+                              theme.colorScheme,
+                            ).foreground,
+                            fontWeight: FontWeight.w800,
+                          ),
                         ),
                       ),
                       if (booking.isActive) ...[
                         const SizedBox(height: 8),
-                        TextButton(
-                          onPressed: () => context
-                              .read<BarberAgendaCubit>()
-                              .completeBooking(booking),
-                          child: const Text('Completar'),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          alignment: WrapAlignment.end,
+                          children: [
+                            FilledButton.icon(
+                              onPressed: canComplete
+                                  ? () => context
+                                        .read<BarberAgendaCubit>()
+                                        .completeBooking(booking)
+                                  : null,
+                              icon: const Icon(
+                                Icons.check_circle_outline_rounded,
+                              ),
+                              label: const Text('Completar'),
+                              style: FilledButton.styleFrom(
+                                backgroundColor:
+                                    theme.colorScheme.primaryContainer,
+                                foregroundColor:
+                                    theme.colorScheme.onPrimaryContainer,
+                              ),
+                            ),
+                            OutlinedButton.icon(
+                              onPressed: () async {
+                                final shouldCancel = await showDialog<bool>(
+                                  context: context,
+                                  builder: (dialogContext) => AlertDialog(
+                                    title: const Text('Cancelar cita'),
+                                    content: Text(
+                                      'Vas a cancelar la cita de ${booking.clientSnapshot.name}. El cliente será notificado.',
+                                    ),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () => Navigator.of(
+                                          dialogContext,
+                                        ).pop(false),
+                                        child: const Text('Volver'),
+                                      ),
+                                      FilledButton(
+                                        onPressed: () => Navigator.of(
+                                          dialogContext,
+                                        ).pop(true),
+                                        child: const Text('Cancelar cita'),
+                                      ),
+                                    ],
+                                  ),
+                                );
+
+                                if (shouldCancel != true || !context.mounted) {
+                                  return;
+                                }
+
+                                final success = await context
+                                    .read<BarberAgendaCubit>()
+                                    .cancelBooking(booking);
+
+                                if (!context.mounted || !success) return;
+
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Cita cancelada'),
+                                  ),
+                                );
+                              },
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: theme.colorScheme.error,
+                                side: BorderSide(
+                                  color: theme.colorScheme.error.withValues(
+                                    alpha: 0.55,
+                                  ),
+                                ),
+                              ),
+                              icon: const Icon(Icons.close_rounded),
+                              label: const Text('Cancelar'),
+                            ),
+                          ],
                         ),
+                        if (!canComplete) ...[
+                          const SizedBox(height: 8),
+                          Text(
+                            'Disponible al finalizar la cita',
+                            style: AppTypography.labelSmall.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
                       ],
                     ],
                   ),
@@ -431,4 +529,32 @@ String _formatTime(DateTime date) {
   final hour = date.hour.toString().padLeft(2, '0');
   final minute = date.minute.toString().padLeft(2, '0');
   return '$hour:$minute';
+}
+
+({Color background, Color foreground}) _statusStyle(
+  AppointmentBookingStatus status,
+  ColorScheme colorScheme,
+) {
+  return switch (status) {
+    AppointmentBookingStatus.confirmed => (
+      background: colorScheme.primaryContainer,
+      foreground: colorScheme.onPrimaryContainer,
+    ),
+    AppointmentBookingStatus.inProgress => (
+      background: colorScheme.primary.withValues(alpha: 0.1),
+      foreground: colorScheme.primary,
+    ),
+    AppointmentBookingStatus.completed => (
+      background: colorScheme.surfaceContainerHigh,
+      foreground: colorScheme.onSurfaceVariant,
+    ),
+    AppointmentBookingStatus.pending => (
+      background: colorScheme.surfaceContainerHigh,
+      foreground: colorScheme.onSurfaceVariant,
+    ),
+    AppointmentBookingStatus.cancelled => (
+      background: colorScheme.errorContainer,
+      foreground: colorScheme.onErrorContainer,
+    ),
+  };
 }

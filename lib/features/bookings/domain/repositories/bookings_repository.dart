@@ -18,6 +18,7 @@ abstract class BookingsRepository {
 
   Stream<List<Booking>> watchBarberAgenda({
     required String barbershopId,
+    required String barberId,
     required String dateKey,
   });
 

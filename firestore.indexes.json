@@ -32,6 +32,16 @@
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "barbershopId", "order": "ASCENDING" },
+        { "fieldPath": "barberId", "order": "ASCENDING" },
+        { "fieldPath": "dateKey", "order": "ASCENDING" },
+        { "fieldPath": "slotStart", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "bookings",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "barberId", "order": "ASCENDING" },
         { "fieldPath": "slotStart", "order": "ASCENDING" }
       ]
     }

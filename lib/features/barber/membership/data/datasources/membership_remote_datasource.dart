@@ -1,5 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import '../../../../bookings/data/repositories/firestore_bookings_repository.dart';
+import '../../../../bookings/domain/entities/booking.dart';
+import '../../../../bookings/domain/repositories/bookings_repository.dart';
 import '../../../barbershop_management/domain/entities/barbershop.dart';
 import '../../domain/entities/barber_member.dart';
 import '../../domain/entities/membership_request.dart';
@@ -28,9 +31,16 @@ abstract class MembershipRemoteDatasource {
 class MembershipRemoteDatasourceImpl implements MembershipRemoteDatasource {
   MembershipRemoteDatasourceImpl({
     FirebaseFirestore? firestore,
-  }) : _db = firestore ?? FirebaseFirestore.instance;
+    BookingsRepository? bookingsRepository,
+  }) : _db = firestore ?? FirebaseFirestore.instance,
+       _bookingsRepository =
+           bookingsRepository ??
+           FirestoreBookingsRepository(
+             firestore: firestore ?? FirebaseFirestore.instance,
+           );
 
   final FirebaseFirestore _db;
+  final BookingsRepository _bookingsRepository;
 
   CollectionReference<Map<String, dynamic>> get _shopsCollection =>
       _db.collection('barbershops');
@@ -49,10 +59,9 @@ class MembershipRemoteDatasourceImpl implements MembershipRemoteDatasource {
         .orderBy('name');
 
     if (query.isNotEmpty) {
-      q = q.where('name', isGreaterThanOrEqualTo: query).where(
-        'name',
-        isLessThanOrEqualTo: '$query\uf8ff',
-      );
+      q = q
+          .where('name', isGreaterThanOrEqualTo: query)
+          .where('name', isLessThanOrEqualTo: '$query\uf8ff');
     }
 
     final snapshot = await q.limit(20).get();
@@ -118,8 +127,8 @@ class MembershipRemoteDatasourceImpl implements MembershipRemoteDatasource {
         barbershopId: data['barbershopId'] as String? ?? barbershopId,
         barbershopName: data['barbershopName'] as String? ?? '',
         status: MembershipRequestStatus.pending,
-        requestedAt: (data['requestedAt'] as Timestamp?)?.toDate() ??
-            DateTime.now(),
+        requestedAt:
+            (data['requestedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       );
     }).toList();
   }
@@ -135,9 +144,9 @@ class MembershipRemoteDatasourceImpl implements MembershipRemoteDatasource {
     final doc = await docRef.get();
     final data = doc.data() ?? <String, dynamic>{};
 
-    final newStatus =
-        approve ? MembershipRequestStatus.approved : MembershipRequestStatus
-            .rejected;
+    final newStatus = approve
+        ? MembershipRequestStatus.approved
+        : MembershipRequestStatus.rejected;
 
     await docRef.update({
       'status': newStatus.name,
@@ -173,8 +182,8 @@ class MembershipRemoteDatasourceImpl implements MembershipRemoteDatasource {
       barbershopId: barbershopId,
       barbershopName: data['barbershopName'] as String? ?? '',
       status: newStatus,
-      requestedAt: (data['requestedAt'] as Timestamp?)?.toDate() ??
-          DateTime.now(),
+      requestedAt:
+          (data['requestedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       reviewedAt: DateTime.now(),
       reviewedBy: reviewedBy,
     );
@@ -182,9 +191,9 @@ class MembershipRemoteDatasourceImpl implements MembershipRemoteDatasource {
 
   @override
   Future<List<BarberMember>> getMembers(String barbershopId) async {
-    final snapshot = await _membersCollection(barbershopId)
-        .orderBy('joinedAt')
-        .get();
+    final snapshot = await _membersCollection(
+      barbershopId,
+    ).orderBy('joinedAt').get();
 
     return snapshot.docs.map((doc) {
       final data = doc.data();
@@ -211,17 +220,28 @@ class MembershipRemoteDatasourceImpl implements MembershipRemoteDatasource {
         .where('barberId', isEqualTo: barberId)
         .where('barbershopId', isEqualTo: barbershopId)
         .where('dateKey', isGreaterThanOrEqualTo: todayKey)
-        .where('status', whereIn: ['pending', 'confirmed'])
         .get();
 
-    final batch = _db.batch();
-    for (final doc in bookingsSnapshot.docs) {
-      batch.update(doc.reference, {
-        'status': 'cancelled',
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
+    final activeStatuses = {
+      AppointmentBookingStatus.pending,
+      AppointmentBookingStatus.confirmed,
+      AppointmentBookingStatus.inProgress,
+    };
+
+    final bookingsToCancel = bookingsSnapshot.docs
+        .map((doc) => _BookingRef.fromDocument(doc))
+        .where((booking) => activeStatuses.contains(booking.status))
+        .toList();
+
+    for (final booking in bookingsToCancel) {
+      await _bookingsRepository.cancelBooking(
+        bookingId: booking.id,
+        clientId: booking.clientId,
+        cancelledBy: BookingCancellationActor.barber,
+      );
     }
 
+    final batch = _db.batch();
     batch.delete(_membersCollection(barbershopId).doc(barberId));
 
     batch.update(_db.collection('users').doc(barberId), {
@@ -256,5 +276,33 @@ class MembershipRemoteDatasourceImpl implements MembershipRemoteDatasource {
         isActive: data['isActive'] as bool? ?? true,
       );
     }).toList();
+  }
+}
+
+class _BookingRef {
+  const _BookingRef({
+    required this.id,
+    required this.clientId,
+    required this.status,
+  });
+
+  factory _BookingRef.fromDocument(DocumentSnapshot<Map<String, dynamic>> doc) {
+    final data = doc.data() ?? <String, dynamic>{};
+    return _BookingRef(
+      id: doc.id,
+      clientId: data['clientId'] as String? ?? '',
+      status: _status(data['status'] as String?),
+    );
+  }
+
+  final String id;
+  final String clientId;
+  final AppointmentBookingStatus status;
+
+  static AppointmentBookingStatus _status(String? value) {
+    return AppointmentBookingStatus.values.firstWhere(
+      (status) => status.name == value,
+      orElse: () => AppointmentBookingStatus.cancelled,
+    );
   }
 }

@@ -135,16 +135,40 @@ class BarberAgendaCubit extends Cubit<BarberAgendaState> {
     await _watchBookingsForSelectedDay();
   }
 
-  Future<void> completeBooking(Booking booking) async {
-    if (!booking.isActive) return;
+  Future<bool> completeBooking(Booking booking) async {
+    if (!canCompleteBooking(booking)) return false;
 
     try {
       await _bookingsRepository.completeBooking(
         bookingId: booking.id,
         clientId: booking.clientId,
       );
+      return true;
     } catch (_) {
       emit(const BarberAgendaError('No se pudo completar la cita'));
+      return false;
+    }
+  }
+
+  bool canCompleteBooking(Booking booking, {DateTime? now}) {
+    if (!booking.isActive) return false;
+    final currentTime = now ?? DateTime.now();
+    return !currentTime.isBefore(booking.slotEnd);
+  }
+
+  Future<bool> cancelBooking(Booking booking) async {
+    if (!booking.isActive) return false;
+
+    try {
+      await _bookingsRepository.cancelBooking(
+        bookingId: booking.id,
+        clientId: booking.clientId,
+        cancelledBy: BookingCancellationActor.barber,
+      );
+      return true;
+    } catch (_) {
+      emit(const BarberAgendaError('No se pudo cancelar la cita'));
+      return false;
     }
   }
 
@@ -204,6 +228,7 @@ class BarberAgendaCubit extends Cubit<BarberAgendaState> {
     _subscription = _bookingsRepository
         .watchBarberAgenda(
           barbershopId: barbershopId,
+          barberId: _userId,
           dateKey: _dateKey(_selectedDay),
         )
         .listen(
