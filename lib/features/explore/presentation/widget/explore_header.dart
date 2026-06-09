@@ -91,12 +91,6 @@ class _Greeting extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(
-          'Buen día,',
-          style: AppTypography.labelMedium.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
-        ),
-        Text(
           displayName,
           style: AppTypography.titleMedium.copyWith(
             color: theme.colorScheme.onSurface,

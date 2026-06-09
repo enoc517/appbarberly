@@ -100,15 +100,14 @@ class BarberBookingRepositoryImpl implements BarberBookingRepository {
     final bookingsSnapshot = await _db
         .collection('bookings')
         .where('barbershopId', isEqualTo: shopId)
+        .where('barberId', isEqualTo: barberId)
         .where('dateKey', isEqualTo: dateKey)
         .orderBy('slotStart')
         .get();
 
     final activeBookings = bookingsSnapshot.docs
         .map(BookingModel.fromDocument)
-        .where(
-          (booking) => booking.barberId == barberId && booking.status.isActive,
-        )
+        .where((booking) => booking.status.isActive)
         .toList();
 
     final candidates = <String>[];

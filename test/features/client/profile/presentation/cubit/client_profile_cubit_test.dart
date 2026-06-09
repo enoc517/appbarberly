@@ -105,6 +105,22 @@ void main() {
       expect(cubit.state.updateError, isNull);
       expect(cubit.state.isUpdating, isFalse);
     });
+
+    test(
+      'shows a friendly error when the new phone is already in use',
+      () async {
+        validationDatasource.phoneIsTaken = true;
+
+        await cubit.saveProfile(fullName: 'Client Updated', phone: '999-0000');
+
+        expect(authRepository.updateCount, 0);
+        expect(
+          cubit.state.phoneError,
+          contains('Este teléfono ya está registrado'),
+        );
+        expect(cubit.state.isUpdating, isFalse);
+      },
+    );
   });
 }
 
@@ -127,9 +143,11 @@ class _FakeImageUploader implements ImageUploadDatasource {
 }
 
 class _FakeUserValidationDatasource implements UserValidationSource {
+  bool phoneIsTaken = false;
+
   @override
   Future<bool> isPhoneRegistered(String phone, {String? excludeUserId}) async {
-    return false;
+    return phoneIsTaken;
   }
 }
 

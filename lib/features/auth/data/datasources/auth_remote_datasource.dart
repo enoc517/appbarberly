@@ -2,6 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
+import '../../../../core/datasources/user_validation_datasource.dart';
+import '../../../../core/utils/phone_utils.dart';
 import '../../domain/entities/app_user.dart';
 import '../models/app_user_model.dart';
 
@@ -62,16 +64,21 @@ class AuthRemoteDatasourceImpl implements AuthRemoteDatasource {
     FirebaseAuth? firebaseAuth,
     FirebaseFirestore? firestore,
     GoogleSignIn? googleSignIn,
-  }) : _auth = firebaseAuth ?? FirebaseAuth.instance,
+  }) : _authInstance = firebaseAuth,
        _firestore = firestore ?? FirebaseFirestore.instance,
        _googleSignIn = googleSignIn ?? GoogleSignIn(scopes: const ['email']);
 
-  final FirebaseAuth _auth;
+  final FirebaseAuth? _authInstance;
   final FirebaseFirestore _firestore;
   final GoogleSignIn _googleSignIn;
 
+  FirebaseAuth get _auth => _authInstance ?? FirebaseAuth.instance;
+
   CollectionReference<Map<String, dynamic>> get _usersCollection =>
       _firestore.collection('users');
+
+  CollectionReference<Map<String, dynamic>> get _phoneNumbersCollection =>
+      _firestore.collection('phone_numbers');
 
   CollectionReference<Map<String, dynamic>>
   get _professionalRequestsCollection =>
@@ -331,14 +338,72 @@ class AuthRemoteDatasourceImpl implements AuthRemoteDatasource {
     String? phone,
     String? profileImageUrl,
   }) async {
-    final updates = <String, dynamic>{
-      'updatedAt': FieldValue.serverTimestamp(),
-    };
-    if (fullName != null) updates['fullName'] = fullName;
-    if (phone != null) updates['phone'] = phone;
-    if (profileImageUrl != null) updates['profileImageUrl'] = profileImageUrl;
+    final userRef = _userDoc(uid);
+    final providedPhone = phone == null ? null : normalizePhoneNumber(phone);
 
-    await _userDoc(uid).set(updates, SetOptions(merge: true));
+    await _firestore.runTransaction((transaction) async {
+      final userSnapshot = await transaction.get(userRef);
+      if (!userSnapshot.exists) {
+        throw StateError('No se pudo obtener el usuario.');
+      }
+
+      final userData = userSnapshot.data() ?? <String, dynamic>{};
+      final currentPhone = normalizePhoneNumber(
+        userData['phone'] as String? ?? '',
+      );
+      final updates = <String, dynamic>{
+        'updatedAt': FieldValue.serverTimestamp(),
+      };
+
+      if (fullName != null) updates['fullName'] = fullName;
+      if (profileImageUrl != null) updates['profileImageUrl'] = profileImageUrl;
+
+      if (phone != null) {
+        final nextPhone = providedPhone ?? '';
+        DocumentSnapshot<Map<String, dynamic>>? phoneSnapshot;
+        DocumentSnapshot<Map<String, dynamic>>? oldPhoneSnapshot;
+
+        if (nextPhone.isNotEmpty) {
+          final phoneRef = _phoneNumbersCollection.doc(nextPhone);
+          phoneSnapshot = await transaction.get(phoneRef);
+          final ownerId = phoneSnapshot.data()?['userId'] as String?;
+
+          if (phoneSnapshot.exists && ownerId != null && ownerId != uid) {
+            throw const PhoneAlreadyRegisteredException();
+          }
+        }
+
+        if (currentPhone.isNotEmpty && currentPhone != nextPhone) {
+          final oldPhoneRef = _phoneNumbersCollection.doc(currentPhone);
+          oldPhoneSnapshot = await transaction.get(oldPhoneRef);
+        }
+
+        if (nextPhone.isNotEmpty) {
+          final phoneRef = _phoneNumbersCollection.doc(nextPhone);
+          transaction.set(phoneRef, {
+            'userId': uid,
+            'phone': nextPhone,
+            'updatedAt': FieldValue.serverTimestamp(),
+            if (!(phoneSnapshot?.exists ?? false))
+              'createdAt': FieldValue.serverTimestamp(),
+          }, SetOptions(merge: true));
+        }
+
+        if (currentPhone.isNotEmpty && currentPhone != nextPhone) {
+          final oldPhoneRef = _phoneNumbersCollection.doc(currentPhone);
+          final oldOwnerId = oldPhoneSnapshot?.data()?['userId'] as String?;
+          if (oldPhoneSnapshot != null &&
+              oldPhoneSnapshot.exists &&
+              oldOwnerId == uid) {
+            transaction.delete(oldPhoneRef);
+          }
+        }
+
+        updates['phone'] = nextPhone.isEmpty ? null : nextPhone;
+      }
+
+      transaction.set(userRef, updates, SetOptions(merge: true));
+    });
   }
 
   Future<void> _createProfessionalRequest(AppUserModel user) async {

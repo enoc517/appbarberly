@@ -9,6 +9,7 @@ import 'package:barberly/shared/motion/app_motion.dart';
 import 'package:barberly/shared/theme/app_theme.dart';
 import 'package:barberly/features/explore/domain/entities/explore_entities.dart';
 import 'package:barberly/features/explore/presentation/bloc/explore_bloc.dart';
+import 'package:barberly/features/explore/presentation/utils/distance_formatter.dart';
 import 'package:barberly/features/notifications/presentation/cubit/notifications_cubit.dart';
 
 import '../widget/explore_header.dart';
@@ -256,6 +257,7 @@ class _BarbershopCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final distanceLabel = formatDistanceKm(shop.distanceKm);
     return AppPressable(
       onTap: () => context.push('/barberia/${shop.id}'),
       child: Container(
@@ -403,21 +405,21 @@ class _BarbershopCard extends StatelessWidget {
                             color: theme.colorScheme.onSurfaceVariant,
                           ),
                         ),
-                        const Spacer(),
-                        Icon(
-                          Icons.location_on_rounded,
-                          size: 16,
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                        const SizedBox(width: 3),
-                        Text(
-                          shop.distanceKm == null
-                              ? ''
-                              : '${shop.distanceKm!.toStringAsFixed(1)} km',
-                          style: AppTypography.labelSmall.copyWith(
+                        if (distanceLabel.isNotEmpty) ...[
+                          const Spacer(),
+                          Icon(
+                            Icons.location_on_rounded,
+                            size: 16,
                             color: theme.colorScheme.onSurfaceVariant,
                           ),
-                        ),
+                          const SizedBox(width: 3),
+                          Text(
+                            distanceLabel,
+                            style: AppTypography.labelSmall.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ],

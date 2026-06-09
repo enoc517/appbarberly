@@ -12,6 +12,7 @@ import 'package:barberly/shared/widgets/main_shell.dart';
 
 // Core DI
 import 'package:barberly/core/di/app_dependencies.dart';
+import 'package:barberly/core/router/auth_route_resolver.dart';
 
 // Features: Auth
 import 'package:barberly/features/auth/presentation/screens/forgot_password_screen.dart';
@@ -20,6 +21,8 @@ import 'package:barberly/features/auth/presentation/screens/login_screen.dart';
 import 'package:barberly/features/auth/presentation/screens/professional_status_screen.dart';
 import 'package:barberly/features/auth/presentation/screens/register_screen.dart';
 import 'package:barberly/features/auth/presentation/screens/verify_email_screen.dart';
+import 'package:barberly/features/auth/data/models/app_user_model.dart';
+import 'package:barberly/features/auth/domain/entities/app_user.dart';
 
 // Features: Client
 import 'package:barberly/features/client/bookings/presentation/screens/client_bookings_screen.dart';
@@ -79,37 +82,95 @@ class AppRouter {
   static const String forgotPassword = '/forgot_password';
   static const String notifications = '/notificaciones';
 
+  static const Set<String> _publicRoutes = {
+    welcome,
+    login,
+    register,
+    forgotPassword,
+  };
+
   // ── Auth guard helpers ───────────────────────────────────────────────────────
+  static bool _pathMatches(String path, String route) {
+    return path == route || path.startsWith('$route/');
+  }
+
   static bool _isProtectedRoute(String path) {
-    const protected = [
-      explorar,
-      citas,
-      favoritos,
-      perfil,
-      panel,
-      agenda,
-      barberia,
-      cuentaBarbero,
-      notifications,
-    ];
-    for (final p in protected) {
-      if (path == p || path.startsWith('$p/')) return true;
-    }
-    return false;
+    return _pathMatches(path, explorar) ||
+        _pathMatches(path, citas) ||
+        _pathMatches(path, favoritos) ||
+        _pathMatches(path, perfil) ||
+        path == verifyEmail ||
+        path == professionalStatus ||
+        _pathMatches(path, panel) ||
+        _pathMatches(path, agenda) ||
+        path == barberia ||
+        _pathMatches(path, cuentaBarbero) ||
+        _pathMatches(path, notifications) ||
+        path.startsWith('/barberia/');
+  }
+
+  static bool _isAllowedForClient(String path) {
+    return _pathMatches(path, explorar) ||
+        _pathMatches(path, citas) ||
+        _pathMatches(path, favoritos) ||
+        _pathMatches(path, perfil) ||
+        _pathMatches(path, notifications) ||
+        path.startsWith('/barberia/');
+  }
+
+  static bool _isAllowedForBarber(String path) {
+    return _pathMatches(path, panel) ||
+        _pathMatches(path, agenda) ||
+        path == barberia ||
+        _pathMatches(path, cuentaBarbero) ||
+        _pathMatches(path, notifications);
+  }
+
+  static Future<AppUser?> _loadCurrentUser(String userId) async {
+    final snapshot = await AppDependencies.firestore
+        .collection('users')
+        .doc(userId)
+        .get();
+    final data = snapshot.data();
+    if (data == null) return null;
+
+    final firebaseUser = FirebaseAuth.instance.currentUser;
+    final user = AppUserModel.fromMap(userId, data);
+    return firebaseUser == null
+        ? user
+        : user.copyWith(emailVerified: firebaseUser.emailVerified);
   }
 
   // ── Router ───────────────────────────────────────────────────────────────────
   static final GoRouter router = GoRouter(
     initialLocation: welcome,
-    debugLogDiagnostics: true,
-    redirect: (context, state) {
+    debugLogDiagnostics: false,
+    redirect: (context, state) async {
       final path = state.uri.path;
+      if (path == googleRole) {
+        return FirebaseAuth.instance.currentUser == null ? login : null;
+      }
+      if (_publicRoutes.contains(path)) return null;
       if (!_isProtectedRoute(path)) return null;
 
-      final user = FirebaseAuth.instance.currentUser;
+      final firebaseUser = FirebaseAuth.instance.currentUser;
+      if (firebaseUser == null) return login;
+      if (!firebaseUser.emailVerified) {
+        return path == verifyEmail ? null : verifyEmail;
+      }
+
+      final user = await _loadCurrentUser(firebaseUser.uid);
       if (user == null) return login;
-      if (!user.emailVerified) return verifyEmail;
-      return null;
+
+      if (user.role == UserRole.barber) {
+        if (user.professionalStatus != ProfessionalStatus.approved) {
+          return path == professionalStatus ? null : professionalStatus;
+        }
+
+        return _isAllowedForBarber(path) ? null : routeForAuthenticatedUser(user);
+      }
+
+      return _isAllowedForClient(path) ? null : routeForAuthenticatedUser(user);
     },
     routes: [
       GoRoute(

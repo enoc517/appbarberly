@@ -31,6 +31,9 @@ migrate_working_dir/
 .pub-cache/
 .pub/
 /build/
+tools/node_modules/
+tools/service-account.json
+tools/*.log
 /coverage/
 
 # Symbolication related
@@ -57,6 +60,7 @@ app.*.map.json
 /.codegraph/
 /.atl/
 /openspec/
+/tools/
 session-ses_1db8.md
 session_domingo24.md
 AGENTS.md

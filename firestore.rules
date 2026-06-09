@@ -50,6 +50,17 @@ service cloud.firestore {
       return get(shopPath(shopId)).data;
     }
 
+    function isPublicShop(shopId) {
+      return exists(shopPath(shopId)) && (
+        shopData(shopId).isActive == true
+        || !shopData(shopId).keys().hasAny(['isActive'])
+      );
+    }
+
+    function memberPath(shopId, barberId) {
+      return /databases/$(database)/documents/barbershops/$(shopId)/members/$(barberId);
+    }
+
     function isShopOwner(shopId) {
       return signedIn() && exists(shopPath(shopId)) && shopData(shopId).ownerId == uid();
     }
@@ -112,7 +123,11 @@ service cloud.firestore {
         && request.resource.data.price >= 0
         && request.resource.data.durationMinutes > 0
         && request.resource.data.slotStart < request.resource.data.slotEnd
-        && isBarberInShop(request.resource.data.barbershopId);
+        && isPublicShop(request.resource.data.barbershopId)
+        && exists(memberPath(
+          request.resource.data.barbershopId,
+          request.resource.data.barberId
+        ));
     }
 
     function validBookingCreatedNotification() {
@@ -218,6 +233,34 @@ service cloud.firestore {
       }
     }
 
+    match /phone_numbers/{phone} {
+      allow get: if signedIn();
+      allow list: if false;
+
+      allow create: if signedIn()
+        && request.resource.data.userId == uid()
+        && request.resource.data.phone == phone
+        && request.resource.data.keys().hasOnly([
+          'userId',
+          'phone',
+          'createdAt',
+          'updatedAt',
+        ]);
+
+      allow update: if signedIn()
+        && resource.data.userId == uid()
+        && request.resource.data.userId == uid()
+        && request.resource.data.phone == phone
+        && request.resource.data.keys().hasOnly([
+          'userId',
+          'phone',
+          'createdAt',
+          'updatedAt',
+        ]);
+
+      allow delete: if signedIn() && resource.data.userId == uid();
+    }
+
     match /professional_requests/{requestId} {
       allow create: if signedIn() && request.resource.data.userId == uid();
       allow read: if signedIn() && resource.data.userId == uid();
@@ -268,6 +311,7 @@ service cloud.firestore {
         resource.data.clientId == uid()
         || resource.data.barberId == uid()
         || isBarberInShop(resource.data.barbershopId)
+        || isPublicShop(resource.data.barbershopId)
       );
 
       allow create: if validBookingCreate();
@@ -279,7 +323,7 @@ service cloud.firestore {
 
     match /barbershops/{shopId} {
       allow read: if signedIn() && (
-        resource.data.isActive == true
+        isPublicShop(shopId)
         || isShopOwner(shopId)
         || isBarberInShop(shopId)
       );
@@ -310,7 +354,11 @@ service cloud.firestore {
       allow delete: if false;
 
       match /members/{barberId} {
-        allow read: if signedIn();
+        allow read: if signedIn() && (
+          isPublicShop(shopId)
+          || isShopOwner(shopId)
+          || isBarberInShop(shopId)
+        );
 
         allow create: if signedIn() && (
           (
@@ -350,7 +398,11 @@ service cloud.firestore {
       }
 
       match /barbers/{barberId}/services/{serviceId} {
-        allow read: if signedIn();
+        allow read: if signedIn() && (
+          isPublicShop(shopId)
+          || isShopOwner(shopId)
+          || isBarberInShop(shopId)
+        );
 
         allow create, update, delete: if signedIn()
           && (barberId == uid() || isShopOwner(shopId))
@@ -358,12 +410,25 @@ service cloud.firestore {
       }
 
       match /barbers/{barberId}/schedule/{scheduleId} {
-        allow read: if signedIn();
+        allow read: if signedIn() && (
+          isPublicShop(shopId)
+          || isShopOwner(shopId)
+          || isBarberInShop(shopId)
+        );
 
         allow create, update, delete: if signedIn()
           && (barberId == uid() || isShopOwner(shopId))
           && isBarberInShop(shopId);
       }
+    }
+
+    match /services_explore/{serviceId} {
+      allow read: if signedIn()
+        && resource.data.isActive == true
+        && resource.data.barbershopId is string
+        && isPublicShop(resource.data.barbershopId);
+
+      allow create, update, delete: if false;
     }
   }
 }

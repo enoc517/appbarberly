@@ -52,9 +52,7 @@ class BarbershopModel {
   factory BarbershopModel.fromDocument(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
 
-    // Extraer lat/lng desde el objeto position.geopoint
-    final position = data['position'] as Map<String, dynamic>? ?? {};
-    final geoPoint = position['geopoint'] as GeoPoint? ?? const GeoPoint(0, 0);
+    final geoPoint = _geoPointFromData(data);
 
     return BarbershopModel(
       id: doc.id,
@@ -84,6 +82,24 @@ class BarbershopModel {
     }
 
     return names.toList();
+  }
+
+  static GeoPoint _geoPointFromData(Map<String, dynamic> data) {
+    final position = data['position'];
+    if (position is Map<String, dynamic>) {
+      final geoPoint = position['geopoint'];
+      if (geoPoint is GeoPoint) {
+        return geoPoint;
+      }
+    }
+
+    final lat = (data['lat'] as num?)?.toDouble();
+    final lng = (data['lng'] as num?)?.toDouble();
+    if (lat != null && lng != null) {
+      return GeoPoint(lat, lng);
+    }
+
+    return const GeoPoint(0, 0);
   }
 
   // ── Conversión a entidad de dominio ─────────────────────────────────────
@@ -179,8 +195,7 @@ class ServiceExploreModel {
     final snapshotRaw =
         data['barbershopSnapshot'] as Map<String, dynamic>? ?? {};
 
-    final position = data['position'] as Map<String, dynamic>? ?? {};
-    final geoPoint = position['geopoint'] as GeoPoint? ?? const GeoPoint(0, 0);
+    final geoPoint = BarbershopModel._geoPointFromData(data);
 
     return ServiceExploreModel(
       id: doc.id,

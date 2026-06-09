@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../auth/domain/usecases/get_current_user.dart';
@@ -18,14 +17,10 @@ class WelcomeBloc extends Bloc<WelcomeEvent, WelcomeState> {
     WelcomeStarted event,
     Emitter<WelcomeState> emit,
   ) async {
-    debugPrint('WELCOME START: ${DateTime.now()}');
-
     emit(state.copyWith(status: WelcomeStatus.loading));
 
     try {
       final user = await _getCurrentUserUseCase();
-
-      debugPrint('WELCOME END: ${DateTime.now()}');
 
       if (user == null) {
         emit(state.copyWith(status: WelcomeStatus.goToLogin));
@@ -39,7 +34,6 @@ class WelcomeBloc extends Bloc<WelcomeEvent, WelcomeState> {
 
       emit(state.copyWith(status: WelcomeStatus.goToHome, user: user));
     } catch (e) {
-      debugPrint('WELCOME ERROR: $e');
       emit(state.copyWith(status: WelcomeStatus.goToLogin));
     }
   }

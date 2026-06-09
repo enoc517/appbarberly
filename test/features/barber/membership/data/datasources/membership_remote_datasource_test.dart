@@ -18,6 +18,9 @@ void main() {
         bookingsRepository: bookingsRepository,
       );
 
+      final bookingDay = DateTime.now().add(const Duration(days: 1));
+      final bookingDateKey = _dateKey(bookingDay);
+
       await firestore.collection('users').doc('barber-1').set({
         'barbershopId': 'shop-1',
         'updatedAt': DateTime(2026, 6, 3),
@@ -45,7 +48,7 @@ void main() {
         'clientId': 'client-1',
         'barberId': 'barber-1',
         'barbershopId': 'shop-1',
-        'dateKey': '2026-06-03',
+        'dateKey': bookingDateKey,
         'status': AppointmentBookingStatus.pending.name,
       });
 
@@ -53,7 +56,7 @@ void main() {
         'clientId': 'client-2',
         'barberId': 'barber-1',
         'barbershopId': 'shop-1',
-        'dateKey': '2026-06-03',
+        'dateKey': bookingDateKey,
         'status': AppointmentBookingStatus.inProgress.name,
       });
 
@@ -61,7 +64,7 @@ void main() {
         'clientId': 'client-3',
         'barberId': 'barber-1',
         'barbershopId': 'shop-1',
-        'dateKey': '2026-06-03',
+        'dateKey': bookingDateKey,
         'status': AppointmentBookingStatus.completed.name,
       });
     });
@@ -88,6 +91,10 @@ void main() {
       expect(userDoc.data()?['activeBookingStatus'], isNull);
     });
   });
+}
+
+String _dateKey(DateTime date) {
+  return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
 }
 
 class _SpyBookingsRepository implements BookingsRepository {

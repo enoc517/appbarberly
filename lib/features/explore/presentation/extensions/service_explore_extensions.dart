@@ -9,6 +9,7 @@
 
 import 'package:barberly/features/explore/domain/entities/explore_entities.dart';
 import 'package:barberly/features/explore/presentation/bloc/service_model.dart';
+import 'package:barberly/features/explore/presentation/utils/distance_formatter.dart';
 
 extension ServiceExploreEntityX on ServiceExploreEntity {
   ServiceModel toServiceModel() {
@@ -23,10 +24,7 @@ extension ServiceExploreEntityX on ServiceExploreEntity {
       reviewCount: 0,
       // Formatear precio en colones costarricenses
       price: _formatPrice(price),
-      // Distancia calculada: si está disponible usarla, si no mostrar vacío
-      distance: distanceKm != null
-          ? '${distanceKm!.toStringAsFixed(1)} km'
-          : '',
+      distance: formatDistanceKm(distanceKm),
       category: category,
       isNew: false,
       isAvailable: true,

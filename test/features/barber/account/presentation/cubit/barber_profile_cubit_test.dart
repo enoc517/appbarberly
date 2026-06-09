@@ -15,17 +15,19 @@ void main() {
   group('BarberProfileCubit.saveProfile', () {
     late _FakeAuthRepository authRepository;
     late _FakeImageUploader imageUploader;
+    late _FakeUserValidationDatasource validationDatasource;
     late BarberProfileCubit cubit;
 
     setUp(() {
       authRepository = _FakeAuthRepository();
       imageUploader = _FakeImageUploader();
+      validationDatasource = _FakeUserValidationDatasource();
       cubit = BarberProfileCubit(
         getCurrentUser: GetCurrentUserUseCase(authRepository),
         signOut: SignOutUseCase(authRepository),
         updateUserProfile: UpdateUserProfileUseCase(authRepository),
         imageUploader: imageUploader,
-        userValidationDatasource: _FakeUserValidationDatasource(),
+        userValidationDatasource: validationDatasource,
       );
     });
 
@@ -100,6 +102,22 @@ void main() {
       expect(cubit.state.profileImageUrl, 'https://cdn.test/barber-retry.jpg');
       expect(cubit.state.updateError, isNull);
     });
+
+    test(
+      'shows a friendly error when the new phone is already in use',
+      () async {
+        validationDatasource.phoneIsTaken = true;
+
+        await cubit.saveProfile(fullName: 'Barber Updated', phone: '999-0000');
+
+        expect(authRepository.updateCount, 0);
+        expect(
+          cubit.state.phoneError,
+          contains('Este teléfono ya está registrado'),
+        );
+        expect(cubit.state.isUpdating, isFalse);
+      },
+    );
   });
 }
 
@@ -122,9 +140,11 @@ class _FakeImageUploader implements ImageUploadDatasource {
 }
 
 class _FakeUserValidationDatasource implements UserValidationSource {
+  bool phoneIsTaken = false;
+
   @override
   Future<bool> isPhoneRegistered(String phone, {String? excludeUserId}) async {
-    return false;
+    return phoneIsTaken;
   }
 }
 

@@ -22,12 +22,12 @@ class FirestoreBookingsRepository implements BookingsRepository {
 
     final sameDaySnapshot = await _bookings
         .where('barbershopId', isEqualTo: draft.barbershopId)
+        .where('barberId', isEqualTo: draft.barberId)
         .where('dateKey', isEqualTo: draft.dateKey)
         .orderBy('slotStart')
         .get();
     final hasConflict = sameDaySnapshot.docs.any((doc) {
       final data = doc.data();
-      if (data['barberId'] != draft.barberId) return false;
       final status = _bookingStatus(data['status'] as String?);
       if (!status.isActive) return false;
       final existingStart = _dateTime(data['slotStart']);

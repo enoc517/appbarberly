@@ -94,7 +94,6 @@ class ExploreBloc extends Bloc<ExploreEvent, ExploreState> {
     ExploreInitialized event,
     Emitter<ExploreState> emit,
   ) async {
-    debugPrint('🔵 [ExploreBloc] _onInitialized START');
     emit(const ExploreLoading());
 
     double lat = _kNeilyLat;
@@ -112,37 +111,30 @@ class ExploreBloc extends Bloc<ExploreEvent, ExploreState> {
 
     // Intentar obtener GPS real; si falla, usar Ciudad Neily
     try {
-      debugPrint('🔵 [ExploreBloc] Solicitando GPS...');
       final pos = await _repo.getCurrentPosition();
       lat = pos.latitude;
       lng = pos.longitude;
       _userLat = lat;
       _userLng = lng;
-      debugPrint('🟢 [ExploreBloc] GPS OK: $lat, $lng');
     } on LocationPermissionDeniedException catch (e) {
-      debugPrint('🔴 [ExploreBloc] PERMISO DENEGADO: $e');
       emit(ExploreError(e.toString()));
       return;
     } on LocationPermissionPermanentlyDeniedException catch (e) {
-      debugPrint('🔴 [ExploreBloc] PERMISO DENEGADO PERMANENTEMENTE: $e');
       emit(ExploreError(e.toString()));
       return;
     } catch (e) {
-      debugPrint('🟡 [ExploreBloc] GPS falló, usando fallback Neily: $e');
+      _userLat = lat;
+      _userLng = lng;
     }
 
     // ── Suscribir streams de Firestore ────────────────────────────────────
-    debugPrint('🔵 [ExploreBloc] Suscribiendo streams en ($lat, $lng)...');
     await _subscribeNearbyStreams(lat: lat, lng: lng, radiusKm: _radiusKm);
 
     if (userId != null) {
-      debugPrint('🔵 [ExploreBloc] Suscribiendo favoritos para $userId');
       _favoritesSubscription = _repo.getUserFavoriteIds(userId).listen((ids) {
-        debugPrint('🟢 [ExploreBloc] Stream favoritos: ${ids.length} IDs');
         add(_FavoritesUpdated(ids));
       }, onError: (_) => add(const _FavoritesUpdated([])));
     } else {
-      debugPrint('🟡 [ExploreBloc] Sin userId — no se suscribe a favoritos');
     }
 
     // Emitir estado inicial vacío con la posición del usuario
@@ -151,7 +143,6 @@ class ExploreBloc extends Bloc<ExploreEvent, ExploreState> {
       onTap: (shop) => add(ExploreMapBarbershopSelected(shop)),
     );
 
-    debugPrint('🟢 [ExploreBloc] Emitiendo ExploreLoaded inicial vacío');
     emit(
       ExploreLoaded(
         barbershops: const [],
@@ -193,9 +184,6 @@ class ExploreBloc extends Bloc<ExploreEvent, ExploreState> {
     _FavoritesUpdated event,
     Emitter<ExploreState> emit,
   ) async {
-    debugPrint(
-      '🔵 [ExploreBloc] _onFavoritesUpdated: ${event.favoriteIds.length} IDs',
-    );
     _favoriteIds = event.favoriteIds;
 
     await _rebuildAndEmit(emit);
@@ -473,13 +461,9 @@ class ExploreBloc extends Bloc<ExploreEvent, ExploreState> {
         .getNearbyBarbershops(lat: lat, lng: lng, radiusKm: radiusKm)
         .listen(
           (shops) {
-            debugPrint(
-              '🟢 [ExploreBloc] Stream barberías: ${shops.length} resultados',
-            );
             add(_BarbershopsUpdated(_withDistances(shops, lat, lng)));
           },
-          onError: (e) {
-            debugPrint('🔴 [ExploreBloc] Stream barberías ERROR: $e');
+          onError: (_) {
             add(const _BarbershopsUpdated([]));
           },
         );
@@ -488,13 +472,9 @@ class ExploreBloc extends Bloc<ExploreEvent, ExploreState> {
         .getNearbyServices(lat: lat, lng: lng, radiusKm: radiusKm)
         .listen(
           (svcs) {
-            debugPrint(
-              '🟢 [ExploreBloc] Stream servicios: ${svcs.length} resultados',
-            );
             add(_ServicesUpdated(_servicesWithDistances(svcs, lat, lng)));
           },
-          onError: (e) {
-            debugPrint('🔴 [ExploreBloc] Stream servicios ERROR: $e');
+          onError: (_) {
             add(const _ServicesUpdated([]));
           },
         );
@@ -505,12 +485,7 @@ class ExploreBloc extends Bloc<ExploreEvent, ExploreState> {
     double lat,
     double lng,
   ) {
-    const distance = Distance();
-    final userLocation = LatLng(lat, lng);
-    return shops.map((shop) {
-      final meters = distance(userLocation, LatLng(shop.lat, shop.lng));
-      return shop.copyWith(distanceKm: meters / 1000);
-    }).toList();
+    return applyBarbershopDistances(shops: shops, userLat: lat, userLng: lng);
   }
 
   List<ServiceExploreEntity> _servicesWithDistances(
@@ -554,6 +529,20 @@ class ExploreBloc extends Bloc<ExploreEvent, ExploreState> {
     _mapController?.dispose();
     return super.close();
   }
+}
+
+@visibleForTesting
+List<BarbershopEntity> applyBarbershopDistances({
+  required List<BarbershopEntity> shops,
+  required double userLat,
+  required double userLng,
+}) {
+  const distance = Distance();
+  final userLocation = LatLng(userLat, userLng);
+  return shops.map((shop) {
+    final meters = distance(userLocation, LatLng(shop.lat, shop.lng));
+    return shop.copyWith(distanceKm: meters / 1000);
+  }).toList();
 }
 
 @visibleForTesting

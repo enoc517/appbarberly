@@ -4,11 +4,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../../../../core/datasources/user_validation_datasource.dart';
+import '../../../../../core/utils/phone_utils.dart';
 import '../../../../auth/domain/usecases/get_current_user.dart';
 import '../../../../auth/domain/usecases/sign_out.dart';
 import '../../../../auth/domain/usecases/update_user_profile.dart';
 import '../../../../../core/datasources/cloudinary_datasource.dart';
-import '../../../../../core/datasources/user_validation_datasource.dart';
 
 class ClientProfileState extends Equatable {
   final bool isLoading;
@@ -144,9 +145,16 @@ class ClientProfileCubit extends Cubit<ClientProfileState> {
         return;
       }
 
-      if (phone != null && phone != user.phone) {
+      final currentPhone = normalizePhoneNumber(user.phone ?? '');
+      final normalizedPhone = phone == null
+          ? null
+          : normalizePhoneNumber(phone);
+
+      if (normalizedPhone != null &&
+          normalizedPhone.isNotEmpty &&
+          normalizedPhone != currentPhone) {
         final isPhoneTaken = await _userValidationDatasource.isPhoneRegistered(
-          phone,
+          normalizedPhone,
           excludeUserId: user.id,
         );
 
@@ -184,9 +192,12 @@ class ClientProfileCubit extends Cubit<ClientProfileState> {
         await _updateUserProfile(
           uid: user.id,
           fullName: fullName,
-          phone: phone,
+          phone: normalizedPhone,
           profileImageUrl: uploadedImageUrl,
         );
+      } on PhoneAlreadyRegisteredException catch (e) {
+        emit(state.copyWith(isUpdating: false, phoneError: e.toString()));
+        return;
       } catch (e) {
         emit(
           state.copyWith(
@@ -201,7 +212,9 @@ class ClientProfileCubit extends Cubit<ClientProfileState> {
         state.copyWith(
           isUpdating: false,
           userName: fullName ?? state.userName,
-          userPhone: phone ?? state.userPhone,
+          userPhone: normalizedPhone == null || normalizedPhone.isEmpty
+              ? null
+              : normalizedPhone,
           profileImageUrl: uploadedImageUrl ?? state.profileImageUrl,
         ),
       );

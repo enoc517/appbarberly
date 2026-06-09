@@ -1,6 +1,8 @@
 import 'package:barberly/features/auth/data/datasources/auth_remote_datasource.dart';
 import 'package:barberly/features/auth/data/models/app_user_model.dart';
 import 'package:barberly/features/auth/domain/entities/app_user.dart';
+import 'package:barberly/core/datasources/user_validation_datasource.dart';
+import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -90,5 +92,63 @@ void main() {
         expect(reconstructed.email, 'missing@example.com');
       },
     );
+  });
+
+  group('AuthRemoteDatasource.updateUserProfile', () {
+    test('creates and moves the phone index when updating the phone', () async {
+      final firestore = FakeFirebaseFirestore();
+      await firestore.collection('users').doc('user-1').set({
+        'phone': '1111',
+        'fullName': 'Client User',
+        'profileImageUrl': null,
+      });
+      await firestore.collection('phone_numbers').doc('1111').set({
+        'userId': 'user-1',
+        'phone': '1111',
+      });
+
+      final datasource = AuthRemoteDatasourceImpl(firestore: firestore);
+
+      await datasource.updateUserProfile(uid: 'user-1', phone: '8888-1234');
+
+      final userDoc = await firestore.collection('users').doc('user-1').get();
+      expect(userDoc.data()?['phone'], '88881234');
+
+      final oldPhoneDoc = await firestore
+          .collection('phone_numbers')
+          .doc('1111')
+          .get();
+      expect(oldPhoneDoc.exists, isFalse);
+
+      final newPhoneDoc = await firestore
+          .collection('phone_numbers')
+          .doc('88881234')
+          .get();
+      expect(newPhoneDoc.data()?['userId'], 'user-1');
+      expect(newPhoneDoc.data()?['phone'], '88881234');
+    });
+
+    test('throws when the new phone already belongs to another user', () async {
+      final firestore = FakeFirebaseFirestore();
+      await firestore.collection('users').doc('user-1').set({
+        'phone': '1111',
+        'fullName': 'Client User',
+        'profileImageUrl': null,
+      });
+      await firestore.collection('phone_numbers').doc('88881234').set({
+        'userId': 'other-user',
+        'phone': '88881234',
+      });
+
+      final datasource = AuthRemoteDatasourceImpl(firestore: firestore);
+
+      expect(
+        () => datasource.updateUserProfile(uid: 'user-1', phone: '8888 1234'),
+        throwsA(isA<PhoneAlreadyRegisteredException>()),
+      );
+
+      final userDoc = await firestore.collection('users').doc('user-1').get();
+      expect(userDoc.data()?['phone'], '1111');
+    });
   });
 }

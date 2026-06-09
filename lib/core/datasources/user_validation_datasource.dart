@@ -1,5 +1,18 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import '../utils/phone_utils.dart';
+
+class PhoneAlreadyRegisteredException implements Exception {
+  const PhoneAlreadyRegisteredException([
+    this.message = 'Este teléfono ya está registrado por otro usuario.',
+  ]);
+
+  final String message;
+
+  @override
+  String toString() => message;
+}
+
 abstract class UserValidationSource {
   Future<bool> isPhoneRegistered(String phone, {String? excludeUserId});
 }
@@ -11,15 +24,17 @@ class UserValidationDatasource implements UserValidationSource {
 
   @override
   Future<bool> isPhoneRegistered(String phone, {String? excludeUserId}) async {
-    final query = await firestore
-        .collection('users')
-        .where('phone', isEqualTo: phone)
+    final normalizedPhone = normalizePhoneNumber(phone);
+    if (normalizedPhone.isEmpty) return false;
+
+    final snapshot = await firestore
+        .collection('phone_numbers')
+        .doc(normalizedPhone)
         .get();
 
-    if (excludeUserId != null) {
-      return query.docs.any((doc) => doc.id != excludeUserId);
-    }
+    if (!snapshot.exists) return false;
 
-    return query.docs.isNotEmpty;
+    final ownerId = snapshot.data()?['userId'] as String?;
+    return ownerId != null && ownerId != excludeUserId;
   }
 }

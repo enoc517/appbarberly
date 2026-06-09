@@ -63,6 +63,21 @@ void main() {
 
     expect(state.radiusKm, 25);
   });
+
+  test('applyBarbershopDistances computes different distances from coordinates', () {
+    final result = applyBarbershopDistances(
+      shops: [_imperio(), _navaja()],
+      userLat: 8.6,
+      userLng: -82.9,
+    );
+
+    final imperio = result.firstWhere((shop) => shop.id == 'imperio');
+    final navaja = result.firstWhere((shop) => shop.id == 'navaja');
+
+    expect(imperio.distanceKm, isNotNull);
+    expect(navaja.distanceKm, isNotNull);
+    expect(imperio.distanceKm, isNot(equals(navaja.distanceKm)));
+  });
 }
 
 BarbershopEntity _imperio({double? distanceKm}) {
