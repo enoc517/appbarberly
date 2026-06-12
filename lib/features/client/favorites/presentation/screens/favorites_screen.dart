@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../../shared/motion/app_motion.dart';
 import '../../../../../shared/theme/app_theme.dart';
-import '../../../../explore/domain/entities/explore_entities.dart';
 import '../bloc/favorites_cubit.dart';
+import '../../domain/entities/favorite_barbershop_entry.dart';
 
 class FavoritesScreen extends StatelessWidget {
   const FavoritesScreen({super.key});
@@ -34,7 +35,7 @@ class FavoritesScreen extends StatelessWidget {
 class _LoadedView extends StatelessWidget {
   const _LoadedView({required this.barbershops});
 
-  final List<BarbershopEntity> barbershops;
+  final List<FavoriteBarbershopEntry> barbershops;
 
   @override
   Widget build(BuildContext context) {
@@ -77,7 +78,7 @@ class _Header extends StatelessWidget {
 class _FavoriteBarbershopCard extends StatelessWidget {
   const _FavoriteBarbershopCard({required this.shop});
 
-  final BarbershopEntity shop;
+  final FavoriteBarbershopEntry shop;
 
   @override
   Widget build(BuildContext context) {
@@ -101,12 +102,12 @@ class _FavoriteBarbershopCard extends StatelessWidget {
             width: 72,
             height: 72,
             decoration: BoxDecoration(
-              color: theme.colorScheme.primary,
+              color: theme.colorScheme.primaryContainer,
               borderRadius: BorderRadius.circular(AppRadius.xl),
             ),
             child: Icon(
               Icons.storefront_rounded,
-              color: theme.colorScheme.onPrimary,
+              color: theme.colorScheme.onPrimaryContainer,
               size: 34,
             ),
           ),
@@ -115,27 +116,128 @@ class _FavoriteBarbershopCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(shop.name, style: AppTypography.titleMedium),
+                Text(shop.shop.name, style: AppTypography.titleMedium),
                 const SizedBox(height: 4),
                 Text(
-                  '${shop.rating.toStringAsFixed(1)} · ${shop.reviewCount} reseñas',
+                  '${shop.shop.rating.toStringAsFixed(1)} · ${shop.shop.reviewCount} reseñas · ${shop.bookingCount} reservas',
                   style: AppTypography.bodySmall.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  shop.address,
+                  shop.shop.address,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: AppTypography.bodySmall.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
                 ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _StatusBadge(
+                      label: shop.isOpenNow == true
+                          ? 'Abierto ahora'
+                          : shop.isOpenNow == false
+                              ? 'Cerrado ahora'
+                              : 'Horario no disponible',
+                      color: shop.isOpenNow == true
+                          ? theme.colorScheme.secondaryContainer
+                          : theme.colorScheme.surfaceContainerHighest,
+                      foregroundColor: shop.isOpenNow == true
+                          ? theme.colorScheme.onSecondaryContainer
+                          : theme.colorScheme.onSurfaceVariant,
+                      icon: shop.isOpenNow == true
+                          ? Icons.storefront_rounded
+                          : Icons.access_time_rounded,
+                    ),
+                    _StatusBadge(
+                      label: shop.lastServiceName?.isNotEmpty == true
+                          ? 'Último: ${shop.lastServiceName}'
+                          : 'Sin uso reciente',
+                      color: theme.colorScheme.primaryContainer,
+                      foregroundColor: theme.colorScheme.onPrimaryContainer,
+                      icon: Icons.history_rounded,
+                    ),
+                    if (shop.nextAvailableLabel != null)
+                      _StatusBadge(
+                        label: shop.nextAvailableLabel!,
+                        color: theme.colorScheme.surfaceContainerHighest,
+                        foregroundColor: theme.colorScheme.onSurfaceVariant,
+                        icon: Icons.event_available_rounded,
+                      ),
+                  ],
+                ),
               ],
             ),
           ),
-          Icon(Icons.favorite_rounded, color: theme.colorScheme.secondary),
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Icon(Icons.favorite_rounded, color: theme.colorScheme.secondary),
+              const SizedBox(height: 8),
+              FilledButton(
+                onPressed: shop.lastBarberId == null || shop.lastBarberId!.isEmpty
+                    ? null
+                    : () => context.push(
+                          '/barberia/${shop.shop.id}/barbero/${shop.lastBarberId}',
+                        ),
+                style: FilledButton.styleFrom(
+                  backgroundColor: theme.colorScheme.primaryContainer,
+                  foregroundColor: theme.colorScheme.onPrimaryContainer,
+                ),
+                child: const Text('Reservar de nuevo'),
+              ),
+              const SizedBox(height: 8),
+              TextButton(
+                onPressed: () => context.push('/barberia/${shop.shop.id}'),
+                child: const Text('Ver barbería'),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StatusBadge extends StatelessWidget {
+  const _StatusBadge({
+    required this.label,
+    required this.color,
+    required this.foregroundColor,
+    required this.icon,
+  });
+
+  final String label;
+  final Color color;
+  final Color foregroundColor;
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(AppRadius.full),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: foregroundColor),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: AppTypography.labelSmall.copyWith(
+              color: foregroundColor,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
         ],
       ),
     );

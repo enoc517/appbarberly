@@ -22,6 +22,8 @@ class BookingModel extends Booking {
     super.cancelledBy,
     super.cancelledAt,
     super.cancellationReason,
+    super.reviewId,
+    super.reviewedAt,
   });
 
   factory BookingModel.fromDocument(
@@ -47,6 +49,8 @@ class BookingModel extends Booking {
       cancelledBy: _cancelledBy(data['cancelledBy'] as String?),
       cancelledAt: _dateTimeOrNull(data['cancelledAt']),
       cancellationReason: data['cancellationReason'] as String?,
+      reviewId: data['reviewId'] as String?,
+      reviewedAt: _dateTimeOrNull(data['reviewedAt']),
     );
   }
 

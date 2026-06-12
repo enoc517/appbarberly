@@ -23,6 +23,7 @@ class BarbershopDetailCubit extends Cubit<BarbershopDetailState> {
         isLoading: false,
         shop: result.shop,
         members: result.members,
+        reviews: result.reviews,
       ));
     } catch (e) {
       emit(state.copyWith(isLoading: false, errorMessage: e.toString()));

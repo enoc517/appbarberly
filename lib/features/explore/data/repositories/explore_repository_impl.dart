@@ -167,7 +167,10 @@ class ExploreRepositoryImpl implements ExploreRepository {
     if (isCurrentlyFavorite) {
       await ref.delete();
     } else {
-      await ref.set({'addedAt': FieldValue.serverTimestamp()});
+      await ref.set({
+        'barbershopId': barbershopId,
+        'addedAt': FieldValue.serverTimestamp(),
+      });
     }
   }
 

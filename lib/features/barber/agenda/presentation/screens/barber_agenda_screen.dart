@@ -900,6 +900,18 @@ Future<void> _blockSpace(BuildContext context, DateTime selectedDay) async {
       );
       return;
     }
+
+    final hasBlockedOverlap = currentState.blockedSlots.any(
+      (slot) => _overlaps(result.start, result.end, slot.start, slot.end),
+    );
+    if (hasBlockedOverlap) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Ya había un bloqueo en ese horario.'),
+        ),
+      );
+      return;
+    }
   }
 
   final success = await context.read<BarberAgendaCubit>().blockSlot(

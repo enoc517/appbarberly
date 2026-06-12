@@ -51,12 +51,16 @@ import '../../features/bookings/domain/entities/booking.dart';
 import '../../features/client/bookings/presentation/bloc/client_bookings_cubit.dart';
 import '../../features/client/favorites/data/repositories/firestore_favorites_repository.dart';
 import '../../features/client/favorites/presentation/bloc/favorites_cubit.dart';
+import '../../features/client/favorites/domain/repositories/favorites_repository.dart';
 import '../../features/explore/data/repositories/explore_repository_impl.dart';
 import '../../features/explore/data/repositories/barbershop_detail_repository_impl.dart';
 import '../../features/explore/data/repositories/barber_booking_repository_impl.dart';
 import '../../features/explore/domain/repositories/explore_repository.dart';
 import '../../features/explore/domain/repositories/barbershop_detail_repository.dart';
 import '../../features/explore/domain/repositories/barber_booking_repository.dart';
+import '../../features/reviews/data/repositories/firestore_reviews_repository.dart';
+import '../../features/reviews/domain/repositories/reviews_repository.dart';
+import '../../features/reviews/presentation/cubit/barbershop_reviews_cubit.dart';
 import '../../features/explore/presentation/bloc/explore_bloc.dart';
 import '../../features/explore/presentation/cubit/barbershop_detail_cubit.dart';
 import '../../features/explore/presentation/cubit/barber_booking_cubit.dart';
@@ -173,11 +177,27 @@ class AppDependencies {
     firestore: firestore,
   );
 
+  static final ReviewsRepository reviewsRepository =
+      FirestoreReviewsRepository(firestore: firestore);
   // Explore — Barbershop Detail & Barber Booking
   static final BarbershopDetailRepository barbershopDetailRepository =
-      BarbershopDetailRepositoryImpl(firestore: firestore);
+      BarbershopDetailRepositoryImpl(
+        firestore: firestore,
+        reviewsRepository: reviewsRepository,
+      );
   static final BarberBookingRepository barberBookingRepository =
       BarberBookingRepositoryImpl(firestore: firestore);
+  static final FavoritesRepository favoritesRepository =
+      FirestoreFavoritesRepository(firestore: firestore);
+
+  static BarbershopReviewsCubit buildBarbershopReviewsCubit(
+    String barbershopId,
+  ) {
+    return BarbershopReviewsCubit(
+      barbershopId: barbershopId,
+      repository: reviewsRepository,
+    );
+  }
 
   // Notifications
   static final FirestoreNotificationsRepository notificationsRepository =
@@ -304,7 +324,7 @@ class AppDependencies {
 
   static FavoritesCubit buildFavoritesCubit(String userId) {
     return FavoritesCubit(
-      repository: FirestoreFavoritesRepository(firestore: firestore),
+      repository: favoritesRepository,
       userId: userId,
     )..watch();
   }

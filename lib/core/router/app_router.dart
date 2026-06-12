@@ -54,6 +54,7 @@ import 'package:barberly/features/barber/services/presentation/screens/manage_sc
 import 'package:barberly/features/explore/presentation/screens/explore_screen.dart';
 import 'package:barberly/features/explore/presentation/screens/barbershop_detail_screen.dart';
 import 'package:barberly/features/explore/presentation/screens/barber_booking_screen.dart';
+import 'package:barberly/features/reviews/presentation/screens/barbershop_reviews_screen.dart';
 
 // Features: Notifications
 import 'package:barberly/features/notifications/presentation/screens/notifications_screen.dart';
@@ -253,6 +254,20 @@ class AppRouter {
           );
         },
         routes: [
+          GoRoute(
+            path: 'resenas',
+            name: 'barbershopReviews',
+            builder: (context, state) {
+              final shopId = state.pathParameters['shopId'] ?? '';
+              final shopName = state.extra as String? ?? 'Barbería';
+              return BlocProvider(
+                create: (_) => AppDependencies.buildBarbershopReviewsCubit(
+                  shopId,
+                ),
+                child: BarbershopReviewsScreen(shopName: shopName),
+              );
+            },
+          ),
           GoRoute(
             path: 'barbero/:barberId',
             name: 'barberBooking',

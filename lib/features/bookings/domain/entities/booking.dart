@@ -50,6 +50,8 @@ class Booking {
     this.cancelledBy,
     this.cancelledAt,
     this.cancellationReason,
+    this.reviewId,
+    this.reviewedAt,
   });
 
   final String id;
@@ -70,8 +72,11 @@ class Booking {
   final BookingCancellationActor? cancelledBy;
   final DateTime? cancelledAt;
   final String? cancellationReason;
+  final String? reviewId;
+  final DateTime? reviewedAt;
 
   bool get isActive => status.isActive;
+  bool get isReviewed => reviewId != null && reviewId!.isNotEmpty;
 }
 
 class BookingDraft {

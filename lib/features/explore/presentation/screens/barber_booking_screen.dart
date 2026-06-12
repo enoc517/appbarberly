@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/di/app_dependencies.dart';
 import '../../../../shared/theme/app_theme.dart';
 import '../../../../shared/motion/app_motion.dart';
 import '../../../../shared/widgets/app_toast.dart';
@@ -38,7 +39,7 @@ class _BarberBookingView extends StatelessWidget {
             context,
             state.isRescheduleMode ? 'Cambio confirmado' : 'Reserva confirmada',
           );
-          context.pop();
+          _handleFavoriteSuggestion(context, state);
         }
       },
       child: Scaffold(
@@ -138,6 +139,100 @@ class _BarberBookingView extends StatelessWidget {
       ),
     );
   }
+}
+
+Future<void> _handleFavoriteSuggestion(
+  BuildContext context,
+  BarberBookingState state,
+) async {
+  if (state.isRescheduleMode) {
+    if (context.mounted) context.pop();
+    return;
+  }
+
+  final cubit = context.read<BarberBookingCubit>();
+  final clientId = cubit.clientId;
+  if (clientId == null || clientId.isEmpty) {
+    if (context.mounted) context.pop();
+    return;
+  }
+
+  final shopId = cubit.shopId;
+  final alreadyFavorite = await AppDependencies.favoritesRepository.isFavorite(
+    clientId,
+    shopId,
+  );
+
+  if (!context.mounted) return;
+
+  if (alreadyFavorite) {
+    await _syncFavoriteUsage(context, state, clientId);
+    if (context.mounted) context.pop();
+    return;
+  }
+
+  final shouldAdd = await showDialog<bool>(
+    context: context,
+    builder: (dialogContext) {
+      final theme = Theme.of(dialogContext);
+      return AlertDialog(
+        title: const Text('¿Agregar a favoritos?'),
+        content: const Text(
+          'Podés guardar esta barbería para reservar más rápido la próxima vez.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Ahora no'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            style: FilledButton.styleFrom(
+              backgroundColor: theme.colorScheme.primaryContainer,
+              foregroundColor: theme.colorScheme.onPrimaryContainer,
+            ),
+            child: const Text('Agregar'),
+          ),
+        ],
+      );
+    },
+  );
+
+  if (shouldAdd == true) {
+    await AppDependencies.favoritesRepository.addFavorite(
+      userId: clientId,
+      barbershopId: shopId,
+      lastBookedAt: state.selectedDay,
+      lastServiceId: state.selectedService?['id'] as String?,
+      lastServiceName: state.selectedService?['name'] as String?,
+      lastBarberId: cubit.barberId,
+      lastBarberName: state.barberName,
+      bookingCount: 1,
+    );
+  }
+
+  if (!context.mounted) return;
+  context.pop();
+}
+
+Future<void> _syncFavoriteUsage(
+  BuildContext context,
+  BarberBookingState state,
+  String userId,
+) async {
+  final cubit = context.read<BarberBookingCubit>();
+  final selectedService = state.selectedService;
+  if (selectedService == null) return;
+
+    await AppDependencies.favoritesRepository.recordFavoriteBooking(
+      userId: userId,
+      barbershopId: cubit.shopId,
+      bookedAt: DateTime.now(),
+      serviceId: selectedService['id'] as String,
+      serviceName: selectedService['name'] as String,
+      barberId: cubit.barberId,
+    barberName: state.barberName ?? 'Barbero',
+  );
 }
 
 class _BarberAvatar extends StatelessWidget {

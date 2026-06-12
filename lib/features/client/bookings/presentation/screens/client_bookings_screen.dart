@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../../core/di/app_dependencies.dart';
 import '../../../../../shared/motion/app_motion.dart';
 import '../../../../../shared/theme/app_theme.dart';
 import '../../../../bookings/domain/entities/booking.dart';
@@ -74,7 +75,14 @@ class _LoadedView extends StatelessWidget {
         if (history.isEmpty)
           const _InlineEmpty(message: 'Tu historial aparecerá aquí.'),
         for (final booking in history) ...[
-          _BookingTile(booking: booking, muted: true),
+          _BookingTile(
+            booking: booking,
+            muted: true,
+            onReview: booking.status == AppointmentBookingStatus.completed &&
+                    !booking.isReviewed
+                ? () => _reviewBooking(context, booking)
+                : null,
+          ),
           const SizedBox(height: 10),
         ],
       ],
@@ -291,10 +299,15 @@ class _NoActiveBookingCard extends StatelessWidget {
 }
 
 class _BookingTile extends StatelessWidget {
-  const _BookingTile({required this.booking, this.muted = false});
+  const _BookingTile({
+    required this.booking,
+    this.muted = false,
+    this.onReview,
+  });
 
   final Booking booking;
   final bool muted;
+  final VoidCallback? onReview;
 
   @override
   Widget build(BuildContext context) {
@@ -350,6 +363,16 @@ class _BookingTile extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: AppTypography.bodySmall.copyWith(
                       color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                  ),
+                ],
+                if (booking.isReviewed) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    'Reseñada',
+                    style: AppTypography.labelSmall.copyWith(
+                      color: theme.colorScheme.secondary,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                 ],
@@ -357,17 +380,115 @@ class _BookingTile extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 12),
-          Text(
-            booking.status.label,
-            style: AppTypography.labelSmall.copyWith(
-              color: muted
-                  ? theme.colorScheme.onSurfaceVariant
-                  : theme.colorScheme.secondary,
-              fontWeight: FontWeight.w700,
-            ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                booking.status.label,
+                style: AppTypography.labelSmall.copyWith(
+                  color: muted
+                      ? theme.colorScheme.onSurfaceVariant
+                      : theme.colorScheme.secondary,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              if (onReview != null) ...[
+                const SizedBox(height: 8),
+                OutlinedButton(
+                  onPressed: onReview,
+                  child: const Text('Calificar'),
+                ),
+              ],
+            ],
           ),
         ],
       ),
+    );
+  }
+}
+
+Future<void> _reviewBooking(BuildContext context, Booking booking) async {
+  int rating = 5;
+  var comment = '';
+
+  final result = await showDialog<bool>(
+    context: context,
+    builder: (dialogContext) {
+      final theme = Theme.of(dialogContext);
+      return StatefulBuilder(
+        builder: (context, setState) {
+          return AlertDialog(
+            title: const Text('Calificar cita'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  booking.serviceSnapshot.name,
+                  style: AppTypography.titleMedium,
+                ),
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 4,
+                  children: List.generate(5, (index) {
+                    final star = index + 1;
+                    final selected = star <= rating;
+                    return IconButton(
+                      onPressed: () => setState(() => rating = star),
+                      icon: Icon(
+                        selected ? Icons.star_rounded : Icons.star_border_rounded,
+                        color: theme.colorScheme.secondary,
+                      ),
+                    );
+                  }),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  maxLines: 3,
+                  onChanged: (value) => comment = value,
+                  decoration: const InputDecoration(
+                    labelText: 'Comentario (opcional)',
+                    hintText: 'Contá cómo te fue con el servicio',
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(false),
+                child: const Text('Cancelar'),
+              ),
+              FilledButton(
+                onPressed: rating < 1
+                    ? null
+                    : () => Navigator.of(dialogContext).pop(true),
+                child: const Text('Publicar'),
+              ),
+            ],
+          );
+        },
+      );
+    },
+  );
+
+  if (result != true || !context.mounted) return;
+
+  try {
+    await AppDependencies.reviewsRepository.createReview(
+      bookingId: booking.id,
+      clientId: booking.clientId,
+      rating: rating,
+      comment: comment,
+    );
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Reseña publicada')),
+    );
+  } catch (error) {
+    if (!context.mounted) return;
+    final message = error is StateError ? error.message : error.toString();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
     );
   }
 }

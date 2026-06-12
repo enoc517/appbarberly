@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../../explore/domain/entities/explore_entities.dart';
+import '../../domain/entities/favorite_barbershop_entry.dart';
 import '../../domain/repositories/favorites_repository.dart';
 
 sealed class FavoritesState {
@@ -16,7 +16,7 @@ class FavoritesLoading extends FavoritesState {
 class FavoritesLoaded extends FavoritesState {
   const FavoritesLoaded(this.barbershops);
 
-  final List<BarbershopEntity> barbershops;
+  final List<FavoriteBarbershopEntry> barbershops;
 }
 
 class FavoritesEmpty extends FavoritesState {
@@ -39,7 +39,7 @@ class FavoritesCubit extends Cubit<FavoritesState> {
 
   final FavoritesRepository _repository;
   final String _userId;
-  StreamSubscription<List<BarbershopEntity>>? _subscription;
+  StreamSubscription<List<FavoriteBarbershopEntry>>? _subscription;
 
   void watch() {
     if (_userId.isEmpty) {

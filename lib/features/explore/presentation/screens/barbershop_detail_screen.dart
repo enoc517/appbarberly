@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../shared/theme/app_theme.dart';
 import '../../../../shared/motion/app_motion.dart';
+import '../../../reviews/domain/entities/barbershop_review.dart';
 import '../cubit/barbershop_detail_cubit.dart';
 import '../cubit/barbershop_detail_state.dart';
 
@@ -51,6 +52,7 @@ class _BarbershopDetailView extends StatelessWidget {
             shopId: shopId,
             shop: state.shop!,
             members: state.members,
+            reviews: state.reviews,
           );
         },
       ),
@@ -62,11 +64,13 @@ class _DetailContent extends StatelessWidget {
   final String shopId;
   final Map<String, dynamic> shop;
   final List<Map<String, dynamic>> members;
+  final List<BarbershopReview> reviews;
 
   const _DetailContent({
     required this.shopId,
     required this.shop,
     required this.members,
+    required this.reviews,
   });
 
   @override
@@ -185,6 +189,36 @@ class _DetailContent extends StatelessWidget {
                 );
               },
             ),
+          const SizedBox(height: 28),
+          Text(
+            'Reseñas recientes',
+            style: AppTypography.titleLarge.copyWith(
+              color: theme.colorScheme.onSurface,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 8),
+          TextButton(
+            onPressed: () => context.push(
+              '/barberia/$shopId/resenas',
+              extra: shop['name'] as String? ?? 'Barbería',
+            ),
+            style: TextButton.styleFrom(
+              foregroundColor: theme.colorScheme.primary,
+            ),
+            child: const Text('Ver todas las reseñas'),
+          ),
+          const SizedBox(height: 16),
+          if (reviews.isEmpty)
+            Text(
+              'Todavía no hay reseñas para esta barbería.',
+              style: AppTypography.bodyMedium.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            )
+          else
+            for (final review in reviews)
+              _ReviewCard(review: review),
         ],
       ),
     );
@@ -321,6 +355,76 @@ class _BarberAvatar extends StatelessWidget {
               errorBuilder: (context, error, stackTrace) =>
                   _AvatarFallback(name: name),
             ),
+    );
+  }
+}
+
+class _ReviewCard extends StatelessWidget {
+  const _ReviewCard({required this.review});
+
+  final BarbershopReview review;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final clientName = review.clientSnapshot.name;
+    final serviceName = review.serviceSnapshot.name;
+    final rating = review.rating;
+    final comment = review.comment ?? '';
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerLowest,
+        borderRadius: BorderRadius.circular(AppRadius.xl),
+        border: Border.all(
+          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.12),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  clientName,
+                  style: AppTypography.titleSmall,
+                ),
+              ),
+              Row(
+                children: List.generate(
+                  5,
+                  (index) => Icon(
+                    index < rating
+                        ? Icons.star_rounded
+                        : Icons.star_border_rounded,
+                    size: 16,
+                    color: theme.colorScheme.secondary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            serviceName,
+            style: AppTypography.labelSmall.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+          if (comment.trim().isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Text(
+              comment.trim(),
+              style: AppTypography.bodyMedium.copyWith(
+                color: theme.colorScheme.onSurface,
+              ),
+            ),
+          ],
+        ],
+      ),
     );
   }
 }

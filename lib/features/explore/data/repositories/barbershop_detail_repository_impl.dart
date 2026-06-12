@@ -1,12 +1,17 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../domain/repositories/barbershop_detail_repository.dart';
+import '../../../reviews/domain/repositories/reviews_repository.dart';
 
 class BarbershopDetailRepositoryImpl implements BarbershopDetailRepository {
-  BarbershopDetailRepositoryImpl({FirebaseFirestore? firestore})
-      : _db = firestore ?? FirebaseFirestore.instance;
+  BarbershopDetailRepositoryImpl({
+    FirebaseFirestore? firestore,
+    required ReviewsRepository reviewsRepository,
+  })  : _db = firestore ?? FirebaseFirestore.instance,
+        _reviewsRepository = reviewsRepository;
 
   final FirebaseFirestore _db;
+  final ReviewsRepository _reviewsRepository;
 
   @override
   Future<BarbershopDetailData> getDetail(String shopId) async {
@@ -23,9 +28,12 @@ class BarbershopDetailRepositoryImpl implements BarbershopDetailRepository {
       membersSnapshot.docs.map((doc) => _enrichMember(doc)),
     );
 
+    final reviews = await _reviewsRepository.getLatestReviews(shopId);
+
     return BarbershopDetailData(
       shop: shopDoc.data(),
       members: members,
+      reviews: reviews,
     );
   }
 

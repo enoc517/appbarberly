@@ -262,6 +262,12 @@ class BarberAgendaCubit extends Cubit<BarberAgendaState> {
       return false;
     }
 
+    if (_activeBlockedSlotsForSelectedDay().any(
+      (slot) => _overlaps(start, end, slot.start, slot.end),
+    )) {
+      return false;
+    }
+
     final doc = _firestore
         .collection('barbershops')
         .doc(barbershopId)
@@ -413,6 +419,14 @@ class BarberAgendaCubit extends Cubit<BarberAgendaState> {
     if (current is! BarberAgendaLoaded) return const <Booking>[];
     return current.bookings
         .where((booking) => booking.isActive)
+        .toList(growable: false);
+  }
+
+  List<AgendaBlockedSlot> _activeBlockedSlotsForSelectedDay() {
+    final current = state;
+    if (current is! BarberAgendaLoaded) return const <AgendaBlockedSlot>[];
+    return current.blockedSlots
+        .where((slot) => slot.isActive)
         .toList(growable: false);
   }
 
