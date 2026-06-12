@@ -37,6 +37,8 @@ class BarbershopManagementRemoteDatasourceImpl
   }) async {
     final docRef = _shopsCollection.doc();
     final geoFirePoint = GeoFirePoint(GeoPoint(params.lat, params.lng));
+    final ownerUserDoc = await _db.collection('users').doc(ownerId).get();
+    final ownerAvatarUrl = ownerUserDoc.data()?['profileImageUrl'] as String?;
 
     final data = <String, dynamic>{
       'ownerId': ownerId,
@@ -63,7 +65,7 @@ class BarbershopManagementRemoteDatasourceImpl
     await _membersCollection(docRef.id).doc(ownerId).set({
       'barberId': ownerId,
       'barberName': ownerName,
-      'barberAvatarUrl': '',
+      'barberAvatarUrl': ownerAvatarUrl ?? '',
       'role': 'owner',
       'joinedAt': FieldValue.serverTimestamp(),
     });

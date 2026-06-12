@@ -5,6 +5,7 @@ import '../../../barber/services/domain/entities/barber_schedule.dart';
 class BarberBookingState extends Equatable {
   final bool isLoading;
   final String? barberName;
+  final String? barberAvatarUrl;
   final List<Map<String, dynamic>> services;
   final Map<int, BarberSchedule> schedule;
   final List<DateTime> availableDays;
@@ -19,6 +20,7 @@ class BarberBookingState extends Equatable {
   const BarberBookingState({
     this.isLoading = true,
     this.barberName,
+    this.barberAvatarUrl,
     this.services = const [],
     this.schedule = const {},
     this.availableDays = const [],
@@ -34,6 +36,7 @@ class BarberBookingState extends Equatable {
   BarberBookingState copyWith({
     bool? isLoading,
     String? barberName,
+    String? barberAvatarUrl,
     List<Map<String, dynamic>>? services,
     Map<int, BarberSchedule>? schedule,
     List<DateTime>? availableDays,
@@ -51,6 +54,7 @@ class BarberBookingState extends Equatable {
     return BarberBookingState(
       isLoading: isLoading ?? this.isLoading,
       barberName: barberName ?? this.barberName,
+      barberAvatarUrl: barberAvatarUrl ?? this.barberAvatarUrl,
       services: services ?? this.services,
       schedule: schedule ?? this.schedule,
       availableDays: availableDays ?? this.availableDays,
@@ -78,6 +82,7 @@ class BarberBookingState extends Equatable {
   List<Object?> get props => [
     isLoading,
     barberName,
+    barberAvatarUrl,
     services,
     schedule,
     availableDays,

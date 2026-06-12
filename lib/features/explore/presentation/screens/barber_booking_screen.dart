@@ -46,12 +46,25 @@ class _BarberBookingView extends StatelessWidget {
             onPressed: () => context.go('/explorar'),
           ),
           title: BlocBuilder<BarberBookingCubit, BarberBookingState>(
-            builder: (context, state) => Text(
-              state.barberName ?? 'Barbero',
-              style: AppTypography.titleLarge.copyWith(
-                color: theme.colorScheme.onSurface,
-                fontWeight: FontWeight.w700,
-              ),
+            builder: (context, state) => Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _BarberAvatar(
+                  name: state.barberName ?? 'Barbero',
+                  imageUrl: state.barberAvatarUrl,
+                ),
+                const SizedBox(width: 12),
+                Flexible(
+                  child: Text(
+                    state.barberName ?? 'Barbero',
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTypography.titleLarge.copyWith(
+                      color: theme.colorScheme.onSurface,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ),
@@ -116,6 +129,53 @@ class _BarberBookingView extends StatelessWidget {
                 );
               },
             ),
+      ),
+    );
+  }
+}
+
+class _BarberAvatar extends StatelessWidget {
+  const _BarberAvatar({required this.name, required this.imageUrl});
+
+  final String name;
+  final String? imageUrl;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final initials = name.trim().isEmpty ? 'B' : name.trim()[0].toUpperCase();
+
+    return ClipOval(
+      child: SizedBox(
+        width: 36,
+        height: 36,
+        child: imageUrl == null || imageUrl!.isEmpty
+            ? Container(
+                color: theme.colorScheme.surfaceContainerHighest,
+                alignment: Alignment.center,
+                child: Text(
+                  initials,
+                  style: AppTypography.labelLarge.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              )
+            : Image.network(
+                imageUrl!,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) => Container(
+                  color: theme.colorScheme.surfaceContainerHighest,
+                  alignment: Alignment.center,
+                  child: Text(
+                    initials,
+                    style: AppTypography.labelLarge.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+              ),
       ),
     );
   }

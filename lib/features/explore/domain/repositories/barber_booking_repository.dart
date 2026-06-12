@@ -16,11 +16,13 @@ abstract class BarberBookingRepository {
 
 class BarberBookingData {
   final String barberName;
+  final String? barberAvatarUrl;
   final List<Map<String, dynamic>> services;
   final Map<int, BarberSchedule> schedule;
 
   const BarberBookingData({
     required this.barberName,
+    this.barberAvatarUrl,
     required this.services,
     required this.schedule,
   });

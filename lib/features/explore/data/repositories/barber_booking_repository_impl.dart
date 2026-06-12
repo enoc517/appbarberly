@@ -25,6 +25,7 @@ class BarberBookingRepositoryImpl implements BarberBookingRepository {
         .get();
 
     final barberName = memberDoc.data()?['barberName'] as String? ?? 'Barbero';
+    final barberAvatarUrl = await _resolveBarberAvatarUrl(memberDoc, barberId);
 
     final servicesSnapshot = await _db
         .collection('barbershops')
@@ -63,6 +64,7 @@ class BarberBookingRepositoryImpl implements BarberBookingRepository {
 
     return BarberBookingData(
       barberName: barberName,
+      barberAvatarUrl: barberAvatarUrl,
       services: services,
       schedule: schedule,
     );
@@ -184,5 +186,24 @@ class BarberBookingRepositoryImpl implements BarberBookingRepository {
     final hour = time.hour.toString().padLeft(2, '0');
     final minute = time.minute.toString().padLeft(2, '0');
     return '$hour:$minute';
+  }
+
+  Future<String?> _resolveBarberAvatarUrl(
+    DocumentSnapshot<Map<String, dynamic>> memberDoc,
+    String barberId,
+  ) async {
+    final memberData = memberDoc.data() ?? <String, dynamic>{};
+    final memberAvatarUrl = memberData['barberAvatarUrl'] as String?;
+    if (memberAvatarUrl != null && memberAvatarUrl.isNotEmpty) {
+      return memberAvatarUrl;
+    }
+
+    final userDoc = await _db.collection('users').doc(barberId).get();
+    final userAvatarUrl = userDoc.data()?['profileImageUrl'] as String?;
+    if (userAvatarUrl != null && userAvatarUrl.isNotEmpty) {
+      return userAvatarUrl;
+    }
+
+    return null;
   }
 }

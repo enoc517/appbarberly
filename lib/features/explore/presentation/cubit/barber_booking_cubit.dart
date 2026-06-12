@@ -31,6 +31,7 @@ class BarberBookingCubit extends Cubit<BarberBookingState> {
         state.copyWith(
           isLoading: false,
           barberName: result.barberName,
+          barberAvatarUrl: result.barberAvatarUrl,
           services: result.services,
           schedule: result.schedule,
           availableDays: availableDays,
@@ -120,7 +121,10 @@ class BarberBookingCubit extends Cubit<BarberBookingState> {
           price: price,
           durationMinutes: durationMin,
           clientSnapshot: BookingSnapshot(name: clientName),
-          barberSnapshot: BookingSnapshot(name: state.barberName ?? 'Barbero'),
+          barberSnapshot: BookingSnapshot(
+            name: state.barberName ?? 'Barbero',
+            imageUrl: state.barberAvatarUrl,
+          ),
           shopSnapshot: BookingSnapshot(name: shopName),
           serviceSnapshot: BookingSnapshot(name: serviceName),
         ),

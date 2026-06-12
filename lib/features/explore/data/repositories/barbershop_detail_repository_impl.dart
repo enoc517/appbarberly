@@ -19,9 +19,33 @@ class BarbershopDetailRepositoryImpl implements BarbershopDetailRepository {
         .orderBy('joinedAt')
         .get();
 
+    final members = await Future.wait(
+      membersSnapshot.docs.map((doc) => _enrichMember(doc)),
+    );
+
     return BarbershopDetailData(
       shop: shopDoc.data(),
-      members: membersSnapshot.docs.map((d) => d.data()).toList(),
+      members: members,
     );
+  }
+
+  Future<Map<String, dynamic>> _enrichMember(
+    QueryDocumentSnapshot<Map<String, dynamic>> doc,
+  ) async {
+    final data = Map<String, dynamic>.from(doc.data());
+    final barberId = data['barberId'] as String? ?? doc.id;
+    final avatarUrl = data['barberAvatarUrl'] as String?;
+
+    if (avatarUrl != null && avatarUrl.isNotEmpty) {
+      return data;
+    }
+
+    final userDoc = await _db.collection('users').doc(barberId).get();
+    final userAvatarUrl = userDoc.data()?['profileImageUrl'] as String?;
+    if (userAvatarUrl != null && userAvatarUrl.isNotEmpty) {
+      data['barberAvatarUrl'] = userAvatarUrl;
+    }
+
+    return data;
   }
 }
