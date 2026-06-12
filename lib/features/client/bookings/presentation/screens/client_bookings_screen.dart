@@ -53,9 +53,10 @@ class _LoadedView extends StatelessWidget {
             delay: AppMotion.delay(1),
             child: _NextBookingCard(
               booking: activeBooking!,
-              onCancel: () => context
-                  .read<ClientBookingsCubit>()
-                  .cancelBooking(activeBooking!),
+              onCancel: () => _confirmAndCancelBooking(
+                context,
+                activeBooking!,
+              ),
             ),
           ),
         if (activeBooking == null) const _NoActiveBookingCard(),
@@ -80,6 +81,44 @@ class _LoadedView extends StatelessWidget {
       ],
     );
   }
+}
+
+Future<void> _confirmAndCancelBooking(
+  BuildContext context,
+  Booking booking,
+) async {
+  final shouldCancel = await showDialog<bool>(
+    context: context,
+    builder: (dialogContext) {
+      final theme = Theme.of(dialogContext);
+      return AlertDialog(
+        title: const Text('Cancelar cita'),
+        content: Text(
+          'Vas a cancelar tu cita de ${booking.serviceSnapshot.name} en ${booking.shopSnapshot.name}.\n\nLa barbería será notificada. Si cancelas con menos de 1 hora de anticipación, puede aplicarse una penalización del 50%.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Volver'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            style: FilledButton.styleFrom(
+              backgroundColor: theme.colorScheme.error,
+              foregroundColor: theme.colorScheme.onError,
+            ),
+            child: const Text('Sí, cancelar'),
+          ),
+        ],
+      );
+    },
+  );
+
+  if (shouldCancel != true || !context.mounted) {
+    return;
+  }
+
+  await context.read<ClientBookingsCubit>().cancelBooking(booking);
 }
 
 class _Header extends StatelessWidget {
