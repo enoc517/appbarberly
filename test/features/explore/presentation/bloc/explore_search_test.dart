@@ -47,6 +47,17 @@ void main() {
 
       expect(result.map((shop) => shop.id), ['navaja', 'imperio']);
     });
+
+    test('keeps barbershops without distance at the end', () {
+      final result = applyExploreSearch(
+        barbershops: [_imperio(), _navaja(distanceKm: 1.5)],
+        services: const [],
+        query: '',
+        sort: ExploreSort.cercania,
+      );
+
+      expect(result.map((shop) => shop.id), ['navaja', 'imperio']);
+    });
   });
 
   test('ExploreLoaded keeps selected custom radius', () {

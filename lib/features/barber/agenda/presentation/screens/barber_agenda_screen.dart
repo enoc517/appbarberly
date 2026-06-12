@@ -431,9 +431,7 @@ class _AgendaBlock extends StatelessWidget {
                           children: [
                             FilledButton.icon(
                               onPressed: canComplete
-                                  ? () => context
-                                        .read<BarberAgendaCubit>()
-                                        .completeBooking(booking)
+                                  ? () => _completeBooking(context, booking)
                                   : null,
                               icon: const Icon(
                                 Icons.check_circle_outline_rounded,
@@ -515,7 +513,7 @@ class _AgendaSummary extends StatelessWidget {
           label: 'Pendientes',
           value: pending.toString(),
           icon: Icons.event_available_rounded,
-          color: theme.colorScheme.secondary,
+          color: theme.colorScheme.primary,
         ),
         _AgendaStatCard(
           label: 'Completadas',
@@ -786,6 +784,22 @@ String _emptyMessageFor(_AgendaFilter filter) {
     _AgendaFilter.completed => 'No hay citas completadas para este día.',
     _AgendaFilter.cancelled => 'No hay citas canceladas para este día.',
   };
+}
+
+Future<void> _completeBooking(
+  BuildContext context,
+  Booking booking,
+) async {
+  final success = await context.read<BarberAgendaCubit>().completeBooking(booking);
+  if (!context.mounted) return;
+
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text(
+        success ? 'Cita completada' : 'No se pudo completar la cita',
+      ),
+    ),
+  );
 }
 
 Future<void> _blockSpace(BuildContext context, DateTime selectedDay) async {
@@ -1154,9 +1168,10 @@ class _ErrorView extends StatelessWidget {
 }
 
 String _formatTime(DateTime date) {
-  final hour = date.hour.toString().padLeft(2, '0');
+  final hour = date.hour % 12 == 0 ? 12 : date.hour % 12;
   final minute = date.minute.toString().padLeft(2, '0');
-  return '$hour:$minute';
+  final period = date.hour >= 12 ? 'PM' : 'AM';
+  return '$hour:$minute $period';
 }
 
 ({Color background, Color foreground}) _statusStyle(

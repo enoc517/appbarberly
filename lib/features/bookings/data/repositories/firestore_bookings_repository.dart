@@ -24,19 +24,11 @@ class FirestoreBookingsRepository implements BookingsRepository {
       throw StateError('El horario ya no está disponible.');
     }
 
+    if (await _hasActiveClientBooking(draft.clientId)) {
+      throw StateError('El cliente ya tiene una cita activa.');
+    }
+
     await _db.runTransaction((transaction) async {
-      final userSnapshot = await transaction.get(userRef);
-      final userData = userSnapshot.data() ?? <String, dynamic>{};
-      final activeBookingId = userData['activeBookingId'] as String?;
-      final activeBookingStatus = userData['activeBookingStatus'] as String?;
-      final hasActiveBooking =
-          activeBookingId != null &&
-          _activeStatusNames.contains(activeBookingStatus);
-
-      if (hasActiveBooking) {
-        throw StateError('El cliente ya tiene una cita activa.');
-      }
-
       if (slotRef != null) {
         final slotSnapshot = await transaction.get(slotRef);
         final slotData = slotSnapshot.data();
@@ -70,11 +62,15 @@ class FirestoreBookingsRepository implements BookingsRepository {
         'updatedAt': FieldValue.serverTimestamp(),
       });
 
-      transaction.set(userRef, {
-        'activeBookingId': bookingRef.id,
-        'activeBookingStatus': AppointmentBookingStatus.confirmed.name,
-        'updatedAt': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
+      transaction.set(
+        userRef,
+        {
+          'activeBookingId': bookingRef.id,
+          'activeBookingStatus': AppointmentBookingStatus.confirmed.name,
+          'updatedAt': FieldValue.serverTimestamp(),
+        },
+        SetOptions(merge: true),
+      );
 
       transaction.set(notificationRef, {
         'recipientId': draft.barberId,
@@ -330,11 +326,18 @@ class FirestoreBookingsRepository implements BookingsRepository {
         });
       }
 
-      transaction.set(userRef, {
-        'activeBookingId': null,
-        'activeBookingStatus': null,
-        'updatedAt': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
+      if (status == AppointmentBookingStatus.cancelled &&
+          cancelledBy == BookingCancellationActor.client) {
+        transaction.set(
+          userRef,
+          {
+            'activeBookingId': null,
+            'activeBookingStatus': null,
+            'updatedAt': FieldValue.serverTimestamp(),
+          },
+          SetOptions(merge: true),
+        );
+      }
     });
   }
 
@@ -458,18 +461,20 @@ class FirestoreBookingsRepository implements BookingsRepository {
     final date = draft.slotStart;
     final day = date.day.toString().padLeft(2, '0');
     final month = date.month.toString().padLeft(2, '0');
-    final hour = date.hour.toString().padLeft(2, '0');
+    final hour = date.hour % 12 == 0 ? 12 : date.hour % 12;
     final minute = date.minute.toString().padLeft(2, '0');
-    return '${draft.clientSnapshot.name} reservó ${draft.serviceSnapshot.name} para el $day/$month a las $hour:$minute.';
+    final period = date.hour >= 12 ? 'PM' : 'AM';
+    return '${draft.clientSnapshot.name} reservó ${draft.serviceSnapshot.name} para el $day/$month a las $hour:$minute $period.';
   }
 
   static String _rescheduleNotificationBody(BookingDraft draft) {
     final date = draft.slotStart;
     final day = date.day.toString().padLeft(2, '0');
     final month = date.month.toString().padLeft(2, '0');
-    final hour = date.hour.toString().padLeft(2, '0');
+    final hour = date.hour % 12 == 0 ? 12 : date.hour % 12;
     final minute = date.minute.toString().padLeft(2, '0');
-    return '${draft.clientSnapshot.name} reprogramó ${draft.serviceSnapshot.name} para el $day/$month a las $hour:$minute.';
+    final period = date.hour >= 12 ? 'PM' : 'AM';
+    return '${draft.clientSnapshot.name} reprogramó ${draft.serviceSnapshot.name} para el $day/$month a las $hour:$minute $period.';
   }
 
   Future<bool> _hasConflict(
@@ -522,5 +527,12 @@ class FirestoreBookingsRepository implements BookingsRepository {
     });
   }
 
-  static const _activeStatusNames = {'pending', 'confirmed', 'inProgress'};
+  Future<bool> _hasActiveClientBooking(String clientId) async {
+    final snapshot = await _bookings.where('clientId', isEqualTo: clientId).get();
+    return snapshot.docs.any((doc) {
+      final data = doc.data();
+      final status = _bookingStatus(data['status'] as String?);
+      return status.isActive;
+    });
+  }
 }

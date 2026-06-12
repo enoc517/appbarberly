@@ -8,7 +8,7 @@
 //   explore_state.dart  — abstract ExploreState + todos los estados
 //
 // Responsabilidades:
-//   · Obtener posición del usuario (con fallback a Ciudad Neily)
+//   · Obtener posición del usuario (sin fallback silencioso cuando no hay GPS)
 //   · Suscribirse a streams geo de barberías y servicios
 //   · Detectar favoritos vacíos y emitir estado dedicado
 //   · Construir marcadores (via MarkerUtils) con pin ⚡ para promos
@@ -70,10 +70,6 @@ class ExploreBloc extends Bloc<ExploreEvent, ExploreState> {
   final ExploreRepository _repo;
   final GetCurrentUserUseCase _getCurrentUserUseCase;
 
-  // Coordenadas de Ciudad Neily — fallback si GPS no disponible
-  static const _kNeilyLat = 8.6131;
-  static const _kNeilyLng = -82.9589;
-
   // Suscripciones activas a Firestore streams
   StreamSubscription<List<BarbershopEntity>>? _barbershopsSubscription;
   StreamSubscription<List<ServiceExploreEntity>>? _servicesSubscription;
@@ -84,8 +80,8 @@ class ExploreBloc extends Bloc<ExploreEvent, ExploreState> {
   List<ServiceExploreEntity> _allServices = [];
   List<String> _favoriteIds = [];
   MapController? _mapController;
-  double _userLat = _kNeilyLat;
-  double _userLng = _kNeilyLng;
+  double _userLat = 0;
+  double _userLng = 0;
   double _radiusKm = 10.0;
 
   // ── ExploreInitialized ────────────────────────────────────────────────────
@@ -96,8 +92,6 @@ class ExploreBloc extends Bloc<ExploreEvent, ExploreState> {
   ) async {
     emit(const ExploreLoading());
 
-    double lat = _kNeilyLat;
-    double lng = _kNeilyLng;
     String userName = 'Usuario';
     String? userId = event.userId;
 
@@ -109,13 +103,11 @@ class ExploreBloc extends Bloc<ExploreEvent, ExploreState> {
       userName = 'Usuario';
     }
 
-    // Intentar obtener GPS real; si falla, usar Ciudad Neily
+    // Intentar obtener GPS real; si falla, no mostrar resultados engañosos.
     try {
       final pos = await _repo.getCurrentPosition();
-      lat = pos.latitude;
-      lng = pos.longitude;
-      _userLat = lat;
-      _userLng = lng;
+      _userLat = pos.latitude;
+      _userLng = pos.longitude;
     } on LocationPermissionDeniedException catch (e) {
       emit(ExploreError(e.toString()));
       return;
@@ -123,12 +115,20 @@ class ExploreBloc extends Bloc<ExploreEvent, ExploreState> {
       emit(ExploreError(e.toString()));
       return;
     } catch (e) {
-      _userLat = lat;
-      _userLng = lng;
+      emit(
+        const ExploreError(
+          'Activa la ubicación para ver barberías cercanas y su distancia real.',
+        ),
+      );
+      return;
     }
 
     // ── Suscribir streams de Firestore ────────────────────────────────────
-    await _subscribeNearbyStreams(lat: lat, lng: lng, radiusKm: _radiusKm);
+    await _subscribeNearbyStreams(
+      lat: _userLat,
+      lng: _userLng,
+      radiusKm: _radiusKm,
+    );
 
     if (userId != null) {
       _favoritesSubscription = _repo.getUserFavoriteIds(userId).listen((ids) {
@@ -150,8 +150,8 @@ class ExploreBloc extends Bloc<ExploreEvent, ExploreState> {
         markers: initialMarkers,
         favoriteIds: const [],
         currentSort: ExploreSort.cercania,
-        userLat: lat,
-        userLng: lng,
+        userLat: _userLat,
+        userLng: _userLng,
         userName: userName,
         radiusKm: _radiusKm,
       ),
@@ -612,10 +612,14 @@ List<BarbershopEntity> _sortExploreBarbershops(
   List<BarbershopEntity> barbershops,
   ExploreSort sort,
 ) {
-  switch (sort) {
+    switch (sort) {
     case ExploreSort.cercania:
       return [...barbershops]
-        ..sort((a, b) => (a.distanceKm ?? 0).compareTo(b.distanceKm ?? 0));
+        ..sort((a, b) {
+          final distanceA = a.distanceKm ?? double.infinity;
+          final distanceB = b.distanceKm ?? double.infinity;
+          return distanceA.compareTo(distanceB);
+        });
     case ExploreSort.calificacion:
       return [...barbershops]..sort((a, b) => b.rating.compareTo(a.rating));
     case ExploreSort.conOferta:

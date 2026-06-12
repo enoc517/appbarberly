@@ -44,6 +44,26 @@ void main() {
       },
     );
 
+    test(
+      'completeBooking returns false without entering an error state when the repository fails',
+      () async {
+        final failingRepository = _FakeBookingsRepository()..throwOnComplete = true;
+        final localCubit = BarberAgendaCubit(
+          bookingsRepository: failingRepository,
+          firestore: FakeFirebaseFirestore(),
+          getBarberSchedule: GetBarberSchedule(_FakeBarberServicesRepository()),
+          userId: 'barber-1',
+        );
+
+        addTearDown(localCubit.close);
+
+        final success = await localCubit.completeBooking(_activeBooking());
+
+        expect(success, isFalse);
+        expect(localCubit.state, isNot(isA<BarberAgendaError>()));
+      },
+    );
+
     test('completeBooking is blocked before slotEnd', () async {
       final now = DateTime.now();
       final booking = _activeBookingWithTimes(
@@ -197,6 +217,7 @@ class _FakeBookingsRepository implements BookingsRepository {
   final calls = <String>[];
   (String, String, String)? watchArgs;
   final _agendaController = StreamController<List<Booking>>.broadcast();
+  bool throwOnComplete = false;
 
   @override
   Future<String> createBooking(BookingDraft draft) {
@@ -229,6 +250,9 @@ class _FakeBookingsRepository implements BookingsRepository {
     required String bookingId,
     required String clientId,
   }) async {
+    if (throwOnComplete) {
+      throw StateError('boom');
+    }
     calls.add('complete:$bookingId:$clientId');
   }
 

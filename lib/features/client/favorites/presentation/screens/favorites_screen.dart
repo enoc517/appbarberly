@@ -96,90 +96,74 @@ class _FavoriteBarbershopCard extends StatelessWidget {
           ),
         ],
       ),
-      child: Row(
-        children: [
-          Container(
-            width: 72,
-            height: 72,
-            decoration: BoxDecoration(
-              color: theme.colorScheme.primaryContainer,
-              borderRadius: BorderRadius.circular(AppRadius.xl),
-            ),
-            child: Icon(
-              Icons.storefront_rounded,
-              color: theme.colorScheme.onPrimaryContainer,
-              size: 34,
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(shop.shop.name, style: AppTypography.titleMedium),
-                const SizedBox(height: 4),
-                Text(
-                  '${shop.shop.rating.toStringAsFixed(1)} · ${shop.shop.reviewCount} reseñas · ${shop.bookingCount} reservas',
-                  style: AppTypography.bodySmall.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  shop.shop.address,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTypography.bodySmall.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    _StatusBadge(
-                      label: shop.isOpenNow == true
-                          ? 'Abierto ahora'
-                          : shop.isOpenNow == false
-                              ? 'Cerrado ahora'
-                              : 'Horario no disponible',
-                      color: shop.isOpenNow == true
-                          ? theme.colorScheme.secondaryContainer
-                          : theme.colorScheme.surfaceContainerHighest,
-                      foregroundColor: shop.isOpenNow == true
-                          ? theme.colorScheme.onSecondaryContainer
-                          : theme.colorScheme.onSurfaceVariant,
-                      icon: shop.isOpenNow == true
-                          ? Icons.storefront_rounded
-                          : Icons.access_time_rounded,
-                    ),
-                    _StatusBadge(
-                      label: shop.lastServiceName?.isNotEmpty == true
-                          ? 'Último: ${shop.lastServiceName}'
-                          : 'Sin uso reciente',
-                      color: theme.colorScheme.primaryContainer,
-                      foregroundColor: theme.colorScheme.onPrimaryContainer,
-                      icon: Icons.history_rounded,
-                    ),
-                    if (shop.nextAvailableLabel != null)
-                      _StatusBadge(
-                        label: shop.nextAvailableLabel!,
-                        color: theme.colorScheme.surfaceContainerHighest,
-                        foregroundColor: theme.colorScheme.onSurfaceVariant,
-                        icon: Icons.event_available_rounded,
-                      ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.end,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final compact = constraints.maxWidth < 560;
+
+          final titleBlock = Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(Icons.favorite_rounded, color: theme.colorScheme.secondary),
-              const SizedBox(height: 8),
+              Text(shop.shop.name, style: AppTypography.titleMedium),
+              const SizedBox(height: 4),
+              Text(
+                '${shop.shop.rating.toStringAsFixed(1)} · ${shop.shop.reviewCount} reseñas · ${shop.bookingCount} reservas',
+                style: AppTypography.bodySmall.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                shop.shop.address,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: AppTypography.bodySmall.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+          );
+
+          final badges = Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _StatusBadge(
+                label: shop.isOpenNow == true
+                    ? 'Abierto ahora'
+                    : shop.isOpenNow == false
+                        ? 'Cerrado ahora'
+                        : 'Horario no disponible',
+                color: shop.isOpenNow == true
+                    ? theme.colorScheme.primaryContainer
+                    : theme.colorScheme.surfaceContainerHighest,
+                foregroundColor: shop.isOpenNow == true
+                    ? theme.colorScheme.onPrimaryContainer
+                    : theme.colorScheme.onSurfaceVariant,
+                icon: shop.isOpenNow == true
+                    ? Icons.storefront_rounded
+                    : Icons.access_time_rounded,
+              ),
+              _StatusBadge(
+                label: shop.lastServiceName?.isNotEmpty == true
+                    ? 'Último: ${shop.lastServiceName}'
+                    : 'Sin uso reciente',
+                color: theme.colorScheme.primaryContainer,
+                foregroundColor: theme.colorScheme.onPrimaryContainer,
+                icon: Icons.history_rounded,
+              ),
+              if (shop.nextAvailableLabel != null)
+                _StatusBadge(
+                  label: shop.nextAvailableLabel!,
+                  color: theme.colorScheme.surfaceContainerHighest,
+                  foregroundColor: theme.colorScheme.onSurfaceVariant,
+                  icon: Icons.event_available_rounded,
+                ),
+            ],
+          );
+
+          final actions = Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
               FilledButton(
                 onPressed: shop.lastBarberId == null || shop.lastBarberId!.isEmpty
                     ? null
@@ -195,11 +179,79 @@ class _FavoriteBarbershopCard extends StatelessWidget {
               const SizedBox(height: 8),
               TextButton(
                 onPressed: () => context.push('/barberia/${shop.shop.id}'),
+                style: TextButton.styleFrom(
+                  foregroundColor: theme.colorScheme.primary,
+                ),
                 child: const Text('Ver barbería'),
               ),
             ],
-          ),
-        ],
+          );
+
+          if (compact) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 56,
+                      height: 56,
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.primaryContainer,
+                        borderRadius: BorderRadius.circular(AppRadius.lg),
+                      ),
+                      child: Icon(
+                        Icons.storefront_rounded,
+                        color: theme.colorScheme.onPrimaryContainer,
+                        size: 30,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(child: titleBlock),
+                    const SizedBox(width: 8),
+                    Icon(Icons.favorite_rounded, color: theme.colorScheme.primary),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                badges,
+                const SizedBox(height: 16),
+                actions,
+              ],
+            );
+          }
+
+          return Row(
+            children: [
+              Container(
+                width: 72,
+                height: 72,
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primaryContainer,
+                  borderRadius: BorderRadius.circular(AppRadius.xl),
+                ),
+                child: Icon(
+                  Icons.storefront_rounded,
+                  color: theme.colorScheme.onPrimaryContainer,
+                  size: 34,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    titleBlock,
+                    const SizedBox(height: 12),
+                    badges,
+                  ],
+                ),
+              ),
+              const SizedBox(width: 16),
+              SizedBox(width: 164, child: actions),
+            ],
+          );
+        },
       ),
     );
   }

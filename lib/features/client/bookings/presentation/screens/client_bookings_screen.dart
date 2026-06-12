@@ -214,13 +214,13 @@ class _NextBookingCard extends StatelessWidget {
                   vertical: 6,
                 ),
                 decoration: BoxDecoration(
-                  color: colorScheme.secondary.withValues(alpha: 0.14),
+                  color: colorScheme.primaryContainer,
                   borderRadius: BorderRadius.circular(AppRadius.xl),
                 ),
                 child: Text(
                   'CITA ACTIVA',
                   style: AppTypography.labelSmall.copyWith(
-                    color: colorScheme.secondary,
+                    color: colorScheme.onPrimaryContainer,
                     fontWeight: FontWeight.w800,
                     letterSpacing: 1.1,
                   ),
@@ -260,9 +260,9 @@ class _NextBookingCard extends StatelessWidget {
                 child: OutlinedButton(
                   onPressed: onCancel,
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: colorScheme.secondary,
+                    foregroundColor: colorScheme.error,
                     side: BorderSide(
-                      color: colorScheme.secondary.withValues(alpha: 0.55),
+                      color: colorScheme.error.withValues(alpha: 0.55),
                     ),
                   ),
                   child: const Text('Cancelar'),
@@ -371,7 +371,7 @@ class _BookingTile extends StatelessWidget {
                   Text(
                     'Reseñada',
                     style: AppTypography.labelSmall.copyWith(
-                      color: theme.colorScheme.secondary,
+                      color: theme.colorScheme.primary,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
@@ -388,7 +388,7 @@ class _BookingTile extends StatelessWidget {
                 style: AppTypography.labelSmall.copyWith(
                   color: muted
                       ? theme.colorScheme.onSurfaceVariant
-                      : theme.colorScheme.secondary,
+                      : _statusColor(theme.colorScheme, booking.status),
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -437,7 +437,7 @@ Future<void> _reviewBooking(BuildContext context, Booking booking) async {
                       onPressed: () => setState(() => rating = star),
                       icon: Icon(
                         selected ? Icons.star_rounded : Icons.star_border_rounded,
-                        color: theme.colorScheme.secondary,
+                        color: theme.colorScheme.primary,
                       ),
                     );
                   }),
@@ -553,7 +553,18 @@ class _ErrorView extends StatelessWidget {
 String _formatDateTime(DateTime date) {
   final day = date.day.toString().padLeft(2, '0');
   final month = date.month.toString().padLeft(2, '0');
-  final hour = date.hour.toString().padLeft(2, '0');
+  final hour = date.hour % 12 == 0 ? 12 : date.hour % 12;
   final minute = date.minute.toString().padLeft(2, '0');
-  return '$day/$month · $hour:$minute';
+  final period = date.hour >= 12 ? 'PM' : 'AM';
+  return '$day/$month · $hour:$minute $period';
+}
+
+Color _statusColor(ColorScheme colorScheme, AppointmentBookingStatus status) {
+  return switch (status) {
+    AppointmentBookingStatus.pending => colorScheme.primary,
+    AppointmentBookingStatus.confirmed => colorScheme.primary,
+    AppointmentBookingStatus.inProgress => colorScheme.tertiary,
+    AppointmentBookingStatus.completed => colorScheme.onSurfaceVariant,
+    AppointmentBookingStatus.cancelled => colorScheme.error,
+  };
 }

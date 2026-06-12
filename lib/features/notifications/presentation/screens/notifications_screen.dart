@@ -145,7 +145,7 @@ class _NotificationCard extends StatelessWidget {
     final colorScheme = theme.colorScheme;
     final accentColor = notification.isRead
         ? colorScheme.onSurfaceVariant
-        : colorScheme.secondary;
+        : colorScheme.primary;
 
     return Semantics(
       button: true,
@@ -209,7 +209,7 @@ class _NotificationCard extends StatelessWidget {
                                 vertical: 4,
                               ),
                               decoration: BoxDecoration(
-                                color: colorScheme.secondary.withValues(
+                                color: colorScheme.primary.withValues(
                                   alpha: 0.12,
                                 ),
                                 borderRadius: BorderRadius.circular(
@@ -219,7 +219,7 @@ class _NotificationCard extends StatelessWidget {
                               child: Text(
                                 'Nueva',
                                 style: AppTypography.labelSmall.copyWith(
-                                  color: colorScheme.secondary,
+                                  color: colorScheme.primary,
                                   fontWeight: FontWeight.w800,
                                 ),
                               ),
@@ -352,7 +352,8 @@ class _ErrorState extends StatelessWidget {
 String _formatDateTime(DateTime date) {
   final day = date.day.toString().padLeft(2, '0');
   final month = date.month.toString().padLeft(2, '0');
-  final hour = date.hour.toString().padLeft(2, '0');
+  final hour = date.hour % 12 == 0 ? 12 : date.hour % 12;
   final minute = date.minute.toString().padLeft(2, '0');
-  return '$day/$month/${date.year} · $hour:$minute';
+  final period = date.hour >= 12 ? 'PM' : 'AM';
+  return '$day/$month/${date.year} · $hour:$minute $period';
 }

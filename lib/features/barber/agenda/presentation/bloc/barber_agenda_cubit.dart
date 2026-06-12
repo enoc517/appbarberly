@@ -216,7 +216,6 @@ class BarberAgendaCubit extends Cubit<BarberAgendaState> {
       );
       return true;
     } catch (_) {
-      emit(const BarberAgendaError('No se pudo completar la cita'));
       return false;
     }
   }
@@ -242,7 +241,6 @@ class BarberAgendaCubit extends Cubit<BarberAgendaState> {
       );
       return true;
     } catch (_) {
-      emit(const BarberAgendaError('No se pudo cancelar la cita'));
       return false;
     }
   }
@@ -276,18 +274,22 @@ class BarberAgendaCubit extends Cubit<BarberAgendaState> {
         .collection('blocked_slots')
         .doc();
 
-    await doc.set({
-      'start': Timestamp.fromDate(start),
-      'end': Timestamp.fromDate(end),
-      'dateKey': _dateKey(start),
-      'reason': reason.trim(),
-      'isActive': true,
-      'createdAt': FieldValue.serverTimestamp(),
-      'updatedAt': FieldValue.serverTimestamp(),
-      'createdBy': _userId,
-    });
-    await _watchBookingsForSelectedDay();
-    return true;
+    try {
+      await doc.set({
+        'start': Timestamp.fromDate(start),
+        'end': Timestamp.fromDate(end),
+        'dateKey': _dateKey(start),
+        'reason': reason.trim(),
+        'isActive': true,
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+        'createdBy': _userId,
+      });
+      await _watchBookingsForSelectedDay();
+      return true;
+    } catch (_) {
+      return false;
+    }
   }
 
   Future<bool> cancelBlockedSlot(String blockId) async {
@@ -311,7 +313,6 @@ class BarberAgendaCubit extends Cubit<BarberAgendaState> {
       await _watchBookingsForSelectedDay();
       return true;
     } catch (_) {
-      emit(const BarberAgendaError('No se pudo cancelar el bloqueo'));
       return false;
     }
   }

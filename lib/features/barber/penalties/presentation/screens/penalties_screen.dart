@@ -229,7 +229,8 @@ String _currency(double value) => '₡${value.toStringAsFixed(0)}';
 String _formatDateTime(DateTime date) {
   final day = date.day.toString().padLeft(2, '0');
   final month = date.month.toString().padLeft(2, '0');
-  final hour = date.hour.toString().padLeft(2, '0');
+  final hour = date.hour % 12 == 0 ? 12 : date.hour % 12;
   final minute = date.minute.toString().padLeft(2, '0');
-  return '$day/$month/${date.year} · $hour:$minute';
+  final period = date.hour >= 12 ? 'PM' : 'AM';
+  return '$day/$month/${date.year} · $hour:$minute $period';
 }

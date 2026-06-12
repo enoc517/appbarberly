@@ -235,8 +235,9 @@ class BarberBookingCubit extends Cubit<BarberBookingState> {
   }
 
   static String _formatTime(DateTime time) {
-    final hour = time.hour.toString().padLeft(2, '0');
+    final hour = time.hour % 12 == 0 ? 12 : time.hour % 12;
     final minute = time.minute.toString().padLeft(2, '0');
-    return '$hour:$minute';
+    final period = time.hour >= 12 ? 'PM' : 'AM';
+    return '$hour:$minute $period';
   }
 }

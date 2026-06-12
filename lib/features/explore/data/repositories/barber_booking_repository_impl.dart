@@ -99,6 +99,17 @@ class BarberBookingRepositoryImpl implements BarberBookingRepository {
 
     if (!end.isAfter(start)) return const [];
 
+    final slotStep = const Duration(minutes: 30);
+    var candidateStart = start;
+
+    final now = DateTime.now();
+    if (_isSameDay(day, now)) {
+      final nextSlotStart = _ceilToSlot(now, slotStep);
+      if (nextSlotStart.isAfter(candidateStart)) {
+        candidateStart = nextSlotStart;
+      }
+    }
+
     final dateKey = _dateKey(day);
     final bookingsSnapshot = await _db
         .collection('bookings')
@@ -137,8 +148,6 @@ class BarberBookingRepositoryImpl implements BarberBookingRepository {
         .toList(growable: false);
 
     final candidates = <String>[];
-    final slotStep = const Duration(minutes: 30);
-    var candidateStart = start;
 
     while (candidateStart
             .add(Duration(minutes: durationMinutes))
@@ -230,9 +239,24 @@ class BarberBookingRepositoryImpl implements BarberBookingRepository {
   }
 
   static String _formatTime(DateTime time) {
-    final hour = time.hour.toString().padLeft(2, '0');
+    final hour = time.hour % 12 == 0 ? 12 : time.hour % 12;
     final minute = time.minute.toString().padLeft(2, '0');
-    return '$hour:$minute';
+    final period = time.hour >= 12 ? 'PM' : 'AM';
+    return '$hour:$minute $period';
+  }
+
+  static bool _isSameDay(DateTime a, DateTime b) {
+    return a.year == b.year && a.month == b.month && a.day == b.day;
+  }
+
+  static DateTime _ceilToSlot(DateTime time, Duration slotStep) {
+    final truncated = DateTime(time.year, time.month, time.day, time.hour, time.minute);
+    final remainder = time.minute % slotStep.inMinutes;
+    if (remainder == 0 && time.second == 0 && time.millisecond == 0 && time.microsecond == 0) {
+      return truncated;
+    }
+
+    return truncated.add(Duration(minutes: slotStep.inMinutes - remainder));
   }
 
   Future<String?> _resolveBarberAvatarUrl(
