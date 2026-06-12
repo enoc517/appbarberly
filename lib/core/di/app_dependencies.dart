@@ -47,6 +47,7 @@ import '../../features/barber/services/domain/usecases/update_service.dart';
 import '../../features/barber/services/presentation/cubit/barber_schedule_cubit.dart';
 import '../../features/barber/services/presentation/cubit/barber_services_cubit.dart';
 import '../../features/bookings/data/repositories/firestore_bookings_repository.dart';
+import '../../features/bookings/domain/entities/booking.dart';
 import '../../features/client/bookings/presentation/bloc/client_bookings_cubit.dart';
 import '../../features/client/favorites/data/repositories/firestore_favorites_repository.dart';
 import '../../features/client/favorites/presentation/bloc/favorites_cubit.dart';
@@ -283,11 +284,13 @@ class AppDependencies {
     required String shopId,
     required String barberId,
     String? clientId,
+    Booking? rescheduleBooking,
   }) {
     return BarberBookingCubit(
       shopId: shopId,
       barberId: barberId,
       clientId: clientId,
+      rescheduleBooking: rescheduleBooking,
       repository: barberBookingRepository,
     );
   }

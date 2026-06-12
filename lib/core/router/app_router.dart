@@ -28,6 +28,7 @@ import 'package:barberly/features/auth/domain/entities/app_user.dart';
 import 'package:barberly/features/client/bookings/presentation/screens/client_bookings_screen.dart';
 import 'package:barberly/features/client/favorites/presentation/screens/favorites_screen.dart';
 import 'package:barberly/features/client/profile/presentation/screens/client_profile_screen.dart';
+import 'package:barberly/features/bookings/domain/entities/booking.dart';
 
 // Features: Barber (Account / Agenda)
 import 'package:barberly/features/barber/account/presentation/screens/barber_account_screen.dart';
@@ -167,7 +168,9 @@ class AppRouter {
           return path == professionalStatus ? null : professionalStatus;
         }
 
-        return _isAllowedForBarber(path) ? null : routeForAuthenticatedUser(user);
+        return _isAllowedForBarber(path)
+            ? null
+            : routeForAuthenticatedUser(user);
       }
 
       return _isAllowedForClient(path) ? null : routeForAuthenticatedUser(user);
@@ -257,11 +260,15 @@ class AppRouter {
               final shopId = state.pathParameters['shopId'] ?? '';
               final barberId = state.pathParameters['barberId'] ?? '';
               final clientId = AppDependencies.getCurrentUserId();
+              final rescheduleBooking = state.extra is Booking
+                  ? state.extra as Booking
+                  : null;
               return BlocProvider(
                 create: (_) => AppDependencies.buildBarberBookingCubit(
                   shopId: shopId,
                   barberId: barberId,
                   clientId: clientId,
+                  rescheduleBooking: rescheduleBooking,
                 )..loadData(),
                 child: const BarberBookingScreen(),
               );

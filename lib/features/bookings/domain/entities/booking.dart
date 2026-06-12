@@ -47,6 +47,9 @@ class Booking {
     required this.barberSnapshot,
     required this.shopSnapshot,
     required this.serviceSnapshot,
+    this.cancelledBy,
+    this.cancelledAt,
+    this.cancellationReason,
   });
 
   final String id;
@@ -64,6 +67,9 @@ class Booking {
   final BookingSnapshot barberSnapshot;
   final BookingSnapshot shopSnapshot;
   final BookingSnapshot serviceSnapshot;
+  final BookingCancellationActor? cancelledBy;
+  final DateTime? cancelledAt;
+  final String? cancellationReason;
 
   bool get isActive => status.isActive;
 }

@@ -253,6 +253,7 @@ class _NotificationCard extends StatelessWidget {
 
   IconData _iconFor(AppNotificationType type) => switch (type) {
     AppNotificationType.bookingCreated => Icons.notifications_active_rounded,
+    AppNotificationType.bookingRescheduled => Icons.event_repeat_rounded,
     AppNotificationType.bookingReminder => Icons.event_available_rounded,
     AppNotificationType.bookingCancelled => Icons.event_busy_rounded,
     AppNotificationType.lateCancellationPenalty => Icons.request_quote_rounded,
@@ -264,6 +265,10 @@ String? _destinationFor(AppNotification notification) {
   return switch (notification.type) {
     AppNotificationType.bookingCreated =>
       notification.recipientRole == 'barber' ? AppRouter.agenda : null,
+    AppNotificationType.bookingRescheduled =>
+      notification.recipientRole == 'barber'
+          ? AppRouter.agenda
+          : AppRouter.citas,
     AppNotificationType.bookingReminder =>
       notification.recipientRole == 'client'
           ? AppRouter.citas

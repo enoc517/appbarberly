@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 
 import '../../../barber/services/domain/entities/barber_schedule.dart';
+import '../../../bookings/domain/entities/booking.dart';
 
 class BarberBookingState extends Equatable {
   final bool isLoading;
@@ -13,6 +14,7 @@ class BarberBookingState extends Equatable {
   final Map<String, dynamic>? selectedService;
   final DateTime? selectedDay;
   final String? selectedTime;
+  final Booking? rescheduleBooking;
   final bool isBooking;
   final bool isLoadingSlots;
   final String? errorMessage;
@@ -28,6 +30,7 @@ class BarberBookingState extends Equatable {
     this.selectedService,
     this.selectedDay,
     this.selectedTime,
+    this.rescheduleBooking,
     this.isBooking = false,
     this.isLoadingSlots = false,
     this.errorMessage,
@@ -44,6 +47,7 @@ class BarberBookingState extends Equatable {
     Map<String, dynamic>? selectedService,
     DateTime? selectedDay,
     String? selectedTime,
+    Booking? rescheduleBooking,
     bool? isBooking,
     bool? isLoadingSlots,
     String? errorMessage,
@@ -66,6 +70,7 @@ class BarberBookingState extends Equatable {
       selectedTime: clearSelectedTime
           ? null
           : (selectedTime ?? this.selectedTime),
+      rescheduleBooking: rescheduleBooking ?? this.rescheduleBooking,
       isBooking: isBooking ?? this.isBooking,
       isLoadingSlots: isLoadingSlots ?? this.isLoadingSlots,
       errorMessage: errorMessage,
@@ -77,6 +82,8 @@ class BarberBookingState extends Equatable {
       selectedDay != null &&
       selectedTime != null &&
       !isBooking;
+
+  bool get isRescheduleMode => rescheduleBooking != null;
 
   @override
   List<Object?> get props => [
@@ -90,6 +97,7 @@ class BarberBookingState extends Equatable {
     selectedService,
     selectedDay,
     selectedTime,
+    rescheduleBooking,
     isBooking,
     isLoadingSlots,
     errorMessage,

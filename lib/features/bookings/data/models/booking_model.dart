@@ -19,6 +19,9 @@ class BookingModel extends Booking {
     required super.barberSnapshot,
     required super.shopSnapshot,
     required super.serviceSnapshot,
+    super.cancelledBy,
+    super.cancelledAt,
+    super.cancellationReason,
   });
 
   factory BookingModel.fromDocument(
@@ -41,6 +44,9 @@ class BookingModel extends Booking {
       barberSnapshot: _snapshot(data['barberSnapshot']),
       shopSnapshot: _snapshot(data['shopSnapshot']),
       serviceSnapshot: _snapshot(data['serviceSnapshot']),
+      cancelledBy: _cancelledBy(data['cancelledBy'] as String?),
+      cancelledAt: _dateTimeOrNull(data['cancelledAt']),
+      cancellationReason: data['cancellationReason'] as String?,
     );
   }
 
@@ -63,5 +69,18 @@ class BookingModel extends Booking {
       name: map['name'] as String? ?? '',
       imageUrl: map['imageUrl'] as String?,
     );
+  }
+
+  static BookingCancellationActor? _cancelledBy(String? value) {
+    if (value == null) return null;
+    return BookingCancellationActor.values.firstWhere(
+      (actor) => actor.name == value,
+      orElse: () => BookingCancellationActor.client,
+    );
+  }
+
+  static DateTime? _dateTimeOrNull(Object? value) {
+    if (value == null) return null;
+    return _dateTime(value);
   }
 }

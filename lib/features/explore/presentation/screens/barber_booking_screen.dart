@@ -34,7 +34,10 @@ class _BarberBookingView extends StatelessWidget {
         if (!state.isBooking &&
             state.errorMessage == null &&
             state.canConfirm) {
-          AppToast.success(context, 'Reserva confirmada');
+          AppToast.success(
+            context,
+            state.isRescheduleMode ? 'Cambio confirmado' : 'Reserva confirmada',
+          );
           context.pop();
         }
       },
@@ -43,7 +46,8 @@ class _BarberBookingView extends StatelessWidget {
         appBar: AppBar(
           leading: IconButton(
             icon: const Icon(Icons.arrow_back_rounded),
-            onPressed: () => context.go('/explorar'),
+            onPressed: () =>
+                context.canPop() ? context.pop() : context.go('/explorar'),
           ),
           title: BlocBuilder<BarberBookingCubit, BarberBookingState>(
             builder: (context, state) => Row(
@@ -73,7 +77,7 @@ class _BarberBookingView extends StatelessWidget {
             if (state.isLoading) {
               return const Center(child: CircularProgressIndicator());
             }
-            return const _BookingContent();
+            return _BookingContent(isRescheduleMode: state.isRescheduleMode);
           },
         ),
         bottomNavigationBar:
@@ -116,9 +120,11 @@ class _BarberBookingView extends StatelessWidget {
                                   color: theme.colorScheme.onPrimaryContainer,
                                 ),
                               )
-                            : const Text(
-                                'Confirmar reserva',
-                                style: TextStyle(
+                            : Text(
+                                state.isRescheduleMode
+                                    ? 'Confirmar cambio'
+                                    : 'Confirmar reserva',
+                                style: const TextStyle(
                                   fontSize: 17,
                                   fontWeight: FontWeight.w800,
                                 ),
@@ -182,7 +188,9 @@ class _BarberAvatar extends StatelessWidget {
 }
 
 class _BookingContent extends StatelessWidget {
-  const _BookingContent();
+  const _BookingContent({required this.isRescheduleMode});
+
+  final bool isRescheduleMode;
 
   @override
   Widget build(BuildContext context) {
@@ -209,6 +217,23 @@ class _BookingContent extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 12),
+              if (isRescheduleMode) ...[
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.secondaryContainer,
+                    borderRadius: BorderRadius.circular(AppRadius.xl),
+                  ),
+                  child: Text(
+                    'Estás reprogramando una cita existente. Elegí un nuevo día y horario.',
+                    style: AppTypography.bodyMedium.copyWith(
+                      color: theme.colorScheme.onSecondaryContainer,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
               if (state.services.isEmpty)
                 Text(
                   'No hay servicios disponibles',

@@ -20,27 +20,7 @@ class FirestoreBookingsRepository implements BookingsRepository {
     final slotRef = draft.slotPath == null ? null : _db.doc(draft.slotPath!);
     final notificationRef = _db.collection('notifications').doc();
 
-    final sameDaySnapshot = await _bookings
-        .where('barbershopId', isEqualTo: draft.barbershopId)
-        .where('barberId', isEqualTo: draft.barberId)
-        .where('dateKey', isEqualTo: draft.dateKey)
-        .orderBy('slotStart')
-        .get();
-    final hasConflict = sameDaySnapshot.docs.any((doc) {
-      final data = doc.data();
-      final status = _bookingStatus(data['status'] as String?);
-      if (!status.isActive) return false;
-      final existingStart = _dateTime(data['slotStart']);
-      final existingEnd = _dateTime(data['slotEnd']);
-      return _overlaps(
-        draft.slotStart,
-        draft.slotEnd,
-        existingStart,
-        existingEnd,
-      );
-    });
-
-    if (hasConflict) {
+    if (await _hasConflict(draft)) {
       throw StateError('El horario ya no está disponible.');
     }
 
@@ -119,16 +99,84 @@ class FirestoreBookingsRepository implements BookingsRepository {
   }
 
   @override
+  Future<void> rescheduleBooking({
+    required String bookingId,
+    required BookingDraft draft,
+  }) async {
+    final bookingRef = _bookings.doc(bookingId);
+    final userRef = _db.collection('users').doc(draft.clientId);
+
+    if (await _hasConflict(draft, excludeBookingId: bookingId)) {
+      throw StateError('El nuevo horario ya no está disponible.');
+    }
+
+    await _db.runTransaction((transaction) async {
+      final bookingSnapshot = await transaction.get(bookingRef);
+      final bookingData = bookingSnapshot.data();
+      if (bookingData == null) {
+        throw StateError('La cita ya no existe.');
+      }
+
+      transaction.update(bookingRef, {
+        'clientId': draft.clientId,
+        'barberId': draft.barberId,
+        'barbershopId': draft.barbershopId,
+        'serviceId': draft.serviceId,
+        'dateKey': draft.dateKey,
+        'slotStart': Timestamp.fromDate(draft.slotStart),
+        'slotEnd': Timestamp.fromDate(draft.slotEnd),
+        'price': draft.price,
+        'durationMinutes': draft.durationMinutes,
+        'clientSnapshot': _snapshotToMap(draft.clientSnapshot),
+        'barberSnapshot': _snapshotToMap(draft.barberSnapshot),
+        'shopSnapshot': _snapshotToMap(draft.shopSnapshot),
+        'serviceSnapshot': _snapshotToMap(draft.serviceSnapshot),
+        'updatedAt': FieldValue.serverTimestamp(),
+        'rescheduledAt': FieldValue.serverTimestamp(),
+        'rescheduleCount': FieldValue.increment(1),
+      });
+
+      transaction.set(userRef, {
+        'activeBookingId': bookingId,
+        'activeBookingStatus': AppointmentBookingStatus.confirmed.name,
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+
+      final notificationRef = _db.collection('notifications').doc();
+      transaction.set(notificationRef, {
+        'recipientId': draft.barberId,
+        'recipientRole': 'barber',
+        'type': 'bookingRescheduled',
+        'title': 'Cita reprogramada',
+        'body': _rescheduleNotificationBody(draft),
+        'bookingId': bookingId,
+        'barbershopId': draft.barbershopId,
+        'penaltyId': null,
+        'readAt': null,
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+        'data': {
+          'serviceName': draft.serviceSnapshot.name,
+          'clientName': draft.clientSnapshot.name,
+          'rescheduledAt': Timestamp.fromDate(draft.slotStart),
+        },
+      });
+    });
+  }
+
+  @override
   Future<void> cancelBooking({
     required String bookingId,
     required String clientId,
     required BookingCancellationActor cancelledBy,
+    String? cancellationReason,
   }) async {
     await _finishBooking(
       bookingId: bookingId,
       clientId: clientId,
       status: AppointmentBookingStatus.cancelled,
       cancelledBy: cancelledBy,
+      cancellationReason: cancellationReason,
     );
   }
 
@@ -150,6 +198,7 @@ class FirestoreBookingsRepository implements BookingsRepository {
     required String clientId,
     required AppointmentBookingStatus status,
     required BookingCancellationActor? cancelledBy,
+    String? cancellationReason,
   }) async {
     final bookingRef = _bookings.doc(bookingId);
     final userRef = _db.collection('users').doc(clientId);
@@ -167,6 +216,7 @@ class FirestoreBookingsRepository implements BookingsRepository {
         cancellationData.addAll({
           'cancelledBy': cancelledBy.name,
           'cancelledAt': FieldValue.serverTimestamp(),
+          'cancellationReason': cancellationReason,
         });
       }
 
@@ -183,14 +233,21 @@ class FirestoreBookingsRepository implements BookingsRepository {
             'recipientRole': recipientRole,
             'type': 'bookingCancelled',
             'title': 'Cita cancelada',
-            'body': _cancellationNotificationBody(bookingData, cancelledBy),
+            'body': _cancellationNotificationBody(
+              bookingData,
+              cancelledBy,
+              cancellationReason,
+            ),
             'bookingId': bookingRef.id,
             'barbershopId': bookingData['barbershopId'] as String? ?? '',
             'penaltyId': null,
             'readAt': null,
             'createdAt': FieldValue.serverTimestamp(),
             'updatedAt': FieldValue.serverTimestamp(),
-            'data': {'cancelledBy': cancelledBy.name},
+            'data': {
+              'cancelledBy': cancelledBy.name,
+              'cancellationReason': cancellationReason,
+            },
           });
         }
       }
@@ -353,6 +410,7 @@ class FirestoreBookingsRepository implements BookingsRepository {
   static String _cancellationNotificationBody(
     Map<String, dynamic> bookingData,
     BookingCancellationActor cancelledBy,
+    String? cancellationReason,
   ) {
     final clientName = _snapshotName(
       bookingData['clientSnapshot'],
@@ -367,9 +425,13 @@ class FirestoreBookingsRepository implements BookingsRepository {
       'la cita',
     );
     if (cancelledBy == BookingCancellationActor.client) {
-      return '$clientName canceló $serviceName.';
+      return cancellationReason == null || cancellationReason.trim().isEmpty
+          ? '$clientName canceló $serviceName.'
+          : '$clientName canceló $serviceName. Motivo: ${cancellationReason.trim()}.';
     }
-    return '$barberName canceló $serviceName.';
+    return cancellationReason == null || cancellationReason.trim().isEmpty
+        ? '$barberName canceló $serviceName.'
+        : '$barberName canceló $serviceName. Motivo: ${cancellationReason.trim()}.';
   }
 
   static String _penaltyNotificationBody(
@@ -399,6 +461,65 @@ class FirestoreBookingsRepository implements BookingsRepository {
     final hour = date.hour.toString().padLeft(2, '0');
     final minute = date.minute.toString().padLeft(2, '0');
     return '${draft.clientSnapshot.name} reservó ${draft.serviceSnapshot.name} para el $day/$month a las $hour:$minute.';
+  }
+
+  static String _rescheduleNotificationBody(BookingDraft draft) {
+    final date = draft.slotStart;
+    final day = date.day.toString().padLeft(2, '0');
+    final month = date.month.toString().padLeft(2, '0');
+    final hour = date.hour.toString().padLeft(2, '0');
+    final minute = date.minute.toString().padLeft(2, '0');
+    return '${draft.clientSnapshot.name} reprogramó ${draft.serviceSnapshot.name} para el $day/$month a las $hour:$minute.';
+  }
+
+  Future<bool> _hasConflict(
+    BookingDraft draft, {
+    String? excludeBookingId,
+  }) async {
+    final sameDaySnapshot = await _bookings
+        .where('barbershopId', isEqualTo: draft.barbershopId)
+        .where('barberId', isEqualTo: draft.barberId)
+        .where('dateKey', isEqualTo: draft.dateKey)
+        .orderBy('slotStart')
+        .get();
+    final hasBookingConflict = sameDaySnapshot.docs.any((doc) {
+      if (doc.id == excludeBookingId) return false;
+      final data = doc.data();
+      final status = _bookingStatus(data['status'] as String?);
+      if (!status.isActive) return false;
+      final existingStart = _dateTime(data['slotStart']);
+      final existingEnd = _dateTime(data['slotEnd']);
+      return _overlaps(
+        draft.slotStart,
+        draft.slotEnd,
+        existingStart,
+        existingEnd,
+      );
+    });
+
+    if (hasBookingConflict) return true;
+
+    final blockedSlotsSnapshot = await _db
+        .collection('barbershops')
+        .doc(draft.barbershopId)
+        .collection('barbers')
+        .doc(draft.barberId)
+        .collection('blocked_slots')
+        .where('dateKey', isEqualTo: draft.dateKey)
+        .get();
+
+    return blockedSlotsSnapshot.docs.any((doc) {
+      final data = doc.data();
+      if (data['isActive'] != true) return false;
+      final blockStart = _dateTime(data['start']);
+      final blockEnd = _dateTime(data['end']);
+      return _overlaps(
+        draft.slotStart,
+        draft.slotEnd,
+        blockStart,
+        blockEnd,
+      );
+    });
   }
 
   static const _activeStatusNames = {'pending', 'confirmed', 'inProgress'};

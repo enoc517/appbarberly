@@ -9,12 +9,14 @@ class BarberBookingCubit extends Cubit<BarberBookingState> {
   final String shopId;
   final String barberId;
   final String? clientId;
+  final Booking? rescheduleBooking;
   final BarberBookingRepository _repository;
 
   BarberBookingCubit({
     required this.shopId,
     required this.barberId,
     this.clientId,
+    this.rescheduleBooking,
     required BarberBookingRepository repository,
   }) : _repository = repository,
        super(const BarberBookingState());
@@ -39,7 +41,9 @@ class BarberBookingCubit extends Cubit<BarberBookingState> {
         ),
       );
 
-      if (availableDays.isNotEmpty) {
+      await _applyRescheduleDefaults();
+
+      if (state.selectedDay == null && availableDays.isNotEmpty) {
         emit(
           state.copyWith(
             selectedDay: availableDays.first,
@@ -50,6 +54,13 @@ class BarberBookingCubit extends Cubit<BarberBookingState> {
       }
 
       await _loadAvailableTimes();
+
+      if (rescheduleBooking != null) {
+        final originalTime = _formatTime(rescheduleBooking!.slotStart);
+        if (state.availableTimes.contains(originalTime)) {
+          emit(state.copyWith(selectedTime: originalTime));
+        }
+      }
     } catch (e) {
       emit(state.copyWith(isLoading: false, errorMessage: e.toString()));
     }
@@ -86,12 +97,17 @@ class BarberBookingCubit extends Cubit<BarberBookingState> {
   }
 
   Future<void> confirmBooking() async {
-    if (!state.canConfirm || clientId == null || clientId!.isEmpty) return;
+    final effectiveClientId = rescheduleBooking?.clientId ?? clientId;
+    if (!state.canConfirm ||
+        effectiveClientId == null ||
+        effectiveClientId.isEmpty) {
+      return;
+    }
 
     emit(state.copyWith(isBooking: true, errorMessage: null));
 
     try {
-      final clientName = await _repository.getClientName(clientId!);
+      final clientName = await _repository.getClientName(effectiveClientId);
       final shopName = await _repository.getShopName(shopId);
 
       final serviceName = state.selectedService!['name'] as String;
@@ -106,29 +122,34 @@ class BarberBookingCubit extends Cubit<BarberBookingState> {
         int.parse(timeParts[0]),
         int.parse(timeParts[1]),
       );
-      final dateKey =
-          '${slotStart.year}-${slotStart.month.toString().padLeft(2, '0')}-${slotStart.day.toString().padLeft(2, '0')}';
-
-      await _repository.createBooking(
-        BookingDraft(
-          clientId: clientId!,
-          barberId: barberId,
-          barbershopId: shopId,
-          serviceId: state.selectedService!['id'] as String,
-          dateKey: dateKey,
-          slotStart: slotStart,
-          slotEnd: slotStart.add(Duration(minutes: durationMin)),
-          price: price,
-          durationMinutes: durationMin,
-          clientSnapshot: BookingSnapshot(name: clientName),
-          barberSnapshot: BookingSnapshot(
-            name: state.barberName ?? 'Barbero',
-            imageUrl: state.barberAvatarUrl,
-          ),
-          shopSnapshot: BookingSnapshot(name: shopName),
-          serviceSnapshot: BookingSnapshot(name: serviceName),
+      final draft = BookingDraft(
+        clientId: effectiveClientId,
+        barberId: barberId,
+        barbershopId: shopId,
+        serviceId: state.selectedService!['id'] as String,
+        dateKey:
+            '${slotStart.year}-${slotStart.month.toString().padLeft(2, '0')}-${slotStart.day.toString().padLeft(2, '0')}',
+        slotStart: slotStart,
+        slotEnd: slotStart.add(Duration(minutes: durationMin)),
+        price: price,
+        durationMinutes: durationMin,
+        clientSnapshot: BookingSnapshot(name: clientName),
+        barberSnapshot: BookingSnapshot(
+          name: state.barberName ?? 'Barbero',
+          imageUrl: state.barberAvatarUrl,
         ),
+        shopSnapshot: BookingSnapshot(name: shopName),
+        serviceSnapshot: BookingSnapshot(name: serviceName),
       );
+
+      if (rescheduleBooking != null) {
+        await _repository.rescheduleBooking(
+          bookingId: rescheduleBooking!.id,
+          draft: draft,
+        );
+      } else {
+        await _repository.createBooking(draft);
+      }
 
       emit(state.copyWith(isBooking: false));
     } catch (e) {
@@ -165,6 +186,7 @@ class BarberBookingCubit extends Cubit<BarberBookingState> {
         barberId: barberId,
         day: selectedDay,
         durationMinutes: durationMinutes,
+        excludeBookingId: rescheduleBooking?.id,
       );
 
       emit(
@@ -177,5 +199,44 @@ class BarberBookingCubit extends Cubit<BarberBookingState> {
     } catch (e) {
       emit(state.copyWith(isLoadingSlots: false, errorMessage: e.toString()));
     }
+  }
+
+  Future<void> _applyRescheduleDefaults() async {
+    final booking = rescheduleBooking;
+    if (booking == null) return;
+
+    final service = state.services.firstWhere(
+      (svc) => svc['id'] == booking.serviceId,
+      orElse: () => <String, dynamic>{},
+    );
+
+    if (service.isNotEmpty) {
+      emit(state.copyWith(selectedService: service, clearSelectedTime: true));
+    }
+
+    final originalDay = DateTime(
+      booking.slotStart.year,
+      booking.slotStart.month,
+      booking.slotStart.day,
+    );
+    final hasOriginalDay = state.availableDays.any(
+      (candidate) =>
+          candidate.year == originalDay.year &&
+          candidate.month == originalDay.month &&
+          candidate.day == originalDay.day,
+    );
+    final day = hasOriginalDay
+        ? originalDay
+        : (state.availableDays.isNotEmpty ? state.availableDays.first : null);
+
+    if (day != null) {
+      emit(state.copyWith(selectedDay: day, clearSelectedTime: true));
+    }
+  }
+
+  static String _formatTime(DateTime time) {
+    final hour = time.hour.toString().padLeft(2, '0');
+    final minute = time.minute.toString().padLeft(2, '0');
+    return '$hour:$minute';
   }
 }

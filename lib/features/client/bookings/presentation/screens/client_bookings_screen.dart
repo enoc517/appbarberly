@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../../shared/motion/app_motion.dart';
 import '../../../../../shared/theme/app_theme.dart';
@@ -53,10 +54,8 @@ class _LoadedView extends StatelessWidget {
             delay: AppMotion.delay(1),
             child: _NextBookingCard(
               booking: activeBooking!,
-              onCancel: () => _confirmAndCancelBooking(
-                context,
-                activeBooking!,
-              ),
+              onReschedule: () => _rescheduleBooking(context, activeBooking!),
+              onCancel: () => _confirmAndCancelBooking(context, activeBooking!),
             ),
           ),
         if (activeBooking == null) const _NoActiveBookingCard(),
@@ -121,6 +120,15 @@ Future<void> _confirmAndCancelBooking(
   await context.read<ClientBookingsCubit>().cancelBooking(booking);
 }
 
+void _rescheduleBooking(BuildContext context, Booking booking) {
+  if (booking.barbershopId.isEmpty || booking.barberId.isEmpty) return;
+
+  context.push(
+    '/barberia/${booking.barbershopId}/barbero/${booking.barberId}',
+    extra: booking,
+  );
+}
+
 class _Header extends StatelessWidget {
   const _Header();
 
@@ -144,9 +152,14 @@ class _Header extends StatelessWidget {
 }
 
 class _NextBookingCard extends StatelessWidget {
-  const _NextBookingCard({required this.booking, required this.onCancel});
+  const _NextBookingCard({
+    required this.booking,
+    required this.onReschedule,
+    required this.onCancel,
+  });
 
   final Booking booking;
+  final VoidCallback onReschedule;
   final VoidCallback onCancel;
 
   @override
@@ -226,12 +239,12 @@ class _NextBookingCard extends StatelessWidget {
             children: [
               Expanded(
                 child: FilledButton(
-                  onPressed: () {},
+                  onPressed: onReschedule,
                   style: FilledButton.styleFrom(
                     backgroundColor: colorScheme.primaryContainer,
                     foregroundColor: colorScheme.onPrimaryContainer,
                   ),
-                  child: const Text('Ver detalle'),
+                  child: const Text('Reprogramar'),
                 ),
               ),
               const SizedBox(width: 10),
@@ -291,7 +304,9 @@ class _BookingTile extends StatelessWidget {
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceContainerLowest,
         borderRadius: BorderRadius.circular(AppRadius.xl),
-        border: Border.all(color: theme.colorScheme.outlineVariant.withValues(alpha: 0.15)),
+        border: Border.all(
+          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.15),
+        ),
       ),
       child: Row(
         children: [
@@ -299,12 +314,16 @@ class _BookingTile extends StatelessWidget {
             width: 48,
             height: 48,
             decoration: BoxDecoration(
-              color: muted ? theme.colorScheme.surfaceContainerHigh : theme.colorScheme.primary,
+              color: muted
+                  ? theme.colorScheme.surfaceContainerHigh
+                  : theme.colorScheme.primary,
               borderRadius: BorderRadius.circular(AppRadius.md),
             ),
             child: Icon(
               Icons.calendar_today_outlined,
-              color: muted ? theme.colorScheme.onSurfaceVariant : theme.colorScheme.onPrimary,
+              color: muted
+                  ? theme.colorScheme.onSurfaceVariant
+                  : theme.colorScheme.onPrimary,
             ),
           ),
           const SizedBox(width: 14),
@@ -323,6 +342,17 @@ class _BookingTile extends StatelessWidget {
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
                 ),
+                if ((booking.cancellationReason ?? '').trim().isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    'Motivo: ${booking.cancellationReason!.trim()}',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTypography.bodySmall.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
@@ -330,7 +360,9 @@ class _BookingTile extends StatelessWidget {
           Text(
             booking.status.label,
             style: AppTypography.labelSmall.copyWith(
-              color: muted ? theme.colorScheme.onSurfaceVariant : theme.colorScheme.secondary,
+              color: muted
+                  ? theme.colorScheme.onSurfaceVariant
+                  : theme.colorScheme.secondary,
               fontWeight: FontWeight.w700,
             ),
           ),

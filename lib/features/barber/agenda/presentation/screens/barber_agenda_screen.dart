@@ -7,8 +7,17 @@ import '../../../../../shared/theme/app_theme.dart';
 import '../../../../bookings/domain/entities/booking.dart';
 import '../bloc/barber_agenda_cubit.dart';
 
-class BarberAgendaScreen extends StatelessWidget {
+enum _AgendaFilter { all, pending, completed, cancelled }
+
+class BarberAgendaScreen extends StatefulWidget {
   const BarberAgendaScreen({super.key});
+
+  @override
+  State<BarberAgendaScreen> createState() => _BarberAgendaScreenState();
+}
+
+class _BarberAgendaScreenState extends State<BarberAgendaScreen> {
+  _AgendaFilter _filter = _AgendaFilter.all;
 
   @override
   Widget build(BuildContext context) {
@@ -17,22 +26,27 @@ class BarberAgendaScreen extends StatelessWidget {
       body: SafeArea(
         bottom: false,
         child: BlocBuilder<BarberAgendaCubit, BarberAgendaState>(
-          builder: (context, state) => switch (state) {
-            BarberAgendaLoading() => const _LoadingView(),
-            BarberAgendaEmpty(:final message) => _EmptyView(message: message),
-            BarberAgendaError(:final message) => _ErrorView(message: message),
-            BarberAgendaLoaded(
-              :final bookings,
-              :final selectedDay,
-              :final visibleDays,
-              :final isLoadingBookings,
-            ) =>
-              _LoadedView(
-                bookings: bookings,
-                selectedDay: selectedDay,
-                visibleDays: visibleDays,
-                isLoadingBookings: isLoadingBookings,
-              ),
+          builder: (context, state) {
+            if (state is BarberAgendaLoading) {
+              return const _LoadingView();
+            }
+            if (state is BarberAgendaEmpty) {
+              return _EmptyView(message: state.message);
+            }
+            if (state is BarberAgendaError) {
+              return _ErrorView(message: state.message);
+            }
+            if (state is BarberAgendaLoaded) {
+              return _LoadedView(
+                state: state,
+                isLoadingBookings: state.isLoadingBookings,
+                filter: _filter,
+                onFilterChanged: (value) {
+                  setState(() => _filter = value);
+                },
+              );
+            }
+            return const SizedBox.shrink();
           },
         ),
       ),
@@ -42,38 +56,62 @@ class BarberAgendaScreen extends StatelessWidget {
 
 class _LoadedView extends StatelessWidget {
   const _LoadedView({
-    required this.bookings,
-    required this.selectedDay,
-    required this.visibleDays,
+    required this.state,
     required this.isLoadingBookings,
+    required this.filter,
+    required this.onFilterChanged,
   });
 
-  final List<Booking> bookings;
-  final DateTime selectedDay;
-  final List<DateTime> visibleDays;
+  final BarberAgendaLoaded state;
   final bool isLoadingBookings;
+  final _AgendaFilter filter;
+  final ValueChanged<_AgendaFilter> onFilterChanged;
 
   @override
   Widget build(BuildContext context) {
+    final bookings = state.bookings;
+    final selectedDay = state.selectedDay;
+    final visibleDays = state.visibleDays;
+    final filteredBookings = _filterBookings(bookings, filter);
+
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 120),
       children: [
         const AppFadeSlideIn(child: _Header()),
         const SizedBox(height: 18),
+        _WeekNavigator(selectedDay: selectedDay),
+        const SizedBox(height: 12),
         AppFadeSlideIn(
           delay: AppMotion.delay(1),
           child: _DayStrip(selectedDay: selectedDay, days: visibleDays),
         ),
         const SizedBox(height: 22),
+        _AgendaSummary(
+          total: state.totalBookings,
+          pending: state.activeBookings.length,
+          completed: state.completedCount,
+          cancelled: state.cancelledCount,
+          income: state.dayIncome,
+        ),
+        const SizedBox(height: 16),
+        _AgendaFilterChips(selected: filter, onChanged: onFilterChanged),
+        const SizedBox(height: 18),
+        _BlockedSlotsSection(
+          blockedSlots: state.blockedSlots,
+          onBlockSpace: () => _blockSpace(context, state.selectedDay),
+          onCancelSlot: (slot) => _cancelBlockedSlot(context, slot),
+        ),
+        const SizedBox(height: 18),
         if (isLoadingBookings)
           const Padding(
             padding: EdgeInsets.only(top: 32),
             child: Center(child: CircularProgressIndicator()),
           )
-        else if (bookings.isEmpty)
-          const _InlineEmpty(message: 'No hay citas para este día.')
+        else if (filteredBookings.isEmpty)
+          _InlineEmpty(message: _emptyMessageFor(filter))
         else
-          for (final booking in bookings) _AgendaBlock(booking: booking),
+          for (final booking in filteredBookings)
+            _AgendaBlock(booking: booking),
       ],
     );
   }
@@ -101,6 +139,60 @@ class _Header extends StatelessWidget {
               ),
             ],
           ),
+        ),
+      ],
+    );
+  }
+}
+
+class _WeekNavigator extends StatelessWidget {
+  const _WeekNavigator({required this.selectedDay});
+
+  final DateTime selectedDay;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final label = _weekLabel(selectedDay);
+    return Row(
+      children: [
+        IconButton.filledTonal(
+          onPressed: () => context.read<BarberAgendaCubit>().previousWeek(),
+          icon: const Icon(Icons.chevron_left_rounded),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Text(
+                label,
+                textAlign: TextAlign.center,
+                style: AppTypography.titleMedium.copyWith(
+                  color: theme.colorScheme.onSurface,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Usá las flechas para ver semanas anteriores o futuras',
+                textAlign: TextAlign.center,
+                style: AppTypography.labelSmall.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 8),
+        FilledButton.tonal(
+          onPressed: () => context.read<BarberAgendaCubit>().goToCurrentWeek(),
+          child: const Text('Hoy'),
+        ),
+        const SizedBox(width: 8),
+        IconButton.filledTonal(
+          onPressed: () => context.read<BarberAgendaCubit>().nextWeek(),
+          icon: const Icon(Icons.chevron_right_rounded),
         ),
       ],
     );
@@ -224,6 +316,11 @@ class _AgendaBlock extends StatelessWidget {
     final theme = Theme.of(context);
     final agendaCubit = context.read<BarberAgendaCubit>();
     final canComplete = agendaCubit.canCompleteBooking(booking);
+    final cancelledBy = switch (booking.cancelledBy) {
+      BookingCancellationActor.barber => 'Cancelada por vos',
+      BookingCancellationActor.client => 'Cancelada por el cliente',
+      null => null,
+    };
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
@@ -267,6 +364,26 @@ class _AgendaBlock extends StatelessWidget {
                             color: theme.colorScheme.onSurfaceVariant,
                           ),
                         ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '${_formatTimeRange(booking.slotStart, booking.slotEnd)} · ${booking.durationMinutes} min · ₡${booking.price.toStringAsFixed(0)}',
+                          style: AppTypography.bodySmall.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                        if ((booking.cancellationReason ?? '')
+                            .trim()
+                            .isNotEmpty) ...[
+                          const SizedBox(height: 4),
+                          Text(
+                            'Motivo: ${booking.cancellationReason!.trim()}',
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppTypography.bodySmall.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ),
@@ -296,6 +413,15 @@ class _AgendaBlock extends StatelessWidget {
                           ),
                         ),
                       ),
+                      if (cancelledBy != null) ...[
+                        const SizedBox(height: 6),
+                        Text(
+                          cancelledBy,
+                          style: AppTypography.labelSmall.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
                       if (booking.isActive) ...[
                         const SizedBox(height: 8),
                         Wrap(
@@ -321,47 +447,7 @@ class _AgendaBlock extends StatelessWidget {
                               ),
                             ),
                             OutlinedButton.icon(
-                              onPressed: () async {
-                                final shouldCancel = await showDialog<bool>(
-                                  context: context,
-                                  builder: (dialogContext) => AlertDialog(
-                                    title: const Text('Cancelar cita'),
-                                    content: Text(
-                                      'Vas a cancelar la cita de ${booking.clientSnapshot.name}. El cliente será notificado.',
-                                    ),
-                                    actions: [
-                                      TextButton(
-                                        onPressed: () => Navigator.of(
-                                          dialogContext,
-                                        ).pop(false),
-                                        child: const Text('Volver'),
-                                      ),
-                                      FilledButton(
-                                        onPressed: () => Navigator.of(
-                                          dialogContext,
-                                        ).pop(true),
-                                        child: const Text('Cancelar cita'),
-                                      ),
-                                    ],
-                                  ),
-                                );
-
-                                if (shouldCancel != true || !context.mounted) {
-                                  return;
-                                }
-
-                                final success = await context
-                                    .read<BarberAgendaCubit>()
-                                    .cancelBooking(booking);
-
-                                if (!context.mounted || !success) return;
-
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('Cita cancelada'),
-                                  ),
-                                );
-                              },
+                              onPressed: () => _blockSpace(context, booking.slotStart),
                               style: OutlinedButton.styleFrom(
                                 foregroundColor: theme.colorScheme.error,
                                 side: BorderSide(
@@ -370,8 +456,8 @@ class _AgendaBlock extends StatelessWidget {
                                   ),
                                 ),
                               ),
-                              icon: const Icon(Icons.close_rounded),
-                              label: const Text('Cancelar'),
+                              icon: const Icon(Icons.block_rounded),
+                              label: const Text('Bloquear'),
                             ),
                           ],
                         ),
@@ -395,6 +481,536 @@ class _AgendaBlock extends StatelessWidget {
       ),
     );
   }
+}
+
+class _AgendaSummary extends StatelessWidget {
+  const _AgendaSummary({
+    required this.total,
+    required this.pending,
+    required this.completed,
+    required this.cancelled,
+    required this.income,
+  });
+
+  final int total;
+  final int pending;
+  final int completed;
+  final int cancelled;
+  final double income;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Wrap(
+      spacing: 10,
+      runSpacing: 10,
+      children: [
+        _AgendaStatCard(
+          label: 'Total',
+          value: total.toString(),
+          icon: Icons.today_rounded,
+          color: theme.colorScheme.primary,
+        ),
+        _AgendaStatCard(
+          label: 'Pendientes',
+          value: pending.toString(),
+          icon: Icons.event_available_rounded,
+          color: theme.colorScheme.secondary,
+        ),
+        _AgendaStatCard(
+          label: 'Completadas',
+          value: completed.toString(),
+          icon: Icons.check_circle_rounded,
+          color: theme.colorScheme.tertiary,
+        ),
+        _AgendaStatCard(
+          label: 'Canceladas',
+          value: cancelled.toString(),
+          icon: Icons.event_busy_rounded,
+          color: theme.colorScheme.error,
+        ),
+        _AgendaStatCard(
+          label: 'Ingreso',
+          value: '₡${income.toStringAsFixed(0)}',
+          icon: Icons.payments_rounded,
+          color: theme.colorScheme.primary,
+        ),
+      ],
+    );
+  }
+}
+
+class _AgendaStatCard extends StatelessWidget {
+  const _AgendaStatCard({
+    required this.label,
+    required this.value,
+    required this.icon,
+    required this.color,
+  });
+
+  final String label;
+  final String value;
+  final IconData icon;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      width: 130,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerLowest,
+        borderRadius: BorderRadius.circular(AppRadius.xl),
+        border: Border.all(
+          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.12),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: color, size: 20),
+          const SizedBox(height: 10),
+          Text(
+            value,
+            style: AppTypography.titleLarge.copyWith(
+              color: theme.colorScheme.onSurface,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 3),
+          Text(
+            label,
+            style: AppTypography.labelSmall.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BlockedSlotsSection extends StatelessWidget {
+  const _BlockedSlotsSection({
+    required this.blockedSlots,
+    required this.onBlockSpace,
+    required this.onCancelSlot,
+  });
+
+  final List<AgendaBlockedSlot> blockedSlots;
+  final VoidCallback onBlockSpace;
+  final ValueChanged<AgendaBlockedSlot> onCancelSlot;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                'Espacios bloqueados',
+                style: AppTypography.titleLarge,
+              ),
+            ),
+            TextButton.icon(
+              onPressed: onBlockSpace,
+              icon: const Icon(Icons.block_rounded),
+              label: const Text('Bloquear'),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        if (blockedSlots.isEmpty)
+          Text(
+            'No hay espacios bloqueados para este día.',
+            style: AppTypography.bodyMedium.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          )
+        else
+          for (final slot in blockedSlots) ...[
+            Container(
+              margin: const EdgeInsets.only(bottom: 10),
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surfaceContainerLowest,
+                borderRadius: BorderRadius.circular(AppRadius.xl),
+                border: Border.all(
+                  color: theme.colorScheme.outlineVariant.withValues(
+                    alpha: 0.12,
+                  ),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.block_rounded, color: theme.colorScheme.error),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '${_formatTime(slot.start)} - ${_formatTime(slot.end)}',
+                          style: AppTypography.titleSmall,
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          slot.reason,
+                          style: AppTypography.bodySmall.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    tooltip: 'Cancelar bloqueo',
+                    onPressed: () => onCancelSlot(slot),
+                    icon: Icon(
+                      Icons.close_rounded,
+                      color: theme.colorScheme.error,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+      ],
+    );
+  }
+}
+
+class _AgendaFilterChips extends StatelessWidget {
+  const _AgendaFilterChips({required this.selected, required this.onChanged});
+
+  final _AgendaFilter selected;
+  final ValueChanged<_AgendaFilter> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        _FilterChip(
+          label: 'Todas',
+          selected: selected == _AgendaFilter.all,
+          onTap: () => onChanged(_AgendaFilter.all),
+        ),
+        _FilterChip(
+          label: 'Pendientes',
+          selected: selected == _AgendaFilter.pending,
+          onTap: () => onChanged(_AgendaFilter.pending),
+        ),
+        _FilterChip(
+          label: 'Completadas',
+          selected: selected == _AgendaFilter.completed,
+          onTap: () => onChanged(_AgendaFilter.completed),
+        ),
+        _FilterChip(
+          label: 'Canceladas',
+          selected: selected == _AgendaFilter.cancelled,
+          onTap: () => onChanged(_AgendaFilter.cancelled),
+        ),
+      ],
+    );
+  }
+}
+
+class _FilterChip extends StatelessWidget {
+  const _FilterChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return ChoiceChip(
+      label: Text(label),
+      selected: selected,
+      onSelected: (_) => onTap(),
+      selectedColor: theme.colorScheme.primaryContainer,
+      labelStyle: AppTypography.labelLarge.copyWith(
+        color: selected
+            ? theme.colorScheme.onPrimaryContainer
+            : theme.colorScheme.onSurfaceVariant,
+        fontWeight: FontWeight.w700,
+      ),
+      side: BorderSide(
+        color: selected
+            ? theme.colorScheme.primaryContainer
+            : theme.colorScheme.outlineVariant,
+      ),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppRadius.full),
+      ),
+      backgroundColor: theme.colorScheme.surfaceContainerLowest,
+    );
+  }
+}
+
+List<Booking> _filterBookings(List<Booking> bookings, _AgendaFilter filter) {
+  return switch (filter) {
+    _AgendaFilter.all => bookings,
+    _AgendaFilter.pending =>
+      bookings.where((booking) => booking.isActive).toList(growable: false),
+    _AgendaFilter.completed =>
+      bookings
+          .where(
+            (booking) => booking.status == AppointmentBookingStatus.completed,
+          )
+          .toList(growable: false),
+    _AgendaFilter.cancelled =>
+      bookings
+          .where(
+            (booking) => booking.status == AppointmentBookingStatus.cancelled,
+          )
+          .toList(growable: false),
+  };
+}
+
+String _emptyMessageFor(_AgendaFilter filter) {
+  return switch (filter) {
+    _AgendaFilter.all => 'No hay citas para este día.',
+    _AgendaFilter.pending => 'No hay citas pendientes para este día.',
+    _AgendaFilter.completed => 'No hay citas completadas para este día.',
+    _AgendaFilter.cancelled => 'No hay citas canceladas para este día.',
+  };
+}
+
+Future<void> _blockSpace(BuildContext context, DateTime selectedDay) async {
+  final result = await showDialog<_BlockSpaceDraft?>(
+    context: context,
+    builder: (dialogContext) {
+      var startTime = '12:00';
+      var endTime = '13:00';
+      var reason = '';
+      return StatefulBuilder(
+        builder: (context, setState) {
+          final canConfirm =
+              reason.trim().length >= 5 &&
+              _parseTimeOfDay(startTime) != null &&
+              _parseTimeOfDay(endTime) != null;
+          return AlertDialog(
+            title: const Text('Bloquear espacio'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Este espacio quedará fuera de la agenda para ${_formatDate(selectedDay)}.',
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextFormField(
+                        initialValue: startTime,
+                        decoration: const InputDecoration(
+                          labelText: 'Inicio (HH:mm)',
+                        ),
+                        onChanged: (value) =>
+                            setState(() => startTime = value.trim()),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: TextFormField(
+                        initialValue: endTime,
+                        decoration: const InputDecoration(
+                          labelText: 'Fin (HH:mm)',
+                        ),
+                        onChanged: (value) =>
+                            setState(() => endTime = value.trim()),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  maxLines: 2,
+                  decoration: const InputDecoration(
+                    labelText: 'Motivo',
+                    hintText: 'Ej: emergencia personal, almuerzo, diligencia',
+                  ),
+                  onChanged: (value) => setState(() => reason = value),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'El bloqueo se mostrará en la agenda como un espacio no disponible.',
+                  style: AppTypography.labelSmall.copyWith(
+                    color: Theme.of(dialogContext).colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(),
+                child: const Text('Volver'),
+              ),
+              FilledButton(
+                onPressed: canConfirm
+                    ? () => Navigator.of(dialogContext).pop(
+                        _BlockSpaceDraft(
+                          start: _mergeDateAndTime(selectedDay, startTime)!,
+                          end: _mergeDateAndTime(selectedDay, endTime)!,
+                          reason: reason.trim(),
+                        ),
+                      )
+                    : null,
+                child: const Text('Bloquear'),
+              ),
+            ],
+          );
+        },
+      );
+    },
+  );
+
+  if (result == null || !context.mounted) return;
+
+  final currentState = context.read<BarberAgendaCubit>().state;
+  if (currentState is BarberAgendaLoaded) {
+    final hasOverlap = currentState.activeBookings.any(
+      (booking) => _overlaps(
+        result.start,
+        result.end,
+        booking.slotStart,
+        booking.slotEnd,
+      ),
+    );
+    if (hasOverlap) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Tenés citas activas en ese horario. Reprogramalas o cancelalas primero.',
+          ),
+        ),
+      );
+      return;
+    }
+  }
+
+  final success = await context.read<BarberAgendaCubit>().blockSlot(
+    start: result.start,
+    end: result.end,
+    reason: result.reason,
+  );
+
+  if (!context.mounted) return;
+
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text(
+        success ? 'Espacio bloqueado' : 'No se pudo bloquear el espacio',
+      ),
+    ),
+  );
+}
+
+Future<void> _cancelBlockedSlot(
+  BuildContext context,
+  AgendaBlockedSlot slot,
+) async {
+  final confirmed = await showDialog<bool>(
+    context: context,
+    builder: (dialogContext) {
+      return AlertDialog(
+        title: const Text('Cancelar bloqueo'),
+        content: Text(
+          '¿Querés liberar ${_formatTimeRange(slot.start, slot.end)}? El horario volverá a estar disponible.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Volver'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('Cancelar bloqueo'),
+          ),
+        ],
+      );
+    },
+  );
+
+  if (confirmed != true || !context.mounted) return;
+
+  final success = await context.read<BarberAgendaCubit>().cancelBlockedSlot(slot.id);
+
+  if (!context.mounted) return;
+
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text(
+        success ? 'Bloqueo cancelado' : 'No se pudo cancelar el bloqueo',
+      ),
+    ),
+  );
+}
+
+DateTime? _mergeDateAndTime(DateTime day, String time) {
+  final parsed = _parseTimeOfDay(time);
+  if (parsed == null) return null;
+  return DateTime(day.year, day.month, day.day, parsed.hour, parsed.minute);
+}
+
+bool _overlaps(
+  DateTime aStart,
+  DateTime aEnd,
+  DateTime bStart,
+  DateTime bEnd,
+) {
+  return aStart.isBefore(bEnd) && bStart.isBefore(aEnd);
+}
+
+TimeOfDay? _parseTimeOfDay(String value) {
+  final match = RegExp(r'^(\d{1,2}):(\d{2})$').firstMatch(value.trim());
+  if (match == null) return null;
+  final hour = int.tryParse(match.group(1) ?? '');
+  final minute = int.tryParse(match.group(2) ?? '');
+  if (hour == null || minute == null) return null;
+  if (hour < 0 || hour > 23 || minute < 0 || minute > 59) return null;
+  return TimeOfDay(hour: hour, minute: minute);
+}
+
+String _formatDate(DateTime date) {
+  final day = date.day.toString().padLeft(2, '0');
+  final month = date.month.toString().padLeft(2, '0');
+  return '$day/$month/${date.year}';
+}
+
+String _formatTimeRange(DateTime start, DateTime end) {
+  return '${_formatTime(start)} - ${_formatTime(end)}';
+}
+
+String _weekLabel(DateTime selectedDay) {
+  final monday = selectedDay.subtract(Duration(days: selectedDay.weekday - 1));
+  final sunday = monday.add(const Duration(days: 6));
+  return '${_formatDate(monday)} - ${_formatDate(sunday)}';
+}
+
+class _BlockSpaceDraft {
+  const _BlockSpaceDraft({
+    required this.start,
+    required this.end,
+    required this.reason,
+  });
+
+  final DateTime start;
+  final DateTime end;
+  final String reason;
 }
 
 class _InlineEmpty extends StatelessWidget {

@@ -7,6 +7,12 @@ abstract class BookingsRepository {
     required String bookingId,
     required String clientId,
     required BookingCancellationActor cancelledBy,
+    String? cancellationReason,
+  });
+
+  Future<void> rescheduleBooking({
+    required String bookingId,
+    required BookingDraft draft,
   });
 
   Future<void> completeBooking({

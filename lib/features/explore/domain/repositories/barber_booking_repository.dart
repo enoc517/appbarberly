@@ -10,8 +10,13 @@ abstract class BarberBookingRepository {
     required String barberId,
     required DateTime day,
     required int durationMinutes,
+    String? excludeBookingId,
   });
   Future<void> createBooking(BookingDraft draft);
+  Future<void> rescheduleBooking({
+    required String bookingId,
+    required BookingDraft draft,
+  });
 }
 
 class BarberBookingData {

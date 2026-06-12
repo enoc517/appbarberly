@@ -66,10 +66,19 @@ class _FakeBookingsRepository implements BookingsRepository {
   }
 
   @override
+  Future<void> rescheduleBooking({
+    required String bookingId,
+    required BookingDraft draft,
+  }) {
+    throw UnimplementedError();
+  }
+
+  @override
   Future<void> cancelBooking({
     required String bookingId,
     required String clientId,
     required BookingCancellationActor cancelledBy,
+    String? cancellationReason,
   }) async {
     calls.add('cancel:$bookingId:$clientId:${cancelledBy.name}');
   }

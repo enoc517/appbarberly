@@ -81,10 +81,15 @@ void main() {
       () async {
         final booking = _activeBooking();
 
-        final success = await cubit.cancelBooking(booking);
+        final success = await cubit.cancelBooking(
+          booking,
+          cancellationReason: 'Emergencia personal',
+        );
 
         expect(success, isTrue);
-        expect(bookingsRepository.calls, ['cancel:booking-1:client-1:barber']);
+        expect(bookingsRepository.calls, [
+          'cancel:booking-1:client-1:barber:Emergencia personal',
+        ]);
       },
     );
 
@@ -199,12 +204,24 @@ class _FakeBookingsRepository implements BookingsRepository {
   }
 
   @override
+  Future<void> rescheduleBooking({
+    required String bookingId,
+    required BookingDraft draft,
+  }) {
+    throw UnimplementedError();
+  }
+
+  @override
   Future<void> cancelBooking({
     required String bookingId,
     required String clientId,
     required BookingCancellationActor cancelledBy,
+    String? cancellationReason,
   }) async {
-    calls.add('cancel:$bookingId:$clientId:${cancelledBy.name}');
+    final reason = cancellationReason == null || cancellationReason.isEmpty
+        ? ''
+        : ':$cancellationReason';
+    calls.add('cancel:$bookingId:$clientId:${cancelledBy.name}$reason');
   }
 
   @override
