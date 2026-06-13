@@ -1,10 +1,13 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../../core/events/barbershop_event_bus.dart';
+import '../../../client/favorites/domain/repositories/favorites_repository.dart';
 import '../../../barber/services/domain/entities/barber_schedule.dart';
 import '../../domain/repositories/barber_booking_repository.dart';
 import '../../../bookings/domain/entities/booking.dart';
 import 'barber_booking_state.dart';
+
+enum FavoriteSuggestionStatus { skipped, alreadyFavoriteRecorded, shouldPrompt }
 
 class BarberBookingCubit extends Cubit<BarberBookingState> {
   final String shopId;
@@ -13,6 +16,7 @@ class BarberBookingCubit extends Cubit<BarberBookingState> {
   final Booking? rescheduleBooking;
   final BarberBookingRepository _repository;
   final BarbershopEventBus _eventBus;
+  final FavoritesRepository _favoritesRepository;
 
   BarberBookingCubit({
     required this.shopId,
@@ -20,10 +24,12 @@ class BarberBookingCubit extends Cubit<BarberBookingState> {
     this.clientId,
     this.rescheduleBooking,
     required BarberBookingRepository repository,
+    required FavoritesRepository favoritesRepository,
     required BarbershopEventBus eventBus,
   }) : _repository = repository,
+       _favoritesRepository = favoritesRepository,
        _eventBus = eventBus,
-        super(const BarberBookingState());
+       super(const BarberBookingState());
 
   Future<void> loadData() async {
     emit(state.copyWith(isLoading: true, errorMessage: null));
@@ -161,6 +167,61 @@ class BarberBookingCubit extends Cubit<BarberBookingState> {
     } catch (e) {
       emit(state.copyWith(isBooking: false, errorMessage: e.toString()));
     }
+  }
+
+  Future<FavoriteSuggestionStatus> evaluateFavoriteSuggestion() async {
+    final effectiveClientId = clientId;
+    if (rescheduleBooking != null ||
+        effectiveClientId == null ||
+        effectiveClientId.isEmpty) {
+      return FavoriteSuggestionStatus.skipped;
+    }
+
+    final isFavorite = await _favoritesRepository.isFavorite(
+      effectiveClientId,
+      shopId,
+    );
+
+    if (!isFavorite) return FavoriteSuggestionStatus.shouldPrompt;
+
+    await _recordFavoriteUsage(effectiveClientId);
+    return FavoriteSuggestionStatus.alreadyFavoriteRecorded;
+  }
+
+  Future<void> addFavoriteSuggestion() async {
+    final effectiveClientId = clientId;
+    final selectedService = state.selectedService;
+    if (effectiveClientId == null ||
+        effectiveClientId.isEmpty ||
+        selectedService == null) {
+      return;
+    }
+
+    await _favoritesRepository.addFavorite(
+      userId: effectiveClientId,
+      barbershopId: shopId,
+      lastBookedAt: state.selectedDay,
+      lastServiceId: selectedService['id'] as String?,
+      lastServiceName: selectedService['name'] as String?,
+      lastBarberId: barberId,
+      lastBarberName: state.barberName,
+      bookingCount: 1,
+    );
+  }
+
+  Future<void> _recordFavoriteUsage(String userId) async {
+    final selectedService = state.selectedService;
+    if (selectedService == null) return;
+
+    await _favoritesRepository.recordFavoriteBooking(
+      userId: userId,
+      barbershopId: shopId,
+      bookedAt: DateTime.now(),
+      serviceId: selectedService['id'] as String,
+      serviceName: selectedService['name'] as String,
+      barberId: barberId,
+      barberName: state.barberName ?? 'Barbero',
+    );
   }
 
   List<DateTime> _computeAvailableDays(Map<int, BarberSchedule> schedule) {

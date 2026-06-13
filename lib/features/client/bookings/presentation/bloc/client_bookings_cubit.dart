@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../../core/events/barbershop_event_bus.dart';
 import '../../../../bookings/domain/entities/booking.dart';
 import '../../../../bookings/domain/repositories/bookings_repository.dart';
+import '../../../../reviews/domain/repositories/reviews_repository.dart';
 
 sealed class ClientBookingsState {
   const ClientBookingsState();
@@ -20,10 +21,26 @@ class ClientBookingsLoaded extends ClientBookingsState {
   final List<Booking> bookings;
 
   Booking? get activeBooking {
-    for (final booking in bookings) {
-      if (booking.isActive) return booking;
-    }
-    return null;
+    final upcoming = upcomingBookings;
+    return upcoming.isEmpty ? null : upcoming.first;
+  }
+
+  List<Booking> get upcomingBookings {
+    final upcoming = bookings.where((booking) => booking.isActive).toList();
+    upcoming.sort((a, b) => a.slotStart.compareTo(b.slotStart));
+    return upcoming;
+  }
+
+  List<Booking> get historyBookings {
+    final history = bookings.where((booking) => !booking.isActive).toList();
+    history.sort((a, b) => b.slotStart.compareTo(a.slotStart));
+    return history;
+  }
+
+  List<Booking> get penaltyBookings {
+    final penalties = bookings.where((booking) => booking.hasPenalty).toList();
+    penalties.sort((a, b) => b.slotStart.compareTo(a.slotStart));
+    return penalties;
   }
 }
 
@@ -40,14 +57,17 @@ class ClientBookingsError extends ClientBookingsState {
 class ClientBookingsCubit extends Cubit<ClientBookingsState> {
   ClientBookingsCubit({
     required BookingsRepository repository,
+    required ReviewsRepository reviewsRepository,
     required String clientId,
     required BarbershopEventBus eventBus,
   }) : _repository = repository,
+       _reviewsRepository = reviewsRepository,
        _clientId = clientId,
        _eventBus = eventBus,
        super(const ClientBookingsLoading());
 
   final BookingsRepository _repository;
+  final ReviewsRepository _reviewsRepository;
   final String _clientId;
   final BarbershopEventBus _eventBus;
   StreamSubscription<List<Booking>>? _subscription;
@@ -84,6 +104,28 @@ class ClientBookingsCubit extends Cubit<ClientBookingsState> {
       _eventBus.emit(BarbershopEvent.bookingUpdated);
     } catch (_) {
       emit(const ClientBookingsError('No se pudo cancelar la cita'));
+    }
+  }
+
+  Future<bool> createReview({
+    required Booking booking,
+    required int rating,
+    String? comment,
+  }) async {
+    if (booking.status != AppointmentBookingStatus.completed) return false;
+    if (booking.isReviewed) return false;
+    if (rating < 1 || rating > 5) return false;
+
+    try {
+      await _reviewsRepository.createReview(
+        bookingId: booking.id,
+        clientId: booking.clientId,
+        rating: rating,
+        comment: comment,
+      );
+      return true;
+    } catch (_) {
+      return false;
     }
   }
 

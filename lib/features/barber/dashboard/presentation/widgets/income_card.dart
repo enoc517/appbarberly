@@ -5,11 +5,13 @@ import '/../../../shared/theme/app_theme.dart';
 class IncomeCard extends StatelessWidget {
   final double income;
   final double deltaPercent;
+  final double? estimatedIncome;
 
   const IncomeCard({
     super.key,
     required this.income,
     required this.deltaPercent,
+    this.estimatedIncome,
   });
 
   @override
@@ -74,6 +76,16 @@ class IncomeCard extends StatelessWidget {
               ),
             ),
           ),
+          if (estimatedIncome != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              'Estimado: \$${estimatedIncome!.toStringAsFixed(2)}',
+              style: AppTypography.labelLarge.copyWith(
+                color: theme.colorScheme.onPrimary.withValues(alpha: 0.9),
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
         ],
       ),
     );

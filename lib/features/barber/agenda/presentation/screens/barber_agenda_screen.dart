@@ -519,7 +519,7 @@ class _AgendaSummary extends StatelessWidget {
           label: 'Completadas',
           value: completed.toString(),
           icon: Icons.check_circle_rounded,
-          color: theme.colorScheme.tertiary,
+          color: const Color(0xFF2E7D32),
         ),
         _AgendaStatCard(
           label: 'Canceladas',
@@ -786,11 +786,10 @@ String _emptyMessageFor(_AgendaFilter filter) {
   };
 }
 
-Future<void> _completeBooking(
-  BuildContext context,
-  Booking booking,
-) async {
-  final success = await context.read<BarberAgendaCubit>().completeBooking(booking);
+Future<void> _completeBooking(BuildContext context, Booking booking) async {
+  final success = await context.read<BarberAgendaCubit>().completeBooking(
+    booking,
+  );
   if (!context.mounted) return;
 
   ScaffoldMessenger.of(context).showSnackBar(
@@ -831,7 +830,9 @@ Future<void> _cancelBooking(BuildContext context, Booking booking) async {
 
   if (shouldCancel != true || !context.mounted) return;
 
-  final success = await context.read<BarberAgendaCubit>().cancelBooking(booking);
+  final success = await context.read<BarberAgendaCubit>().cancelBooking(
+    booking,
+  );
   if (!context.mounted) return;
 
   ScaffoldMessenger.of(context).showSnackBar(
@@ -959,9 +960,7 @@ Future<void> _blockSpace(BuildContext context, DateTime selectedDay) async {
     );
     if (hasBlockedOverlap) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Ya había un bloqueo en ese horario.'),
-        ),
+        const SnackBar(content: Text('Ya había un bloqueo en ese horario.')),
       );
       return;
     }
@@ -1012,7 +1011,9 @@ Future<void> _cancelBlockedSlot(
 
   if (confirmed != true || !context.mounted) return;
 
-  final success = await context.read<BarberAgendaCubit>().cancelBlockedSlot(slot.id);
+  final success = await context.read<BarberAgendaCubit>().cancelBlockedSlot(
+    slot.id,
+  );
 
   if (!context.mounted) return;
 
@@ -1031,12 +1032,7 @@ DateTime? _mergeDateAndTime(DateTime day, String time) {
   return DateTime(day.year, day.month, day.day, parsed.hour, parsed.minute);
 }
 
-bool _overlaps(
-  DateTime aStart,
-  DateTime aEnd,
-  DateTime bStart,
-  DateTime bEnd,
-) {
+bool _overlaps(DateTime aStart, DateTime aEnd, DateTime bStart, DateTime bEnd) {
   return aStart.isBefore(bEnd) && bStart.isBefore(aEnd);
 }
 

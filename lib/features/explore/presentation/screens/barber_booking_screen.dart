@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/di/app_dependencies.dart';
 import '../../../../shared/theme/app_theme.dart';
 import '../../../../shared/motion/app_motion.dart';
 import '../../../../shared/widgets/app_toast.dart';
@@ -145,28 +144,17 @@ Future<void> _handleFavoriteSuggestion(
   BuildContext context,
   BarberBookingState state,
 ) async {
-  if (state.isRescheduleMode) {
-    if (context.mounted) context.pop();
-    return;
-  }
-
   final cubit = context.read<BarberBookingCubit>();
-  final clientId = cubit.clientId;
-  if (clientId == null || clientId.isEmpty) {
-    if (context.mounted) context.pop();
-    return;
-  }
-
-  final shopId = cubit.shopId;
-  final alreadyFavorite = await AppDependencies.favoritesRepository.isFavorite(
-    clientId,
-    shopId,
-  );
+  final status = await cubit.evaluateFavoriteSuggestion();
 
   if (!context.mounted) return;
 
-  if (alreadyFavorite) {
-    await _syncFavoriteUsage(context, state, clientId);
+  if (status == FavoriteSuggestionStatus.skipped) {
+    if (context.mounted) context.pop();
+    return;
+  }
+
+  if (status == FavoriteSuggestionStatus.alreadyFavoriteRecorded) {
     if (context.mounted) context.pop();
     return;
   }
@@ -199,40 +187,11 @@ Future<void> _handleFavoriteSuggestion(
   );
 
   if (shouldAdd == true) {
-    await AppDependencies.favoritesRepository.addFavorite(
-      userId: clientId,
-      barbershopId: shopId,
-      lastBookedAt: state.selectedDay,
-      lastServiceId: state.selectedService?['id'] as String?,
-      lastServiceName: state.selectedService?['name'] as String?,
-      lastBarberId: cubit.barberId,
-      lastBarberName: state.barberName,
-      bookingCount: 1,
-    );
+    await cubit.addFavoriteSuggestion();
   }
 
   if (!context.mounted) return;
   context.pop();
-}
-
-Future<void> _syncFavoriteUsage(
-  BuildContext context,
-  BarberBookingState state,
-  String userId,
-) async {
-  final cubit = context.read<BarberBookingCubit>();
-  final selectedService = state.selectedService;
-  if (selectedService == null) return;
-
-    await AppDependencies.favoritesRepository.recordFavoriteBooking(
-      userId: userId,
-      barbershopId: cubit.shopId,
-      bookedAt: DateTime.now(),
-      serviceId: selectedService['id'] as String,
-      serviceName: selectedService['name'] as String,
-      barberId: cubit.barberId,
-    barberName: state.barberName ?? 'Barbero',
-  );
 }
 
 class _BarberAvatar extends StatelessWidget {

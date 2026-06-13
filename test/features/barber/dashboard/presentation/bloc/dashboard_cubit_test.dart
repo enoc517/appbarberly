@@ -2,6 +2,7 @@ import 'package:barberly/core/events/barbershop_event_bus.dart';
 import 'package:barberly/core/usecases/usecase.dart';
 import 'package:barberly/features/barber/dashboard/domain/entities/appointment.dart';
 import 'package:barberly/features/barber/dashboard/domain/entities/daily_summary.dart';
+import 'package:barberly/features/barber/dashboard/domain/entities/dashboard_overview.dart';
 import 'package:barberly/features/barber/dashboard/domain/entities/weekly_performance.dart';
 import 'package:barberly/features/barber/dashboard/domain/repositories/dashboard_repository.dart';
 import 'package:barberly/features/barber/dashboard/domain/usecases/get_dashboard_data.dart';
@@ -49,6 +50,7 @@ class _FakeDashboardRepository implements DashboardRepository {
       DashboardData(
         summary: const DailySummary(
           incomeToday: 1000,
+          estimatedIncomeToday: 1200,
           incomePreviousDay: 500,
           completedAppointments: 1,
           totalAppointments: 2,
@@ -66,6 +68,16 @@ class _FakeDashboardRepository implements DashboardRepository {
             status: AppointmentStatus.upcoming,
           ),
         ],
+        nextAppointment: null,
+        weekOverview: const BarberWeeklyOverview(
+          totalAppointments: 2,
+          completedAppointments: 1,
+          cancelledAppointments: 0,
+          upcomingAppointments: 1,
+          estimatedIncome: 1200,
+        ),
+        topServices: const [],
+        upcomingBlockedHours: const [],
       ),
     );
   }

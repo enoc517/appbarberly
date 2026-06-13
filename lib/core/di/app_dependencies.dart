@@ -177,8 +177,9 @@ class AppDependencies {
     firestore: firestore,
   );
 
-  static final ReviewsRepository reviewsRepository =
-      FirestoreReviewsRepository(firestore: firestore);
+  static final ReviewsRepository reviewsRepository = FirestoreReviewsRepository(
+    firestore: firestore,
+  );
   // Explore — Barbershop Detail & Barber Booking
   static final BarbershopDetailRepository barbershopDetailRepository =
       BarbershopDetailRepositoryImpl(
@@ -244,6 +245,7 @@ class AppDependencies {
       createBarbershop: createBarbershopUseCase,
       updateBarbershop: updateBarbershopUseCase,
       getBarbershopByOwner: getBarbershopByOwnerUseCase,
+      imageUploader: cloudinaryDatasource,
       eventBus: barbershopEventBus,
     );
   }
@@ -312,6 +314,7 @@ class AppDependencies {
       clientId: clientId,
       rescheduleBooking: rescheduleBooking,
       repository: barberBookingRepository,
+      favoritesRepository: favoritesRepository,
       eventBus: barbershopEventBus,
     );
   }
@@ -319,16 +322,15 @@ class AppDependencies {
   static ClientBookingsCubit buildClientBookingsCubit(String userId) {
     return ClientBookingsCubit(
       repository: FirestoreBookingsRepository(firestore: firestore),
+      reviewsRepository: reviewsRepository,
       clientId: userId,
       eventBus: barbershopEventBus,
     )..watch();
   }
 
   static FavoritesCubit buildFavoritesCubit(String userId) {
-    return FavoritesCubit(
-      repository: favoritesRepository,
-      userId: userId,
-    )..watch();
+    return FavoritesCubit(repository: favoritesRepository, userId: userId)
+      ..watch();
   }
 
   static DashboardCubit buildDashboardCubit(String userId) {
@@ -337,10 +339,8 @@ class AppDependencies {
       userId: userId,
     );
     final useCase = GetDashboardData(repo);
-    return DashboardCubit(
-      getData: useCase,
-      eventBus: barbershopEventBus,
-    )..load(userId);
+    return DashboardCubit(getData: useCase, eventBus: barbershopEventBus)
+      ..load(userId);
   }
 
   static BarberAgendaCubit buildBarberAgendaCubit(String userId) {

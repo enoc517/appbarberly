@@ -94,10 +94,10 @@ class DashboardHeader extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 20),
-          Text('Panel del Barbero', style: AppTypography.headlineLarge),
+          Text('Tu día', style: AppTypography.headlineLarge),
           const SizedBox(height: 4),
           Text(
-            'Resumen de actividad para hoy, ${today.day} de ${_months[today.month - 1]}',
+            'Resumen personal para hoy, ${today.day} de ${_months[today.month - 1]}',
             style: AppTypography.bodyMedium.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
             ),

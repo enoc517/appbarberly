@@ -6,6 +6,7 @@ import '../../../../bookings/data/models/booking_model.dart';
 import '../../../../bookings/domain/entities/booking.dart';
 import '../../domain/entities/appointment.dart';
 import '../../domain/entities/daily_summary.dart';
+import '../../domain/entities/dashboard_overview.dart';
 import '../../domain/entities/weekly_performance.dart';
 import '../../domain/repositories/dashboard_repository.dart';
 
@@ -35,6 +36,7 @@ class FirestoreDashboardRepository implements DashboardRepository {
           DashboardData(
             summary: const DailySummary(
               incomeToday: 0,
+              estimatedIncomeToday: 0,
               incomePreviousDay: 0,
               completedAppointments: 0,
               totalAppointments: 0,
@@ -44,6 +46,16 @@ class FirestoreDashboardRepository implements DashboardRepository {
               todayIndex: 0,
             ),
             todayAppointments: [],
+            nextAppointment: null,
+            weekOverview: const BarberWeeklyOverview(
+              totalAppointments: 0,
+              completedAppointments: 0,
+              cancelledAppointments: 0,
+              upcomingAppointments: 0,
+              estimatedIncome: 0,
+            ),
+            topServices: const [],
+            upcomingBlockedHours: const [],
           ),
         );
       }
@@ -57,17 +69,32 @@ class FirestoreDashboardRepository implements DashboardRepository {
 
       final todayBookings = await _bookingRange(
         barbershopId: barbershopId,
+        barberId: barberId,
         start: today,
         end: tomorrow,
       );
       final yesterdayBookings = await _bookingRange(
         barbershopId: barbershopId,
+        barberId: barberId,
         start: yesterday,
         end: today,
       );
       final weekBookings = await _bookingRange(
         barbershopId: barbershopId,
+        barberId: barberId,
         start: weekStart,
+        end: weekEnd,
+      );
+      final futureBookings = await _bookingRange(
+        barbershopId: barbershopId,
+        barberId: barberId,
+        start: now,
+        end: weekEnd,
+      );
+      final blockedSlots = await _safeBlockedSlotsRange(
+        barbershopId: barbershopId,
+        barberId: barberId,
+        start: now,
         end: weekEnd,
       );
 
@@ -76,6 +103,11 @@ class FirestoreDashboardRepository implements DashboardRepository {
             (booking) => booking.status == AppointmentBookingStatus.completed,
           )
           .toList();
+      final estimatedToday = todayBookings
+          .where(
+            (booking) => booking.status != AppointmentBookingStatus.cancelled,
+          )
+          .fold<double>(0, (total, booking) => total + booking.price);
 
       final summary = DailySummary(
         incomeToday: completedToday.fold<double>(
@@ -89,6 +121,7 @@ class FirestoreDashboardRepository implements DashboardRepository {
             .fold<double>(0, (total, booking) => total + booking.price),
         completedAppointments: completedToday.length,
         totalAppointments: todayBookings.length,
+        estimatedIncomeToday: estimatedToday,
       );
 
       final dailyCounts = List<double>.filled(7, 0);
@@ -101,6 +134,65 @@ class FirestoreDashboardRepository implements DashboardRepository {
           ? dailyCounts
           : dailyCounts.map((value) => value / maxCount).toList();
 
+      final cancelledWeek = weekBookings
+          .where(
+            (booking) => booking.status == AppointmentBookingStatus.cancelled,
+          )
+          .length;
+      final completedWeek = weekBookings
+          .where(
+            (booking) => booking.status == AppointmentBookingStatus.completed,
+          )
+          .length;
+      final upcomingWeek = weekBookings
+          .where((booking) => booking.status.isActive)
+          .length;
+      final estimatedWeekIncome = weekBookings
+          .where(
+            (booking) => booking.status != AppointmentBookingStatus.cancelled,
+          )
+          .fold<double>(0, (total, booking) => total + booking.price);
+
+      final serviceTotals = <String, _ServiceAccumulator>{};
+      for (final booking in weekBookings) {
+        if (booking.status != AppointmentBookingStatus.completed) continue;
+        final key = booking.serviceId;
+        final accumulator = serviceTotals.putIfAbsent(
+          key,
+          () => _ServiceAccumulator(name: booking.serviceSnapshot.name),
+        );
+        accumulator.count += 1;
+        accumulator.income += booking.price;
+      }
+
+      final topServices =
+          serviceTotals.values
+              .map(
+                (entry) => ServicePerformance(
+                  serviceName: entry.name,
+                  count: entry.count,
+                  estimatedIncome: entry.income,
+                ),
+              )
+              .toList()
+            ..sort((a, b) {
+              final compare = b.count.compareTo(a.count);
+              if (compare != 0) return compare;
+              return b.estimatedIncome.compareTo(a.estimatedIncome);
+            });
+
+      final nextBooking =
+          futureBookings
+              .where(
+                (booking) =>
+                    booking.status != AppointmentBookingStatus.cancelled,
+              )
+              .toList()
+            ..sort((a, b) => a.slotStart.compareTo(b.slotStart));
+      final nextAppointment = nextBooking.isEmpty
+          ? null
+          : _toAppointment(nextBooking.first);
+
       return Ok(
         DashboardData(
           summary: summary,
@@ -109,6 +201,16 @@ class FirestoreDashboardRepository implements DashboardRepository {
             todayIndex: now.weekday - 1,
           ),
           todayAppointments: todayBookings.map(_toAppointment).toList(),
+          nextAppointment: nextAppointment,
+          weekOverview: BarberWeeklyOverview(
+            totalAppointments: weekBookings.length,
+            completedAppointments: completedWeek,
+            cancelledAppointments: cancelledWeek,
+            upcomingAppointments: upcomingWeek,
+            estimatedIncome: estimatedWeekIncome,
+          ),
+          topServices: topServices.take(3).toList(),
+          upcomingBlockedHours: blockedSlots,
         ),
       );
     } catch (_) {
@@ -118,6 +220,7 @@ class FirestoreDashboardRepository implements DashboardRepository {
 
   Future<List<Booking>> _bookingRange({
     required String barbershopId,
+    required String barberId,
     required DateTime start,
     required DateTime end,
   }) async {
@@ -128,7 +231,56 @@ class FirestoreDashboardRepository implements DashboardRepository {
         .where('slotStart', isLessThan: Timestamp.fromDate(end))
         .orderBy('slotStart')
         .get();
-    return snapshot.docs.map(BookingModel.fromDocument).toList();
+    return snapshot.docs
+        .map(BookingModel.fromDocument)
+        .where((booking) => booking.barberId == barberId)
+        .toList();
+  }
+
+  Future<List<BlockedTimeBlock>> _blockedSlotsRange({
+    required String barbershopId,
+    required String barberId,
+    required DateTime start,
+    required DateTime end,
+  }) async {
+    final snapshot = await _db
+        .collection('barbershops')
+        .doc(barbershopId)
+        .collection('barbers')
+        .doc(barberId)
+        .collection('blocked_slots')
+        .where('isActive', isEqualTo: true)
+        .where('start', isGreaterThanOrEqualTo: Timestamp.fromDate(start))
+        .where('start', isLessThan: Timestamp.fromDate(end))
+        .orderBy('start')
+        .get();
+
+    return snapshot.docs.map((doc) {
+      final data = doc.data();
+      return BlockedTimeBlock(
+        start: _dateTime(data['start']),
+        end: _dateTime(data['end']),
+        reason: data['reason'] as String? ?? '',
+      );
+    }).toList();
+  }
+
+  Future<List<BlockedTimeBlock>> _safeBlockedSlotsRange({
+    required String barbershopId,
+    required String barberId,
+    required DateTime start,
+    required DateTime end,
+  }) async {
+    try {
+      return await _blockedSlotsRange(
+        barbershopId: barbershopId,
+        barberId: barberId,
+        start: start,
+        end: end,
+      );
+    } catch (_) {
+      return const [];
+    }
   }
 
   Appointment _toAppointment(Booking booking) {
@@ -145,4 +297,18 @@ class FirestoreDashboardRepository implements DashboardRepository {
       },
     );
   }
+
+  static DateTime _dateTime(Object? value) {
+    if (value is Timestamp) return value.toDate();
+    if (value is DateTime) return value;
+    return DateTime.fromMillisecondsSinceEpoch(0);
+  }
+}
+
+class _ServiceAccumulator {
+  _ServiceAccumulator({required this.name});
+
+  final String name;
+  int count = 0;
+  double income = 0;
 }

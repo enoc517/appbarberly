@@ -50,6 +50,8 @@ class Booking {
     this.cancelledBy,
     this.cancelledAt,
     this.cancellationReason,
+    this.penaltyApplied = false,
+    this.penaltyAmount = 0,
     this.reviewId,
     this.reviewedAt,
   });
@@ -72,11 +74,14 @@ class Booking {
   final BookingCancellationActor? cancelledBy;
   final DateTime? cancelledAt;
   final String? cancellationReason;
+  final bool penaltyApplied;
+  final double penaltyAmount;
   final String? reviewId;
   final DateTime? reviewedAt;
 
   bool get isActive => status.isActive;
   bool get isReviewed => reviewId != null && reviewId!.isNotEmpty;
+  bool get hasPenalty => penaltyApplied && penaltyAmount > 0;
 }
 
 class BookingDraft {

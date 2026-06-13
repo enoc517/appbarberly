@@ -65,95 +65,162 @@ class _PenaltyCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final statusColor = _statusColor(colorScheme, penalty.status);
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerLowest,
-        borderRadius: BorderRadius.circular(AppRadius.xl),
-        border: Border.all(
-          color: colorScheme.outlineVariant.withValues(alpha: 0.16),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final compact = constraints.maxWidth < 420;
+
+        return Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: colorScheme.surfaceContainerLowest,
+            borderRadius: BorderRadius.circular(AppRadius.xl),
+            border: Border.all(color: statusColor.withValues(alpha: 0.18)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _ClientAvatar(imageUrl: penalty.clientAvatarUrl),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      penalty.clientName,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _ClientAvatar(imageUrl: penalty.clientAvatarUrl),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          penalty.clientName,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTypography.titleMedium.copyWith(
+                            color: colorScheme.onSurface,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          penalty.serviceName,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTypography.bodySmall.copyWith(
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      _currency(penalty.penaltyAmount),
                       style: AppTypography.titleMedium.copyWith(
-                        color: colorScheme.onSurface,
-                        fontWeight: FontWeight.w800,
+                        color: colorScheme.secondary,
+                        fontWeight: FontWeight.w900,
                       ),
                     ),
-                    const SizedBox(height: 2),
-                    Text(
-                      penalty.serviceName,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: AppTypography.bodySmall.copyWith(
-                        color: colorScheme.onSurfaceVariant,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: [
+                  _PenaltyChip(
+                    label: _statusLabel(penalty.status),
+                    color: statusColor,
+                  ),
+                  _PenaltyChip(
+                    label: 'Cancelación tardía',
+                    color: colorScheme.error,
+                  ),
+                  if (penalty.resolvedAt != null)
+                    _PenaltyChip(
+                      label: 'Resuelta',
+                      color: colorScheme.tertiary,
+                    ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Canceló con menos de 1 hora. Penalización del ${penalty.penaltyPercent}% sobre ${_currency(penalty.servicePrice)}.',
+                style: AppTypography.bodySmall.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                _formatDateTime(penalty.appointmentStart),
+                style: AppTypography.labelSmall.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              if (penalty.createdAt != null) ...[
+                const SizedBox(height: 4),
+                Text(
+                  'Generada el ${_formatDateTime(penalty.createdAt!)}',
+                  style: AppTypography.bodySmall.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+              if (penalty.resolvedAt != null) ...[
+                const SizedBox(height: 4),
+                Text(
+                  'Resuelta el ${_formatDateTime(penalty.resolvedAt!)}',
+                  style: AppTypography.bodySmall.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+              const SizedBox(height: 16),
+              if (compact) ...[
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton(
+                    onPressed: () =>
+                        context.read<PenaltiesCubit>().markAsPaid(penalty),
+                    child: const Text('Marcar pagada'),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton(
+                    onPressed: () =>
+                        context.read<PenaltiesCubit>().waive(penalty),
+                    child: const Text('Perdonar'),
+                  ),
+                ),
+              ] else ...[
+                Row(
+                  children: [
+                    Expanded(
+                      child: FilledButton(
+                        onPressed: () =>
+                            context.read<PenaltiesCubit>().markAsPaid(penalty),
+                        child: const Text('Marcar pagada'),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () =>
+                            context.read<PenaltiesCubit>().waive(penalty),
+                        child: const Text('Perdonar'),
                       ),
                     ),
                   ],
                 ),
-              ),
-              const SizedBox(width: 12),
-              Text(
-                _currency(penalty.penaltyAmount),
-                style: AppTypography.titleMedium.copyWith(
-                  color: colorScheme.secondary,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
+              ],
             ],
           ),
-          const SizedBox(height: 14),
-          Text(
-            'Canceló con menos de 1 hora. Penalización del ${penalty.penaltyPercent}% sobre ${_currency(penalty.servicePrice)}.',
-            style: AppTypography.bodySmall.copyWith(
-              color: colorScheme.onSurfaceVariant,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            _formatDateTime(penalty.appointmentStart),
-            style: AppTypography.labelSmall.copyWith(
-              color: colorScheme.onSurfaceVariant,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: FilledButton(
-                  onPressed: () =>
-                      context.read<PenaltiesCubit>().markAsPaid(penalty),
-                  child: const Text('Marcar pagada'),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: () =>
-                      context.read<PenaltiesCubit>().waive(penalty),
-                  child: const Text('Perdonar'),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
@@ -176,6 +243,31 @@ class _ClientAvatar extends StatelessWidget {
       child: normalizedUrl.isEmpty
           ? Icon(Icons.person_rounded, color: colorScheme.onPrimaryContainer)
           : null,
+    );
+  }
+}
+
+class _PenaltyChip extends StatelessWidget {
+  const _PenaltyChip({required this.label, required this.color});
+
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        label,
+        style: AppTypography.labelSmall.copyWith(
+          color: color,
+          fontWeight: FontWeight.w800,
+        ),
+      ),
     );
   }
 }
@@ -225,6 +317,22 @@ class _ErrorState extends StatelessWidget {
 }
 
 String _currency(double value) => '₡${value.toStringAsFixed(0)}';
+
+String _statusLabel(PenaltyStatus status) {
+  return switch (status) {
+    PenaltyStatus.pending => 'Pendiente',
+    PenaltyStatus.paid => 'Pagada',
+    PenaltyStatus.waived => 'Perdonada',
+  };
+}
+
+Color _statusColor(ColorScheme colorScheme, PenaltyStatus status) {
+  return switch (status) {
+    PenaltyStatus.pending => colorScheme.error,
+    PenaltyStatus.paid => colorScheme.primary,
+    PenaltyStatus.waived => colorScheme.tertiary,
+  };
+}
 
 String _formatDateTime(DateTime date) {
   final day = date.day.toString().padLeft(2, '0');

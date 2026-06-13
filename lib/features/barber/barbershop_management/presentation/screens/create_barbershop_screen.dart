@@ -6,7 +6,6 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:latlong2/latlong.dart';
 
-import '../../../../../core/di/app_dependencies.dart';
 import '../../../../../shared/motion/app_motion.dart';
 import '../../../../../shared/theme/app_theme.dart';
 import '../../../../../shared/widgets/app_toast.dart';
@@ -91,22 +90,6 @@ class _CreateBarbershopScreenState extends State<CreateBarbershopScreen> {
 
     FocusScope.of(context).unfocus();
 
-    String? imageUrl;
-    if (_selectedImage != null) {
-      try {
-        imageUrl = await AppDependencies.cloudinaryDatasource.uploadImage(
-          file: File(_selectedImage!.path),
-          folder: 'barbershops',
-          publicId: '${widget.userId}/barbershop',
-        );
-      } catch (e) {
-        if (mounted) {
-          AppToast.error(context, 'Error al subir imagen: ${e.toString()}');
-        }
-        return;
-      }
-    }
-
     final params = CreateBarbershopParams(
       ownerId: widget.userId,
       ownerName: widget.userName,
@@ -115,12 +98,15 @@ class _CreateBarbershopScreenState extends State<CreateBarbershopScreen> {
       address: _addressController.text.trim(),
       lat: _selectedLat,
       lng: _selectedLng,
-      imageUrl: imageUrl ?? '',
+      imageUrl: '',
       tags: List<String>.from(_tags),
     );
 
     if (mounted) {
-      context.read<BarbershopManagementCubit>().create(params);
+      context.read<BarbershopManagementCubit>().create(
+        params,
+        imageFile: _selectedImage == null ? null : File(_selectedImage!.path),
+      );
     }
   }
 
@@ -298,22 +284,6 @@ class _EditBarbershopScreenState extends State<EditBarbershopScreen> {
 
     FocusScope.of(context).unfocus();
 
-    String? imageUrl;
-    if (_selectedImage != null) {
-      try {
-        imageUrl = await AppDependencies.cloudinaryDatasource.uploadImage(
-          file: File(_selectedImage!.path),
-          folder: 'barbershops',
-          publicId: '${widget.userId}/barbershop',
-        );
-      } catch (e) {
-        if (mounted) {
-          AppToast.error(context, 'Error al subir imagen: ${e.toString()}');
-        }
-        return;
-      }
-    }
-
     final params = UpdateBarbershopParams(
       id: shop.id,
       name: _nameController.text.trim(),
@@ -321,12 +291,15 @@ class _EditBarbershopScreenState extends State<EditBarbershopScreen> {
       address: _addressController.text.trim(),
       lat: _selectedLat,
       lng: _selectedLng,
-      imageUrl: imageUrl,
+      imageUrl: null,
       tags: List<String>.from(_tags),
     );
 
     if (mounted) {
-      context.read<BarbershopManagementCubit>().update(params);
+      context.read<BarbershopManagementCubit>().update(
+        params,
+        imageFile: _selectedImage == null ? null : File(_selectedImage!.path),
+      );
     }
   }
 

@@ -22,6 +22,8 @@ class BookingModel extends Booking {
     super.cancelledBy,
     super.cancelledAt,
     super.cancellationReason,
+    super.penaltyApplied,
+    super.penaltyAmount,
     super.reviewId,
     super.reviewedAt,
   });
@@ -49,6 +51,8 @@ class BookingModel extends Booking {
       cancelledBy: _cancelledBy(data['cancelledBy'] as String?),
       cancelledAt: _dateTimeOrNull(data['cancelledAt']),
       cancellationReason: data['cancellationReason'] as String?,
+      penaltyApplied: data['penaltyApplied'] as bool? ?? false,
+      penaltyAmount: (data['penaltyAmount'] as num?)?.toDouble() ?? 0,
       reviewId: data['reviewId'] as String?,
       reviewedAt: _dateTimeOrNull(data['reviewedAt']),
     );
