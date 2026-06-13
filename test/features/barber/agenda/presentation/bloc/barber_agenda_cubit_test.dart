@@ -5,6 +5,7 @@ import 'package:barberly/features/barber/services/domain/entities/barber_service
 import 'package:barberly/features/barber/services/domain/entities/barber_schedule.dart';
 import 'package:barberly/features/barber/services/domain/usecases/get_barber_schedule.dart';
 import 'package:barberly/features/barber/services/domain/repositories/barber_services_repository.dart';
+import 'package:barberly/core/events/barbershop_event_bus.dart';
 import 'package:barberly/features/bookings/domain/entities/booking.dart';
 import 'package:barberly/features/bookings/domain/repositories/bookings_repository.dart';
 import 'package:barberly/core/usecases/usecase.dart';
@@ -20,12 +21,13 @@ void main() {
     setUp(() {
       bookingsRepository = _FakeBookingsRepository();
       firestore = FakeFirebaseFirestore();
-      cubit = BarberAgendaCubit(
-        bookingsRepository: bookingsRepository,
-        firestore: firestore,
-        getBarberSchedule: GetBarberSchedule(_FakeBarberServicesRepository()),
-        userId: 'barber-1',
-      );
+        cubit = BarberAgendaCubit(
+          bookingsRepository: bookingsRepository,
+          firestore: firestore,
+          getBarberSchedule: GetBarberSchedule(_FakeBarberServicesRepository()),
+          userId: 'barber-1',
+          eventBus: BarbershopEventBus.instance,
+        );
     });
 
     tearDown(() async {
@@ -36,6 +38,11 @@ void main() {
       'completeBooking delegates to the repository and returns true',
       () async {
         final booking = _activeBooking();
+
+        expectLater(
+          BarbershopEventBus.instance.stream,
+          emits(BarbershopEvent.bookingUpdated),
+        );
 
         final success = await cubit.completeBooking(booking);
 
@@ -53,6 +60,7 @@ void main() {
           firestore: FakeFirebaseFirestore(),
           getBarberSchedule: GetBarberSchedule(_FakeBarberServicesRepository()),
           userId: 'barber-1',
+          eventBus: BarbershopEventBus.instance,
         );
 
         addTearDown(localCubit.close);

@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:barberly/core/events/barbershop_event_bus.dart';
 import 'package:barberly/features/bookings/domain/entities/booking.dart';
 import 'package:barberly/features/bookings/domain/repositories/bookings_repository.dart';
 import 'package:barberly/features/client/bookings/presentation/bloc/client_bookings_cubit.dart';
@@ -12,7 +13,11 @@ void main() {
 
     setUp(() {
       repository = _FakeBookingsRepository();
-      cubit = ClientBookingsCubit(repository: repository, clientId: 'client-1');
+      cubit = ClientBookingsCubit(
+        repository: repository,
+        clientId: 'client-1',
+        eventBus: BarbershopEventBus.instance,
+      );
     });
 
     tearDown(() async {
@@ -22,6 +27,11 @@ void main() {
 
     test('cancelBooking delegates to the client cancellation flow', () async {
       final booking = _activeBooking();
+
+      expectLater(
+        BarbershopEventBus.instance.stream,
+        emits(BarbershopEvent.bookingUpdated),
+      );
 
       await cubit.cancelBooking(booking);
 

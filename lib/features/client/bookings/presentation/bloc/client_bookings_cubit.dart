@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../../core/events/barbershop_event_bus.dart';
 import '../../../../bookings/domain/entities/booking.dart';
 import '../../../../bookings/domain/repositories/bookings_repository.dart';
 
@@ -40,12 +41,15 @@ class ClientBookingsCubit extends Cubit<ClientBookingsState> {
   ClientBookingsCubit({
     required BookingsRepository repository,
     required String clientId,
+    required BarbershopEventBus eventBus,
   }) : _repository = repository,
        _clientId = clientId,
+       _eventBus = eventBus,
        super(const ClientBookingsLoading());
 
   final BookingsRepository _repository;
   final String _clientId;
+  final BarbershopEventBus _eventBus;
   StreamSubscription<List<Booking>>? _subscription;
 
   void watch() {
@@ -77,6 +81,7 @@ class ClientBookingsCubit extends Cubit<ClientBookingsState> {
         clientId: booking.clientId,
         cancelledBy: BookingCancellationActor.client,
       );
+      _eventBus.emit(BarbershopEvent.bookingUpdated);
     } catch (_) {
       emit(const ClientBookingsError('No se pudo cancelar la cita'));
     }

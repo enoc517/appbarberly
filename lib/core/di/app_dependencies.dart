@@ -312,6 +312,7 @@ class AppDependencies {
       clientId: clientId,
       rescheduleBooking: rescheduleBooking,
       repository: barberBookingRepository,
+      eventBus: barbershopEventBus,
     );
   }
 
@@ -319,6 +320,7 @@ class AppDependencies {
     return ClientBookingsCubit(
       repository: FirestoreBookingsRepository(firestore: firestore),
       clientId: userId,
+      eventBus: barbershopEventBus,
     )..watch();
   }
 
@@ -335,7 +337,10 @@ class AppDependencies {
       userId: userId,
     );
     final useCase = GetDashboardData(repo);
-    return DashboardCubit(useCase)..load(userId);
+    return DashboardCubit(
+      getData: useCase,
+      eventBus: barbershopEventBus,
+    )..load(userId);
   }
 
   static BarberAgendaCubit buildBarberAgendaCubit(String userId) {
@@ -344,6 +349,7 @@ class AppDependencies {
       firestore: firestore,
       getBarberSchedule: getBarberScheduleUseCase,
       userId: userId,
+      eventBus: barbershopEventBus,
     )..load();
   }
 

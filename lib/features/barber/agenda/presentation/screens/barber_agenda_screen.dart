@@ -445,7 +445,7 @@ class _AgendaBlock extends StatelessWidget {
                               ),
                             ),
                             OutlinedButton.icon(
-                              onPressed: () => _blockSpace(context, booking.slotStart),
+                              onPressed: () => _cancelBooking(context, booking),
                               style: OutlinedButton.styleFrom(
                                 foregroundColor: theme.colorScheme.error,
                                 side: BorderSide(
@@ -454,8 +454,8 @@ class _AgendaBlock extends StatelessWidget {
                                   ),
                                 ),
                               ),
-                              icon: const Icon(Icons.block_rounded),
-                              label: const Text('Bloquear'),
+                              icon: const Icon(Icons.cancel_rounded),
+                              label: const Text('Cancelar'),
                             ),
                           ],
                         ),
@@ -798,6 +798,45 @@ Future<void> _completeBooking(
       content: Text(
         success ? 'Cita completada' : 'No se pudo completar la cita',
       ),
+    ),
+  );
+}
+
+Future<void> _cancelBooking(BuildContext context, Booking booking) async {
+  final shouldCancel = await showDialog<bool>(
+    context: context,
+    builder: (dialogContext) {
+      return AlertDialog(
+        title: const Text('Cancelar cita'),
+        content: Text(
+          '¿Querés cancelar la cita de ${booking.clientSnapshot.name} para ${booking.serviceSnapshot.name}?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Volver'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(dialogContext).colorScheme.error,
+              foregroundColor: Theme.of(dialogContext).colorScheme.onError,
+            ),
+            child: const Text('Sí, cancelar'),
+          ),
+        ],
+      );
+    },
+  );
+
+  if (shouldCancel != true || !context.mounted) return;
+
+  final success = await context.read<BarberAgendaCubit>().cancelBooking(booking);
+  if (!context.mounted) return;
+
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text(success ? 'Cita cancelada' : 'No se pudo cancelar la cita'),
     ),
   );
 }

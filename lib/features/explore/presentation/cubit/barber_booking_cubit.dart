@@ -1,5 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../../core/events/barbershop_event_bus.dart';
 import '../../../barber/services/domain/entities/barber_schedule.dart';
 import '../../domain/repositories/barber_booking_repository.dart';
 import '../../../bookings/domain/entities/booking.dart';
@@ -11,6 +12,7 @@ class BarberBookingCubit extends Cubit<BarberBookingState> {
   final String? clientId;
   final Booking? rescheduleBooking;
   final BarberBookingRepository _repository;
+  final BarbershopEventBus _eventBus;
 
   BarberBookingCubit({
     required this.shopId,
@@ -18,8 +20,10 @@ class BarberBookingCubit extends Cubit<BarberBookingState> {
     this.clientId,
     this.rescheduleBooking,
     required BarberBookingRepository repository,
+    required BarbershopEventBus eventBus,
   }) : _repository = repository,
-       super(const BarberBookingState());
+       _eventBus = eventBus,
+        super(const BarberBookingState());
 
   Future<void> loadData() async {
     emit(state.copyWith(isLoading: true, errorMessage: null));
@@ -150,6 +154,8 @@ class BarberBookingCubit extends Cubit<BarberBookingState> {
       } else {
         await _repository.createBooking(draft);
       }
+
+      _eventBus.emit(BarbershopEvent.bookingUpdated);
 
       emit(state.copyWith(isBooking: false));
     } catch (e) {

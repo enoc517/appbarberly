@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../../core/events/barbershop_event_bus.dart';
 import '../../../../bookings/domain/entities/booking.dart';
 import '../../../../bookings/domain/repositories/bookings_repository.dart';
 import '../../../../barber/services/domain/usecases/get_barber_schedule.dart';
@@ -109,16 +110,19 @@ class BarberAgendaCubit extends Cubit<BarberAgendaState> {
     required FirebaseFirestore firestore,
     required GetBarberSchedule getBarberSchedule,
     required String userId,
+    required BarbershopEventBus eventBus,
   }) : _bookingsRepository = bookingsRepository,
-       _firestore = firestore,
-       _getBarberSchedule = getBarberSchedule,
-       _userId = userId,
-       super(const BarberAgendaLoading());
+        _firestore = firestore,
+        _getBarberSchedule = getBarberSchedule,
+        _userId = userId,
+        _eventBus = eventBus,
+        super(const BarberAgendaLoading());
 
   final BookingsRepository _bookingsRepository;
   final FirebaseFirestore _firestore;
   final GetBarberSchedule _getBarberSchedule;
   final String _userId;
+  final BarbershopEventBus _eventBus;
   String? _barbershopId;
   StreamSubscription<List<Booking>>? _subscription;
   DateTime _selectedDay = DateTime.now();
@@ -214,6 +218,7 @@ class BarberAgendaCubit extends Cubit<BarberAgendaState> {
         bookingId: booking.id,
         clientId: booking.clientId,
       );
+      _eventBus.emit(BarbershopEvent.bookingUpdated);
       return true;
     } catch (_) {
       return false;
@@ -239,6 +244,7 @@ class BarberAgendaCubit extends Cubit<BarberAgendaState> {
         cancelledBy: BookingCancellationActor.barber,
         cancellationReason: cancellationReason,
       );
+      _eventBus.emit(BarbershopEvent.bookingUpdated);
       return true;
     } catch (_) {
       return false;
