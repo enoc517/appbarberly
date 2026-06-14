@@ -298,7 +298,9 @@ class AppDependencies {
   static BarbershopDetailCubit buildBarbershopDetailCubit(String shopId) {
     return BarbershopDetailCubit(
       shopId: shopId,
+      userId: getCurrentUserId(),
       repository: barbershopDetailRepository,
+      favoritesRepository: favoritesRepository,
     );
   }
 

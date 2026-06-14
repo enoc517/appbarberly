@@ -16,6 +16,11 @@ abstract class FavoritesRepository {
     int? bookingCount,
   });
 
+  Future<void> removeFavorite({
+    required String userId,
+    required String barbershopId,
+  });
+
   Future<void> recordFavoriteBooking({
     required String userId,
     required String barbershopId,

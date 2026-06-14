@@ -19,7 +19,9 @@ class FirestoreFavoritesRepository implements FavoritesRepository {
       _db.collection('users').doc(userId).collection('favorites');
 
   @override
-  Stream<List<FavoriteBarbershopEntry>> watchFavoriteBarbershops(String userId) {
+  Stream<List<FavoriteBarbershopEntry>> watchFavoriteBarbershops(
+    String userId,
+  ) {
     return _favoritesFor(userId).snapshots().asyncMap(_buildEntries);
   }
 
@@ -47,7 +49,9 @@ class FirestoreFavoritesRepository implements FavoritesRepository {
         'barbershopId': barbershopId,
         'updatedAt': FieldValue.serverTimestamp(),
       };
-      if (lastBookedAt != null) data['lastBookedAt'] = Timestamp.fromDate(lastBookedAt);
+      if (lastBookedAt != null) {
+        data['lastBookedAt'] = Timestamp.fromDate(lastBookedAt);
+      }
       if (lastServiceId != null) data['lastServiceId'] = lastServiceId;
       if (lastServiceName != null) data['lastServiceName'] = lastServiceName;
       if (lastBarberId != null) data['lastBarberId'] = lastBarberId;
@@ -63,12 +67,22 @@ class FirestoreFavoritesRepository implements FavoritesRepository {
       'bookingCount': bookingCount ?? 0,
       'updatedAt': FieldValue.serverTimestamp(),
     };
-    if (lastBookedAt != null) data['lastBookedAt'] = Timestamp.fromDate(lastBookedAt);
+    if (lastBookedAt != null) {
+      data['lastBookedAt'] = Timestamp.fromDate(lastBookedAt);
+    }
     if (lastServiceId != null) data['lastServiceId'] = lastServiceId;
     if (lastServiceName != null) data['lastServiceName'] = lastServiceName;
     if (lastBarberId != null) data['lastBarberId'] = lastBarberId;
     if (lastBarberName != null) data['lastBarberName'] = lastBarberName;
     await ref.set(data);
+  }
+
+  @override
+  Future<void> removeFavorite({
+    required String userId,
+    required String barbershopId,
+  }) async {
+    await _favoritesFor(userId).doc(barbershopId).delete();
   }
 
   @override
@@ -157,8 +171,10 @@ class FirestoreFavoritesRepository implements FavoritesRepository {
     }
 
     entries.sort((a, b) {
-      final aTime = a.lastBookedAt ?? a.addedAt ?? DateTime.fromMillisecondsSinceEpoch(0);
-      final bTime = b.lastBookedAt ?? b.addedAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+      final aTime =
+          a.lastBookedAt ?? a.addedAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+      final bTime =
+          b.lastBookedAt ?? b.addedAt ?? DateTime.fromMillisecondsSinceEpoch(0);
       final compare = bTime.compareTo(aTime);
       if (compare != 0) return compare;
       return a.shop.name.compareTo(b.shop.name);
@@ -188,7 +204,10 @@ class FirestoreFavoritesRepository implements FavoritesRepository {
     required String? barberId,
     required String? serviceId,
   }) async {
-    if (barberId == null || barberId.isEmpty || serviceId == null || serviceId.isEmpty) {
+    if (barberId == null ||
+        barberId.isEmpty ||
+        serviceId == null ||
+        serviceId.isEmpty) {
       return null;
     }
 
@@ -200,7 +219,8 @@ class FirestoreFavoritesRepository implements FavoritesRepository {
         .collection('services')
         .doc(serviceId)
         .get();
-    final durationMinutes = (serviceDoc.data()?['durationMinutes'] as num?)?.toInt() ?? 0;
+    final durationMinutes =
+        (serviceDoc.data()?['durationMinutes'] as num?)?.toInt() ?? 0;
     if (durationMinutes <= 0) return null;
 
     for (var i = 0; i < 7; i++) {
@@ -212,7 +232,11 @@ class FirestoreFavoritesRepository implements FavoritesRepository {
         durationMinutes: durationMinutes,
       );
       if (slots.isNotEmpty) {
-        final labelDay = i == 0 ? 'Hoy' : i == 1 ? 'Mañana' : '${day.day.toString().padLeft(2, '0')}/${day.month.toString().padLeft(2, '0')}';
+        final labelDay = i == 0
+            ? 'Hoy'
+            : i == 1
+            ? 'Mañana'
+            : '${day.day.toString().padLeft(2, '0')}/${day.month.toString().padLeft(2, '0')}';
         return '$labelDay ${slots.first}';
       }
     }

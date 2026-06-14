@@ -151,6 +151,14 @@ class _FakeFavoritesRepository implements FavoritesRepository {
   }
 
   @override
+  Future<void> removeFavorite({
+    required String userId,
+    required String barbershopId,
+  }) async {
+    calls.add('remove:$userId:$barbershopId');
+  }
+
+  @override
   Stream<List<FavoriteBarbershopEntry>> watchFavoriteBarbershops(
     String userId,
   ) {

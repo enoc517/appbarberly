@@ -122,6 +122,9 @@ class _ProfileContent extends StatelessWidget {
               delay: AppMotion.delay(6),
               child: _LogoutButton(
                 onTap: () async {
+                  final shouldLogout = await _confirmLogout(context);
+                  if (shouldLogout != true || !context.mounted) return;
+
                   await context.read<ClientProfileCubit>().logout();
                   if (context.mounted) context.go('/login');
                 },
@@ -129,6 +132,26 @@ class _ProfileContent extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Future<bool?> _confirmLogout(BuildContext context) {
+    return showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Cerrar sesión'),
+        content: const Text('¿Seguro que querés cerrar esta sesión?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('Cerrar sesión'),
+          ),
+        ],
       ),
     );
   }

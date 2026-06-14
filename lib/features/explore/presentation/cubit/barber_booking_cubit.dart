@@ -114,7 +114,13 @@ class BarberBookingCubit extends Cubit<BarberBookingState> {
       return;
     }
 
-    emit(state.copyWith(isBooking: true, errorMessage: null));
+    emit(
+      state.copyWith(
+        isBooking: true,
+        bookingCompleted: false,
+        errorMessage: null,
+      ),
+    );
 
     try {
       final clientName = await _repository.getClientName(effectiveClientId);
@@ -124,13 +130,9 @@ class BarberBookingCubit extends Cubit<BarberBookingState> {
       final price = (state.selectedService!['price'] as num).toDouble();
       final durationMin = state.selectedService!['durationMinutes'] as int;
 
-      final timeParts = state.selectedTime!.split(':');
-      final slotStart = DateTime(
-        state.selectedDay!.year,
-        state.selectedDay!.month,
-        state.selectedDay!.day,
-        int.parse(timeParts[0]),
-        int.parse(timeParts[1]),
+      final slotStart = _parseSelectedTime(
+        day: state.selectedDay!,
+        time: state.selectedTime!,
       );
       final draft = BookingDraft(
         clientId: effectiveClientId,
@@ -163,9 +165,15 @@ class BarberBookingCubit extends Cubit<BarberBookingState> {
 
       _eventBus.emit(BarbershopEvent.bookingUpdated);
 
-      emit(state.copyWith(isBooking: false));
+      emit(state.copyWith(isBooking: false, bookingCompleted: true));
     } catch (e) {
-      emit(state.copyWith(isBooking: false, errorMessage: e.toString()));
+      emit(
+        state.copyWith(
+          isBooking: false,
+          bookingCompleted: false,
+          errorMessage: e.toString(),
+        ),
+      );
     }
   }
 
@@ -306,5 +314,29 @@ class BarberBookingCubit extends Cubit<BarberBookingState> {
     final minute = time.minute.toString().padLeft(2, '0');
     final period = time.hour >= 12 ? 'PM' : 'AM';
     return '$hour:$minute $period';
+  }
+
+  static DateTime _parseSelectedTime({
+    required DateTime day,
+    required String time,
+  }) {
+    final normalized = time.trim().toUpperCase();
+    final parts = normalized.split(RegExp(r'\s+'));
+    final hourMinute = parts.first.split(':');
+    if (hourMinute.length != 2) {
+      throw FormatException('Invalid time format', time);
+    }
+
+    var hour = int.parse(hourMinute[0]);
+    final minute = int.parse(hourMinute[1]);
+    final period = parts.length > 1 ? parts[1] : null;
+
+    if (period == 'AM' && hour == 12) {
+      hour = 0;
+    } else if (period == 'PM' && hour != 12) {
+      hour += 12;
+    }
+
+    return DateTime(day.year, day.month, day.day, hour, minute);
   }
 }

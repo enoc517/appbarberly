@@ -26,19 +26,20 @@ class _BarberBookingView extends StatelessWidget {
     return BlocListener<BarberBookingCubit, BarberBookingState>(
       listenWhen: (prev, curr) =>
           prev.isBooking != curr.isBooking ||
+          prev.bookingCompleted != curr.bookingCompleted ||
           prev.errorMessage != curr.errorMessage,
       listener: (context, state) {
         if (state.errorMessage != null) {
           AppToast.error(context, 'Error: ${state.errorMessage}');
+          return;
         }
-        if (!state.isBooking &&
-            state.errorMessage == null &&
-            state.canConfirm) {
+
+        if (state.bookingCompleted) {
           AppToast.success(
             context,
             state.isRescheduleMode ? 'Cambio confirmado' : 'Reserva confirmada',
           );
-          _handleFavoriteSuggestion(context, state);
+          context.pop();
         }
       },
       child: Scaffold(
@@ -138,60 +139,6 @@ class _BarberBookingView extends StatelessWidget {
       ),
     );
   }
-}
-
-Future<void> _handleFavoriteSuggestion(
-  BuildContext context,
-  BarberBookingState state,
-) async {
-  final cubit = context.read<BarberBookingCubit>();
-  final status = await cubit.evaluateFavoriteSuggestion();
-
-  if (!context.mounted) return;
-
-  if (status == FavoriteSuggestionStatus.skipped) {
-    if (context.mounted) context.pop();
-    return;
-  }
-
-  if (status == FavoriteSuggestionStatus.alreadyFavoriteRecorded) {
-    if (context.mounted) context.pop();
-    return;
-  }
-
-  final shouldAdd = await showDialog<bool>(
-    context: context,
-    builder: (dialogContext) {
-      final theme = Theme.of(dialogContext);
-      return AlertDialog(
-        title: const Text('¿Agregar a favoritos?'),
-        content: const Text(
-          'Podés guardar esta barbería para reservar más rápido la próxima vez.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('Ahora no'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(dialogContext).pop(true),
-            style: FilledButton.styleFrom(
-              backgroundColor: theme.colorScheme.primaryContainer,
-              foregroundColor: theme.colorScheme.onPrimaryContainer,
-            ),
-            child: const Text('Agregar'),
-          ),
-        ],
-      );
-    },
-  );
-
-  if (shouldAdd == true) {
-    await cubit.addFavoriteSuggestion();
-  }
-
-  if (!context.mounted) return;
-  context.pop();
 }
 
 class _BarberAvatar extends StatelessWidget {

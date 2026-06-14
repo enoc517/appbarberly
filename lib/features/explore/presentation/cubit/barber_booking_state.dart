@@ -16,6 +16,7 @@ class BarberBookingState extends Equatable {
   final String? selectedTime;
   final Booking? rescheduleBooking;
   final bool isBooking;
+  final bool bookingCompleted;
   final bool isLoadingSlots;
   final String? errorMessage;
 
@@ -32,6 +33,7 @@ class BarberBookingState extends Equatable {
     this.selectedTime,
     this.rescheduleBooking,
     this.isBooking = false,
+    this.bookingCompleted = false,
     this.isLoadingSlots = false,
     this.errorMessage,
   });
@@ -49,6 +51,7 @@ class BarberBookingState extends Equatable {
     String? selectedTime,
     Booking? rescheduleBooking,
     bool? isBooking,
+    bool? bookingCompleted,
     bool? isLoadingSlots,
     String? errorMessage,
     bool clearSelectedService = false,
@@ -72,6 +75,7 @@ class BarberBookingState extends Equatable {
           : (selectedTime ?? this.selectedTime),
       rescheduleBooking: rescheduleBooking ?? this.rescheduleBooking,
       isBooking: isBooking ?? this.isBooking,
+      bookingCompleted: bookingCompleted ?? this.bookingCompleted,
       isLoadingSlots: isLoadingSlots ?? this.isLoadingSlots,
       errorMessage: errorMessage,
     );
@@ -99,6 +103,7 @@ class BarberBookingState extends Equatable {
     selectedTime,
     rescheduleBooking,
     isBooking,
+    bookingCompleted,
     isLoadingSlots,
     errorMessage,
   ];

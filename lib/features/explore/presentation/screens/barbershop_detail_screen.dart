@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../shared/theme/app_theme.dart';
 import '../../../../shared/motion/app_motion.dart';
+import '../../../../shared/widgets/app_toast.dart';
 import '../../../reviews/domain/entities/barbershop_review.dart';
 import '../cubit/barbershop_detail_cubit.dart';
 import '../cubit/barbershop_detail_state.dart';
@@ -23,39 +24,76 @@ class _BarbershopDetailView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded),
-          onPressed: () => context.go('/explorar'),
+    return BlocListener<BarbershopDetailCubit, BarbershopDetailState>(
+      listenWhen: (prev, curr) => prev.errorMessage != curr.errorMessage,
+      listener: (context, state) {
+        if (state.errorMessage != null) {
+          AppToast.error(context, state.errorMessage!);
+        }
+      },
+      child: Scaffold(
+        backgroundColor: theme.scaffoldBackgroundColor,
+        appBar: AppBar(
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_rounded),
+            onPressed: () => context.go('/explorar'),
+          ),
+          actions: const [_FavoriteButton()],
+        ),
+        body: BlocBuilder<BarbershopDetailCubit, BarbershopDetailState>(
+          buildWhen: (prev, curr) => prev.isLoading != curr.isLoading,
+          builder: (context, state) {
+            if (state.isLoading) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            if (state.shop == null) {
+              return Center(
+                child: Text(
+                  'Barbería no encontrada',
+                  style: AppTypography.titleMedium.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              );
+            }
+            final shopId = context.read<BarbershopDetailCubit>().shopId;
+            return _DetailContent(
+              shopId: shopId,
+              shop: state.shop!,
+              members: state.members,
+              reviews: state.reviews,
+            );
+          },
         ),
       ),
-      body: BlocBuilder<BarbershopDetailCubit, BarbershopDetailState>(
-        buildWhen: (prev, curr) => prev.isLoading != curr.isLoading,
-        builder: (context, state) {
-          if (state.isLoading) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (state.shop == null) {
-            return Center(
-              child: Text(
-                'Barbería no encontrada',
-                style: AppTypography.titleMedium.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
-            );
-          }
-          final shopId = context.read<BarbershopDetailCubit>().shopId;
-          return _DetailContent(
-            shopId: shopId,
-            shop: state.shop!,
-            members: state.members,
-            reviews: state.reviews,
-          );
-        },
-      ),
+    );
+  }
+}
+
+class _FavoriteButton extends StatelessWidget {
+  const _FavoriteButton();
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<BarbershopDetailCubit, BarbershopDetailState>(
+      buildWhen: (prev, curr) =>
+          prev.isFavorite != curr.isFavorite ||
+          prev.isUpdatingFavorite != curr.isUpdatingFavorite,
+      builder: (context, state) {
+        return IconButton(
+          tooltip: state.isFavorite
+              ? 'Quitar de favoritos'
+              : 'Agregar a favoritos',
+          onPressed: state.isUpdatingFavorite
+              ? null
+              : () => context.read<BarbershopDetailCubit>().toggleFavorite(),
+          icon: Icon(
+            state.isFavorite
+                ? Icons.favorite_rounded
+                : Icons.favorite_border_rounded,
+          ),
+        );
+      },
     );
   }
 }
@@ -90,7 +128,11 @@ class _DetailContent extends StatelessWidget {
                 color: theme.colorScheme.surfaceContainerHighest,
                 child: (shop['imageUrl'] as String?)?.isNotEmpty == true
                     ? Image.network(shop['imageUrl']!, fit: BoxFit.cover)
-                    : Icon(Icons.storefront_rounded, size: 64, color: theme.colorScheme.outline),
+                    : Icon(
+                        Icons.storefront_rounded,
+                        size: 64,
+                        color: theme.colorScheme.outline,
+                      ),
               ),
             ),
           ),
@@ -99,29 +141,43 @@ class _DetailContent extends StatelessWidget {
             delay: AppMotion.delay(1),
             child: Text(
               shop['name'] as String? ?? '',
-              style: AppTypography.headlineMedium.copyWith(color: theme.colorScheme.onSurface),
+              style: AppTypography.headlineMedium.copyWith(
+                color: theme.colorScheme.onSurface,
+              ),
             ),
           ),
           const SizedBox(height: 8),
           Row(
             children: [
-              Icon(Icons.star_rounded, size: 18, color: theme.colorScheme.secondary),
+              Icon(
+                Icons.star_rounded,
+                size: 18,
+                color: theme.colorScheme.secondary,
+              ),
               const SizedBox(width: 4),
               Text(
                 '${shop['rating'] ?? 0} (${shop['reviewCount'] ?? 0} reseñas)',
-                style: AppTypography.bodyMedium.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                style: AppTypography.bodyMedium.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
               ),
             ],
           ),
           const SizedBox(height: 8),
           Row(
             children: [
-              Icon(Icons.location_on_rounded, size: 18, color: theme.colorScheme.onSurfaceVariant),
+              Icon(
+                Icons.location_on_rounded,
+                size: 18,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
               const SizedBox(width: 4),
               Expanded(
                 child: Text(
                   shop['address'] as String? ?? '',
-                  style: AppTypography.bodyMedium.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                  style: AppTypography.bodyMedium.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
                 ),
               ),
             ],
@@ -130,16 +186,23 @@ class _DetailContent extends StatelessWidget {
           Wrap(
             spacing: 8,
             runSpacing: 8,
-            children: (shop['tags'] as List<dynamic>?)
-                    ?.map((t) => Chip(
-                          label: Text(t.toString(),
-                              style: AppTypography.labelSmall.copyWith(color: theme.colorScheme.onPrimaryContainer)),
-                          backgroundColor: theme.colorScheme.primaryContainer,
-                          side: BorderSide.none,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(AppRadius.full),
+            children:
+                (shop['tags'] as List<dynamic>?)
+                    ?.map(
+                      (t) => Chip(
+                        label: Text(
+                          t.toString(),
+                          style: AppTypography.labelSmall.copyWith(
+                            color: theme.colorScheme.onPrimaryContainer,
                           ),
-                        ))
+                        ),
+                        backgroundColor: theme.colorScheme.primaryContainer,
+                        side: BorderSide.none,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.full),
+                        ),
+                      ),
+                    )
                     .toList() ??
                 [],
           ),
@@ -155,7 +218,9 @@ class _DetailContent extends StatelessWidget {
           if (members.isEmpty)
             Text(
               'No hay barberos aún',
-              style: AppTypography.bodyLarge.copyWith(color: theme.colorScheme.onSurfaceVariant),
+              style: AppTypography.bodyLarge.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
             )
           else
             LayoutBuilder(
@@ -217,8 +282,7 @@ class _DetailContent extends StatelessWidget {
               ),
             )
           else
-            for (final review in reviews)
-              _ReviewCard(review: review),
+            for (final review in reviews) _ReviewCard(review: review),
         ],
       ),
     );
@@ -290,9 +354,7 @@ class _BarberMemberCard extends StatelessWidget {
                           ),
                           decoration: BoxDecoration(
                             color: colorScheme.primaryContainer,
-                            borderRadius: BorderRadius.circular(
-                              AppRadius.full,
-                            ),
+                            borderRadius: BorderRadius.circular(AppRadius.full),
                           ),
                           child: Text(
                             roleLabel,
@@ -388,10 +450,7 @@ class _ReviewCard extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: Text(
-                  clientName,
-                  style: AppTypography.titleSmall,
-                ),
+                child: Text(clientName, style: AppTypography.titleSmall),
               ),
               Row(
                 children: List.generate(

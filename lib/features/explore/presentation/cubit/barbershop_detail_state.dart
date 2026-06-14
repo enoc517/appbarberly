@@ -7,6 +7,8 @@ class BarbershopDetailState extends Equatable {
   final Map<String, dynamic>? shop;
   final List<Map<String, dynamic>> members;
   final List<BarbershopReview> reviews;
+  final bool isFavorite;
+  final bool isUpdatingFavorite;
   final String? errorMessage;
 
   const BarbershopDetailState({
@@ -14,6 +16,8 @@ class BarbershopDetailState extends Equatable {
     this.shop,
     this.members = const [],
     this.reviews = const [],
+    this.isFavorite = false,
+    this.isUpdatingFavorite = false,
     this.errorMessage,
   });
 
@@ -22,6 +26,8 @@ class BarbershopDetailState extends Equatable {
     Map<String, dynamic>? shop,
     List<Map<String, dynamic>>? members,
     List<BarbershopReview>? reviews,
+    bool? isFavorite,
+    bool? isUpdatingFavorite,
     String? errorMessage,
   }) {
     return BarbershopDetailState(
@@ -29,10 +35,20 @@ class BarbershopDetailState extends Equatable {
       shop: shop ?? this.shop,
       members: members ?? this.members,
       reviews: reviews ?? this.reviews,
+      isFavorite: isFavorite ?? this.isFavorite,
+      isUpdatingFavorite: isUpdatingFavorite ?? this.isUpdatingFavorite,
       errorMessage: errorMessage,
     );
   }
 
   @override
-  List<Object?> get props => [isLoading, shop, members, reviews, errorMessage];
+  List<Object?> get props => [
+    isLoading,
+    shop,
+    members,
+    reviews,
+    isFavorite,
+    isUpdatingFavorite,
+    errorMessage,
+  ];
 }
