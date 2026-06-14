@@ -298,9 +298,10 @@ class AppDependencies {
   static BarbershopDetailCubit buildBarbershopDetailCubit(String shopId) {
     return BarbershopDetailCubit(
       shopId: shopId,
-      userId: getCurrentUserId(),
+      getCurrentUserUseCase: getCurrentUserUseCase,
       repository: barbershopDetailRepository,
       favoritesRepository: favoritesRepository,
+      eventBus: barbershopEventBus,
     );
   }
 
@@ -331,8 +332,12 @@ class AppDependencies {
   }
 
   static FavoritesCubit buildFavoritesCubit(String userId) {
-    return FavoritesCubit(repository: favoritesRepository, userId: userId)
-      ..watch();
+    return FavoritesCubit(
+      repository: favoritesRepository,
+      getCurrentUserUseCase: getCurrentUserUseCase,
+      eventBus: barbershopEventBus,
+      userId: userId,
+    )..watch();
   }
 
   static DashboardCubit buildDashboardCubit(String userId) {

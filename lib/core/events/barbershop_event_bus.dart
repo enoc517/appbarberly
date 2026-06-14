@@ -1,6 +1,11 @@
 import 'dart:async';
 
-enum BarbershopEvent { barbershopCreated, barbershopUpdated, bookingUpdated }
+enum BarbershopEvent {
+  barbershopCreated,
+  barbershopUpdated,
+  bookingUpdated,
+  favoritesUpdated,
+}
 
 class BarbershopEventBus {
   BarbershopEventBus._();

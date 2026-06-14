@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../../core/events/barbershop_event_bus.dart';
+import '../../../../auth/domain/usecases/get_current_user.dart';
 import '../../domain/entities/favorite_barbershop_entry.dart';
 import '../../domain/repositories/favorites_repository.dart';
 
@@ -32,23 +34,40 @@ class FavoritesError extends FavoritesState {
 class FavoritesCubit extends Cubit<FavoritesState> {
   FavoritesCubit({
     required FavoritesRepository repository,
-    required String userId,
+    required GetCurrentUserUseCase getCurrentUserUseCase,
+    required BarbershopEventBus eventBus,
+    String? userId,
   }) : _repository = repository,
+       _getCurrentUserUseCase = getCurrentUserUseCase,
+       _eventBus = eventBus,
        _userId = userId,
-       super(const FavoritesLoading());
+       super(const FavoritesLoading()) {
+    _eventSubscription = _eventBus.stream.listen((event) {
+      if (event == BarbershopEvent.favoritesUpdated) {
+        watch();
+      }
+    });
+  }
 
   final FavoritesRepository _repository;
-  final String _userId;
+  final GetCurrentUserUseCase _getCurrentUserUseCase;
+  final BarbershopEventBus _eventBus;
+  final String? _userId;
   StreamSubscription<List<FavoriteBarbershopEntry>>? _subscription;
+  late final StreamSubscription<BarbershopEvent> _eventSubscription;
 
-  void watch() {
-    if (_userId.isEmpty) {
+  Future<void> watch() async {
+    final storedUserId = _userId;
+    final userId = storedUserId == null || storedUserId.isEmpty
+        ? await _resolveUserId()
+        : storedUserId;
+    if (userId == null || userId.isEmpty) {
       emit(const FavoritesEmpty());
       return;
     }
 
-    _subscription?.cancel();
-    _subscription = _repository.watchFavoriteBarbershops(_userId).listen(
+    await _subscription?.cancel();
+    _subscription = _repository.watchFavoriteBarbershops(userId).listen(
       (barbershops) {
         emit(
           barbershops.isEmpty
@@ -64,6 +83,12 @@ class FavoritesCubit extends Cubit<FavoritesState> {
   @override
   Future<void> close() async {
     await _subscription?.cancel();
+    await _eventSubscription.cancel();
     return super.close();
+  }
+
+  Future<String?> _resolveUserId() async {
+    final user = await _getCurrentUserUseCase();
+    return user?.id;
   }
 }

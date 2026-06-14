@@ -1,22 +1,28 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/events/barbershop_event_bus.dart';
+import '../../../auth/domain/usecases/get_current_user.dart';
 import '../../../client/favorites/domain/repositories/favorites_repository.dart';
 import '../../domain/repositories/barbershop_detail_repository.dart';
 import 'barbershop_detail_state.dart';
 
 class BarbershopDetailCubit extends Cubit<BarbershopDetailState> {
   final String shopId;
-  final String? userId;
+  final GetCurrentUserUseCase _getCurrentUserUseCase;
   final BarbershopDetailRepository _repository;
   final FavoritesRepository _favoritesRepository;
+  final BarbershopEventBus _eventBus;
 
   BarbershopDetailCubit({
     required this.shopId,
-    required this.userId,
+    required GetCurrentUserUseCase getCurrentUserUseCase,
     required BarbershopDetailRepository repository,
     required FavoritesRepository favoritesRepository,
+    required BarbershopEventBus eventBus,
   }) : _repository = repository,
        _favoritesRepository = favoritesRepository,
+       _getCurrentUserUseCase = getCurrentUserUseCase,
+       _eventBus = eventBus,
        super(const BarbershopDetailState());
 
   Future<void> loadData() async {
@@ -41,10 +47,11 @@ class BarbershopDetailCubit extends Cubit<BarbershopDetailState> {
   }
 
   Future<void> toggleFavorite() async {
-    final currentUserId = userId;
+    final currentUserId = await _resolveUserId();
     if (currentUserId == null ||
         currentUserId.isEmpty ||
         state.isUpdatingFavorite) {
+      emit(state.copyWith(errorMessage: 'Iniciá sesión para usar favoritos'));
       return;
     }
 
@@ -65,6 +72,7 @@ class BarbershopDetailCubit extends Cubit<BarbershopDetailState> {
       }
 
       emit(state.copyWith(isUpdatingFavorite: false, errorMessage: null));
+      _eventBus.emit(BarbershopEvent.favoritesUpdated);
     } catch (e) {
       emit(
         state.copyWith(
@@ -77,8 +85,13 @@ class BarbershopDetailCubit extends Cubit<BarbershopDetailState> {
   }
 
   Future<bool> _isFavorite() async {
-    final currentUserId = userId;
+    final currentUserId = await _resolveUserId();
     if (currentUserId == null || currentUserId.isEmpty) return false;
     return _favoritesRepository.isFavorite(currentUserId, shopId);
+  }
+
+  Future<String?> _resolveUserId() async {
+    final user = await _getCurrentUserUseCase();
+    return user?.id;
   }
 }
