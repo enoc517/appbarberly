@@ -9,6 +9,7 @@ import '../../../../../shared/motion/app_motion.dart';
 import '../../../../../shared/theme/app_theme.dart';
 import '../../../../../shared/widgets/image_picker_sheet.dart';
 import '../../../../../shared/widgets/theme_selector.dart';
+import '../../../../notifications/presentation/cubit/notifications_cubit.dart';
 import '../cubit/client_profile_cubit.dart';
 
 class ClientProfileScreen extends StatelessWidget {
@@ -82,35 +83,22 @@ class _ProfileContent extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 10),
-            AppFadeSlideIn(
-              delay: AppMotion.delay(2),
-              child: _ProfileAction(
-                icon: Icons.location_on_outlined,
-                title: 'Direcciones',
-                onTap: () {},
-              ),
+            BlocBuilder<NotificationsCubit, NotificationsState>(
+              builder: (context, state) {
+                return AppFadeSlideIn(
+                  delay: AppMotion.delay(2),
+                  child: _ProfileAction(
+                    icon: Icons.notifications_outlined,
+                    title: 'Notificaciones',
+                    badge: state.unreadCount > 0 ? state.unreadCount : null,
+                    onTap: () => context.push('/notificaciones'),
+                  ),
+                );
+              },
             ),
             const SizedBox(height: 10),
             AppFadeSlideIn(
               delay: AppMotion.delay(3),
-              child: _ProfileAction(
-                icon: Icons.credit_card_outlined,
-                title: 'Métodos de pago',
-                onTap: () {},
-              ),
-            ),
-            const SizedBox(height: 10),
-            AppFadeSlideIn(
-              delay: AppMotion.delay(4),
-              child: _ProfileAction(
-                icon: Icons.notifications_outlined,
-                title: 'Notificaciones',
-                onTap: () {},
-              ),
-            ),
-            const SizedBox(height: 10),
-            AppFadeSlideIn(
-              delay: AppMotion.delay(5),
               child: _ProfileAction(
                 icon: Icons.help_outline_rounded,
                 title: 'Ayuda y soporte',
@@ -119,7 +107,7 @@ class _ProfileContent extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             AppFadeSlideIn(
-              delay: AppMotion.delay(6),
+              delay: AppMotion.delay(4),
               child: _LogoutButton(
                 onTap: () async {
                   final shouldLogout = await _confirmLogout(context);
@@ -286,11 +274,13 @@ class _ProfileAction extends StatelessWidget {
     required this.icon,
     required this.title,
     required this.onTap,
+    this.badge,
   });
 
   final IconData icon;
   final String title;
   final VoidCallback onTap;
+  final int? badge;
 
   @override
   Widget build(BuildContext context) {
@@ -308,10 +298,38 @@ class _ProfileAction extends StatelessWidget {
               color: theme.colorScheme.onSurface,
             ),
           ),
-          trailing: Icon(
-            Icons.chevron_right_rounded,
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
+          trailing: badge == null
+              ? Icon(
+                  Icons.chevron_right_rounded,
+                  color: theme.colorScheme.onSurfaceVariant,
+                )
+              : Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.primaryContainer,
+                        borderRadius: BorderRadius.circular(AppRadius.full),
+                      ),
+                      child: Text(
+                        badge.toString(),
+                        style: AppTypography.labelSmall.copyWith(
+                          color: theme.colorScheme.onPrimaryContainer,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Icon(
+                      Icons.chevron_right_rounded,
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ],
+                ),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadius.xl),
           ),

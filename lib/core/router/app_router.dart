@@ -261,9 +261,8 @@ class AppRouter {
               final shopId = state.pathParameters['shopId'] ?? '';
               final shopName = state.extra as String? ?? 'Barbería';
               return BlocProvider(
-                create: (_) => AppDependencies.buildBarbershopReviewsCubit(
-                  shopId,
-                ),
+                create: (_) =>
+                    AppDependencies.buildBarbershopReviewsCubit(shopId),
                 child: BarbershopReviewsScreen(shopName: shopName),
               );
             },
@@ -375,11 +374,23 @@ class AppRouter {
               GoRoute(
                 path: perfil,
                 name: 'perfil',
-                builder: (context, state) => BlocProvider(
-                  create: (_) =>
-                      AppDependencies.buildClientProfileCubit()..loadData(),
-                  child: const ClientProfileScreen(),
-                ),
+                builder: (context, state) {
+                  final userId = AppDependencies.getCurrentUserId() ?? '';
+                  return MultiBlocProvider(
+                    providers: [
+                      BlocProvider(
+                        create: (_) =>
+                            AppDependencies.buildClientProfileCubit()
+                              ..loadData(),
+                      ),
+                      BlocProvider(
+                        create: (_) =>
+                            AppDependencies.buildNotificationsCubit(userId),
+                      ),
+                    ],
+                    child: const ClientProfileScreen(),
+                  );
+                },
               ),
             ],
           ),
