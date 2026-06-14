@@ -112,11 +112,13 @@ class BarberAgendaCubit extends Cubit<BarberAgendaState> {
     required String userId,
     required BarbershopEventBus eventBus,
   }) : _bookingsRepository = bookingsRepository,
-        _firestore = firestore,
-        _getBarberSchedule = getBarberSchedule,
-        _userId = userId,
-        _eventBus = eventBus,
-        super(const BarberAgendaLoading());
+       _firestore = firestore,
+       _getBarberSchedule = getBarberSchedule,
+       _userId = userId,
+       _eventBus = eventBus,
+       super(const BarberAgendaLoading()) {
+    _subscribeToEvents();
+  }
 
   final BookingsRepository _bookingsRepository;
   final FirebaseFirestore _firestore;
@@ -125,8 +127,18 @@ class BarberAgendaCubit extends Cubit<BarberAgendaState> {
   final BarbershopEventBus _eventBus;
   String? _barbershopId;
   StreamSubscription<List<Booking>>? _subscription;
+  late final StreamSubscription<BarbershopEvent> _eventSubscription;
   DateTime _selectedDay = DateTime.now();
   Set<int> _activeWeekdays = <int>{};
+
+  void _subscribeToEvents() {
+    _eventSubscription = _eventBus.stream.listen((event) {
+      if (event == BarbershopEvent.barbershopCreated ||
+          event == BarbershopEvent.barbershopUpdated) {
+        load(day: _selectedDay);
+      }
+    });
+  }
 
   Future<void> load({DateTime? day}) async {
     try {
@@ -325,6 +337,7 @@ class BarberAgendaCubit extends Cubit<BarberAgendaState> {
 
   @override
   Future<void> close() async {
+    await _eventSubscription.cancel();
     await _subscription?.cancel();
     return super.close();
   }
