@@ -44,6 +44,14 @@
         { "fieldPath": "barberId", "order": "ASCENDING" },
         { "fieldPath": "slotStart", "order": "ASCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "barbershops",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "position.geohash", "order": "ASCENDING" },
+        { "fieldPath": "isActive", "order": "ASCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []

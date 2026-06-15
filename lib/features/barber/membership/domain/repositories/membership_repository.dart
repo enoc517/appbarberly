@@ -4,7 +4,10 @@ import '../entities/barber_member.dart';
 import '../entities/membership_request.dart';
 
 abstract class MembershipRepository {
-  Future<Result<List<Barbershop>>> searchBarbershops(String query);
+  Future<Result<List<Barbershop>>> searchBarbershops({
+    required String query,
+    required double radiusKm,
+  });
   Future<Result<MembershipRequest>> sendRequest({
     required String barberId,
     required String barberName,

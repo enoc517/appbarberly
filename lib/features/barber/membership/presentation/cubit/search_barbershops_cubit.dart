@@ -15,20 +15,26 @@ class SearchBarbershopsCubit extends Cubit<SearchBarbershopsState> {
        _sendMembershipRequest = sendMembershipRequest,
        super(const SearchBarbershopsInitial());
 
-  Future<void> search(String query) async {
+  Future<void> search(String query, {double radiusKm = 10.0}) async {
     emit(const SearchBarbershopsLoading());
-    final result = await _searchBarbershops(query);
-    emit(result.when(
-      ok: (shops) => SearchBarbershopsLoaded(shops),
-      fail: (f) => SearchBarbershopsError(f.message),
-    ));
+    final result = await _searchBarbershops(
+      SearchBarbershopsParams(query: query, radiusKm: radiusKm),
+    );
+    emit(
+      result.when(
+        ok: (shops) => SearchBarbershopsLoaded(shops),
+        fail: (f) => SearchBarbershopsError(f.message),
+      ),
+    );
   }
 
   Future<void> sendRequest(SendMembershipRequestParams params) async {
     final result = await _sendMembershipRequest(params);
-    emit(result.when(
-      ok: (request) => MembershipRequestSent(request.barbershopName),
-      fail: (f) => SearchBarbershopsError(f.message),
-    ));
+    emit(
+      result.when(
+        ok: (request) => MembershipRequestSent(request.barbershopName),
+        fail: (f) => SearchBarbershopsError(f.message),
+      ),
+    );
   }
 }

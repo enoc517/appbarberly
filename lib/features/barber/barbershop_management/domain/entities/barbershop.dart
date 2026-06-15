@@ -13,6 +13,7 @@ class Barbershop {
   final bool hasActivePromotion;
   final List<String> tags;
   final bool isActive;
+  final double? distanceKm;
 
   const Barbershop({
     required this.id,
@@ -29,5 +30,6 @@ class Barbershop {
     required this.hasActivePromotion,
     required this.tags,
     required this.isActive,
+    this.distanceKm,
   });
 }

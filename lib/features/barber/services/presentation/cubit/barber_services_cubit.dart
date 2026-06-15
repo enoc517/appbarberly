@@ -6,6 +6,10 @@ import '../../domain/usecases/get_barber_services.dart';
 import '../../domain/usecases/update_service.dart';
 import 'barber_services_state.dart';
 
+const int kMinServiceDurationMinutes = 5;
+const int kMaxServiceDurationMinutes = 240;
+const int kDefaultServiceDurationMinutes = 60;
+
 class BarberServicesCubit extends Cubit<BarberServicesState> {
   final GetBarberServices _getBarberServices;
   final AddService _addService;
@@ -35,10 +39,12 @@ class BarberServicesCubit extends Cubit<BarberServicesState> {
     final result = await _getBarberServices(
       GetBarberServicesParams(barbershopId: barbershopId, barberId: barberId),
     );
-    emit(result.when(
-      ok: (services) => BarberServicesLoaded(services),
-      fail: (f) => BarberServicesError(f.message),
-    ));
+    emit(
+      result.when(
+        ok: (services) => BarberServicesLoaded(services),
+        fail: (f) => BarberServicesError(f.message),
+      ),
+    );
   }
 
   Future<void> addService({
@@ -49,21 +55,30 @@ class BarberServicesCubit extends Cubit<BarberServicesState> {
     required String category,
   }) async {
     if (_barbershopId == null || _barberId == null) return;
+    final validationError = _validateDuration(durationMinutes);
+    if (validationError != null) {
+      emit(BarberServicesError(validationError));
+      return;
+    }
 
-    final result = await _addService(AddServiceParams(
-      barbershopId: _barbershopId!,
-      barberId: _barberId!,
-      name: name,
-      description: description,
-      price: price,
-      durationMinutes: durationMinutes,
-      category: category,
-    ));
+    final result = await _addService(
+      AddServiceParams(
+        barbershopId: _barbershopId!,
+        barberId: _barberId!,
+        name: name,
+        description: description,
+        price: price,
+        durationMinutes: durationMinutes,
+        category: category,
+      ),
+    );
 
-    emit(result.when(
-      ok: (service) => BarberServiceAdded(service),
-      fail: (f) => BarberServicesError(f.message),
-    ));
+    emit(
+      result.when(
+        ok: (service) => BarberServiceAdded(service),
+        fail: (f) => BarberServicesError(f.message),
+      ),
+    );
   }
 
   Future<void> updateService({
@@ -75,42 +90,65 @@ class BarberServicesCubit extends Cubit<BarberServicesState> {
     String? category,
   }) async {
     if (_barbershopId == null || _barberId == null) return;
+    if (durationMinutes != null) {
+      final validationError = _validateDuration(durationMinutes);
+      if (validationError != null) {
+        emit(BarberServicesError(validationError));
+        return;
+      }
+    }
 
-    final result = await _updateService(UpdateServiceParams(
-      barbershopId: _barbershopId!,
-      barberId: _barberId!,
-      serviceId: serviceId,
-      name: name,
-      description: description,
-      price: price,
-      durationMinutes: durationMinutes,
-      category: category,
-    ));
+    final result = await _updateService(
+      UpdateServiceParams(
+        barbershopId: _barbershopId!,
+        barberId: _barberId!,
+        serviceId: serviceId,
+        name: name,
+        description: description,
+        price: price,
+        durationMinutes: durationMinutes,
+        category: category,
+      ),
+    );
 
-    emit(result.when(
-      ok: (service) => BarberServiceUpdated(service),
-      fail: (f) => BarberServicesError(f.message),
-    ));
+    emit(
+      result.when(
+        ok: (service) => BarberServiceUpdated(service),
+        fail: (f) => BarberServicesError(f.message),
+      ),
+    );
   }
 
   Future<void> deleteService(String serviceId) async {
     if (_barbershopId == null || _barberId == null) return;
 
-    final result = await _deleteService(DeleteServiceParams(
-      barbershopId: _barbershopId!,
-      barberId: _barberId!,
-      serviceId: serviceId,
-    ));
+    final result = await _deleteService(
+      DeleteServiceParams(
+        barbershopId: _barbershopId!,
+        barberId: _barberId!,
+        serviceId: serviceId,
+      ),
+    );
 
-    emit(result.when(
-      ok: (_) => const BarberServiceDeleted(),
-      fail: (f) => BarberServicesError(f.message),
-    ));
+    emit(
+      result.when(
+        ok: (_) => const BarberServiceDeleted(),
+        fail: (f) => BarberServicesError(f.message),
+      ),
+    );
   }
 
   void reload() {
     if (_barbershopId != null && _barberId != null) {
       load(_barbershopId!, _barberId!);
     }
+  }
+
+  String? _validateDuration(int durationMinutes) {
+    if (durationMinutes < kMinServiceDurationMinutes ||
+        durationMinutes > kMaxServiceDurationMinutes) {
+      return 'La duración debe estar entre $kMinServiceDurationMinutes y $kMaxServiceDurationMinutes minutos';
+    }
+    return null;
   }
 }

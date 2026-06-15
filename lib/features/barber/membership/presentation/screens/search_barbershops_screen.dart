@@ -1,12 +1,18 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../../shared/theme/app_theme.dart';
 import '../../../../../shared/widgets/app_toast.dart';
+import '../../../../explore/presentation/utils/distance_formatter.dart';
+import '../../../barbershop_management/domain/entities/barbershop.dart';
 import '../../domain/usecases/send_membership_request.dart';
 import '../cubit/search_barbershops_cubit.dart';
 import '../cubit/search_barbershops_state.dart';
+
+const kMembershipSearchRadii = [5.0, 10.0, 25.0, 50.0];
 
 class SearchBarbershopsScreen extends StatefulWidget {
   final String barberId;
@@ -27,19 +33,30 @@ class SearchBarbershopsScreen extends StatefulWidget {
 
 class _SearchBarbershopsScreenState extends State<SearchBarbershopsScreen> {
   final _searchController = TextEditingController();
+  Timer? _debounce;
+  double _radiusKm = 10.0;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<SearchBarbershopsCubit>().search('');
+      context.read<SearchBarbershopsCubit>().search('', radiusKm: _radiusKm);
     });
   }
 
   @override
   void dispose() {
+    _debounce?.cancel();
     _searchController.dispose();
     super.dispose();
+  }
+
+  void _search(String value) {
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 300), () {
+      if (!mounted) return;
+      context.read<SearchBarbershopsCubit>().search(value, radiusKm: _radiusKm);
+    });
   }
 
   @override
@@ -67,10 +84,10 @@ class _SearchBarbershopsScreenState extends State<SearchBarbershopsScreen> {
             child: TextField(
               controller: _searchController,
               onChanged: (value) {
-                context.read<SearchBarbershopsCubit>().search(value);
+                _search(value);
               },
               decoration: InputDecoration(
-                hintText: 'Buscar por nombre...',
+                hintText: 'Buscar por nombre o barbero...',
                 prefixIcon: const Icon(Icons.search_rounded),
                 filled: true,
                 fillColor: theme.colorScheme.surfaceContainerHighest,
@@ -81,6 +98,41 @@ class _SearchBarbershopsScreenState extends State<SearchBarbershopsScreen> {
               ),
             ),
           ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'Distancia',
+                style: AppTypography.labelLarge.copyWith(
+                  color: theme.colorScheme.onSurface,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+          SizedBox(
+            height: 44,
+            child: ListView.separated(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              scrollDirection: Axis.horizontal,
+              itemBuilder: (context, index) {
+                final radius = kMembershipSearchRadii[index];
+                return ChoiceChip(
+                  label: Text('${radius.toInt()} km'),
+                  selected: _radiusKm == radius,
+                  onSelected: (_) {
+                    setState(() => _radiusKm = radius);
+                    _search(_searchController.text);
+                  },
+                );
+              },
+              separatorBuilder: (context, _) => const SizedBox(width: 8),
+              itemCount: kMembershipSearchRadii.length,
+            ),
+          ),
+          const SizedBox(height: 12),
           Expanded(
             child: BlocConsumer<SearchBarbershopsCubit, SearchBarbershopsState>(
               listener: (context, state) {
@@ -147,7 +199,7 @@ class _SearchBarbershopsScreenState extends State<SearchBarbershopsScreen> {
 }
 
 class _BarbershopTile extends StatelessWidget {
-  final dynamic shop;
+  final Barbershop shop;
   final VoidCallback onRequest;
 
   const _BarbershopTile({required this.shop, required this.onRequest});
@@ -196,9 +248,23 @@ class _BarbershopTile extends StatelessWidget {
                       color: theme.colorScheme.onSurfaceVariant,
                     ),
                   ),
+                  if (shop.distanceKm != null) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      formatDistanceKm(shop.distanceKm),
+                      style: AppTypography.labelMedium.copyWith(
+                        color: theme.colorScheme.primary,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
                   Row(
                     children: [
-                      Icon(Icons.star_rounded, size: 16, color: theme.colorScheme.secondary),
+                      Icon(
+                        Icons.star_rounded,
+                        size: 16,
+                        color: theme.colorScheme.secondary,
+                      ),
                       const SizedBox(width: 4),
                       Text(
                         '${shop.rating}',
@@ -219,7 +285,10 @@ class _BarbershopTile extends StatelessWidget {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 10,
+                ),
               ),
               child: const Text('Solicitar'),
             ),

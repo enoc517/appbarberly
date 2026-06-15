@@ -11,9 +11,12 @@ class MembershipRepositoryImpl implements MembershipRepository {
   const MembershipRepositoryImpl(this._ds);
 
   @override
-  Future<Result<List<Barbershop>>> searchBarbershops(String query) async {
+  Future<Result<List<Barbershop>>> searchBarbershops({
+    required String query,
+    required double radiusKm,
+  }) async {
     try {
-      return Ok(await _ds.searchBarbershops(query));
+      return Ok(await _ds.searchBarbershops(query: query, radiusKm: radiusKm));
     } catch (_) {
       return const Fail(UnknownFailure('No se pudieron buscar barberías'));
     }
@@ -29,14 +32,16 @@ class MembershipRepositoryImpl implements MembershipRepository {
     required String barbershopName,
   }) async {
     try {
-      return Ok(await _ds.sendRequest(
-        barberId: barberId,
-        barberName: barberName,
-        barberEmail: barberEmail,
-        barberAvatarUrl: barberAvatarUrl,
-        barbershopId: barbershopId,
-        barbershopName: barbershopName,
-      ));
+      return Ok(
+        await _ds.sendRequest(
+          barberId: barberId,
+          barberName: barberName,
+          barberEmail: barberEmail,
+          barberAvatarUrl: barberAvatarUrl,
+          barbershopId: barbershopId,
+          barbershopName: barbershopName,
+        ),
+      );
     } catch (_) {
       return const Fail(UnknownFailure('No se pudo enviar la solicitud'));
     }
@@ -63,12 +68,14 @@ class MembershipRepositoryImpl implements MembershipRepository {
     required String reviewedBy,
   }) async {
     try {
-      return Ok(await _ds.reviewRequest(
-        requestId: requestId,
-        barbershopId: barbershopId,
-        approve: approve,
-        reviewedBy: reviewedBy,
-      ));
+      return Ok(
+        await _ds.reviewRequest(
+          requestId: requestId,
+          barbershopId: barbershopId,
+          approve: approve,
+          reviewedBy: reviewedBy,
+        ),
+      );
     } catch (_) {
       return const Fail(UnknownFailure('No se pudo revisar la solicitud'));
     }
@@ -92,9 +99,7 @@ class MembershipRepositoryImpl implements MembershipRepository {
       await _ds.leaveBarbershop(barberId, barbershopId);
       return const Ok(null);
     } catch (_) {
-      return const Fail(
-        UnknownFailure('No se pudo salir de la barbería'),
-      );
+      return const Fail(UnknownFailure('No se pudo salir de la barbería'));
     }
   }
 }
