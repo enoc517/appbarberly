@@ -5,6 +5,7 @@ enum AppNotificationType {
   bookingCancelled,
   lateCancellationPenalty,
   penaltyResolved,
+  membershipRequest,
 }
 
 class AppNotification {

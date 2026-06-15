@@ -100,6 +100,9 @@ class MembershipRemoteDatasourceImpl implements MembershipRemoteDatasource {
     required String barbershopName,
   }) async {
     final docRef = _requestsCollection(barbershopId).doc();
+    final shopDoc = await _shopsCollection.doc(barbershopId).get();
+    final shopData = shopDoc.data() ?? <String, dynamic>{};
+    final ownerId = shopData['ownerId'] as String? ?? '';
 
     final data = <String, dynamic>{
       'barberId': barberId,
@@ -114,7 +117,32 @@ class MembershipRemoteDatasourceImpl implements MembershipRemoteDatasource {
       'reviewedBy': null,
     };
 
-    await docRef.set(data);
+    final notificationRef = _db.collection('notifications').doc();
+    final batch = _db.batch();
+    batch.set(docRef, data);
+
+    if (ownerId.isNotEmpty) {
+      batch.set(notificationRef, {
+        'recipientId': ownerId,
+        'recipientRole': 'barber',
+        'type': 'membershipRequest',
+        'title': 'Nueva solicitud',
+        'body': '$barberName quiere unirse a $barbershopName.',
+        'bookingId': null,
+        'barbershopId': barbershopId,
+        'penaltyId': null,
+        'readAt': null,
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+        'data': {
+          'requestId': docRef.id,
+          'barberId': barberId,
+          'barberName': barberName,
+        },
+      });
+    }
+
+    await batch.commit();
 
     return MembershipRequest(
       id: docRef.id,
@@ -133,12 +161,13 @@ class MembershipRemoteDatasourceImpl implements MembershipRemoteDatasource {
   Future<List<MembershipRequest>> getPendingRequests(
     String barbershopId,
   ) async {
-    final snapshot = await _requestsCollection(barbershopId)
-        .where('status', isEqualTo: 'pending')
-        .orderBy('requestedAt', descending: true)
-        .get();
+    if (barbershopId.isEmpty) return [];
 
-    return snapshot.docs.map((doc) {
+    final snapshot = await _requestsCollection(
+      barbershopId,
+    ).where('status', isEqualTo: 'pending').get();
+
+    final requests = snapshot.docs.map((doc) {
       final data = doc.data();
       return MembershipRequest(
         id: doc.id,
@@ -153,6 +182,9 @@ class MembershipRemoteDatasourceImpl implements MembershipRemoteDatasource {
             (data['requestedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       );
     }).toList();
+
+    requests.sort((a, b) => b.requestedAt.compareTo(a.requestedAt));
+    return requests;
   }
 
   @override

@@ -134,7 +134,8 @@ class BarberAgendaCubit extends Cubit<BarberAgendaState> {
   void _subscribeToEvents() {
     _eventSubscription = _eventBus.stream.listen((event) {
       if (event == BarbershopEvent.barbershopCreated ||
-          event == BarbershopEvent.barbershopUpdated) {
+          event == BarbershopEvent.barbershopUpdated ||
+          event == BarbershopEvent.scheduleUpdated) {
         load(day: _selectedDay);
       }
     });

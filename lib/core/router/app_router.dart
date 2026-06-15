@@ -83,6 +83,8 @@ class AppRouter {
   static const String crearBarberia = '/crear-barberia';
   static const String forgotPassword = '/forgot_password';
   static const String notifications = '/notificaciones';
+  static const String membershipRequests = '/cuenta-barbero/solicitudes';
+  static const String manageSchedule = '/agenda/mi-horario';
 
   static const Set<String> _publicRoutes = {
     welcome,
@@ -435,6 +437,47 @@ class AppRouter {
                     child: const BarberAgendaScreen(),
                   );
                 },
+                routes: [
+                  GoRoute(
+                    path: 'mi-horario',
+                    name: 'miHorario',
+                    builder: (context, state) {
+                      final userId = AppDependencies.getCurrentUserId() ?? '';
+                      return FutureBuilder<String>(
+                        future: AppDependencies.getCurrentBarbershopId(userId),
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState ==
+                              ConnectionState.waiting) {
+                            return const Scaffold(
+                              body: Center(child: CircularProgressIndicator()),
+                            );
+                          }
+
+                          final barbershopId = snapshot.data ?? '';
+                          if (barbershopId.isEmpty) {
+                            return Scaffold(
+                              body: Center(
+                                child: Text(
+                                  'No tienes una barbería asignada',
+                                  style: Theme.of(context).textTheme.bodyLarge,
+                                ),
+                              ),
+                            );
+                          }
+
+                          return BlocProvider(
+                            create: (_) =>
+                                AppDependencies.buildBarberScheduleCubit(),
+                            child: ManageScheduleScreen(
+                              barbershopId: barbershopId,
+                              barberId: userId,
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  ),
+                ],
               ),
             ],
           ),
@@ -525,7 +568,25 @@ class AppRouter {
                       return FutureBuilder<String>(
                         future: AppDependencies.getCurrentBarbershopId(userId),
                         builder: (context, snapshot) {
+                          if (snapshot.connectionState ==
+                              ConnectionState.waiting) {
+                            return const Scaffold(
+                              body: Center(child: CircularProgressIndicator()),
+                            );
+                          }
+
                           final barbershopId = snapshot.data ?? '';
+                          if (barbershopId.isEmpty) {
+                            return Scaffold(
+                              body: Center(
+                                child: Text(
+                                  'No tienes una barbería asignada',
+                                  style: Theme.of(context).textTheme.bodyLarge,
+                                ),
+                              ),
+                            );
+                          }
+
                           return BlocProvider(
                             create: (_) =>
                                 AppDependencies.buildMembershipRequestsCubit(),
@@ -570,27 +631,6 @@ class AppRouter {
                             create: (_) =>
                                 AppDependencies.buildBarberServicesCubit(),
                             child: ManageServicesScreen(
-                              barbershopId: barbershopId,
-                              barberId: userId,
-                            ),
-                          );
-                        },
-                      );
-                    },
-                  ),
-                  GoRoute(
-                    path: 'mi-horario',
-                    name: 'miHorario',
-                    builder: (context, state) {
-                      final userId = AppDependencies.getCurrentUserId() ?? '';
-                      return FutureBuilder<String>(
-                        future: AppDependencies.getCurrentBarbershopId(userId),
-                        builder: (context, snapshot) {
-                          final barbershopId = snapshot.data ?? '';
-                          return BlocProvider(
-                            create: (_) =>
-                                AppDependencies.buildBarberScheduleCubit(),
-                            child: ManageScheduleScreen(
                               barbershopId: barbershopId,
                               barberId: userId,
                             ),

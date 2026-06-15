@@ -387,6 +387,7 @@ class AppDependencies {
     return BarberScheduleCubit(
       getBarberSchedule: getBarberScheduleUseCase,
       setSchedule: setScheduleUseCase,
+      eventBus: barbershopEventBus,
     );
   }
 

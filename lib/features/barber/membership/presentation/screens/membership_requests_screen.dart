@@ -30,8 +30,19 @@ class _MembershipRequestsScreenState extends State<MembershipRequestsScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<MembershipRequestsCubit>().load(widget.barbershopId);
+      if (widget.barbershopId.isNotEmpty) {
+        context.read<MembershipRequestsCubit>().load(widget.barbershopId);
+      }
     });
+  }
+
+  @override
+  void didUpdateWidget(covariant MembershipRequestsScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.barbershopId != widget.barbershopId &&
+        widget.barbershopId.isNotEmpty) {
+      context.read<MembershipRequestsCubit>().load(widget.barbershopId);
+    }
   }
 
   @override
@@ -55,8 +66,8 @@ class _MembershipRequestsScreenState extends State<MembershipRequestsScreen> {
       body: BlocConsumer<MembershipRequestsCubit, MembershipRequestsState>(
         listener: (context, state) {
           if (state is MembershipRequestReviewed) {
-            final approved = state.request.status ==
-                MembershipRequestStatus.approved;
+            final approved =
+                state.request.status == MembershipRequestStatus.approved;
             AppToast.success(
               context,
               approved ? 'Solicitud aprobada' : 'Solicitud rechazada',
@@ -219,7 +230,11 @@ class _RequestCard extends StatelessWidget {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(AppRadius.md),
                       ),
-                      side: BorderSide(color: theme.colorScheme.secondary.withValues(alpha: 0.3)),
+                      side: BorderSide(
+                        color: theme.colorScheme.secondary.withValues(
+                          alpha: 0.3,
+                        ),
+                      ),
                     ),
                     child: const Text('Rechazar'),
                   ),

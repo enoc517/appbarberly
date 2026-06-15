@@ -1,5 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../../core/events/barbershop_event_bus.dart';
 import '../../domain/entities/barber_schedule.dart';
 import '../../domain/usecases/get_barber_schedule.dart';
 import '../../domain/usecases/set_schedule.dart';
@@ -8,31 +9,31 @@ import 'barber_schedule_state.dart';
 class BarberScheduleCubit extends Cubit<BarberScheduleState> {
   final GetBarberSchedule _getBarberSchedule;
   final SetSchedule _setSchedule;
+  final BarbershopEventBus _eventBus;
 
   BarberScheduleCubit({
     required GetBarberSchedule getBarberSchedule,
     required SetSchedule setSchedule,
+    required BarbershopEventBus eventBus,
   }) : _getBarberSchedule = getBarberSchedule,
        _setSchedule = setSchedule,
+       _eventBus = eventBus,
        super(const BarberScheduleInitial());
 
   String? _barbershopId;
   String? _barberId;
 
-  Set<int> get selectedDays =>
-      state is BarberScheduleLoaded
-          ? (state as BarberScheduleLoaded).selectedDays
-          : <int>{};
+  Set<int> get selectedDays => state is BarberScheduleLoaded
+      ? (state as BarberScheduleLoaded).selectedDays
+      : <int>{};
 
-  String? get pendingStartTime =>
-      state is BarberScheduleLoaded
-          ? (state as BarberScheduleLoaded).pendingStartTime
-          : null;
+  String? get pendingStartTime => state is BarberScheduleLoaded
+      ? (state as BarberScheduleLoaded).pendingStartTime
+      : null;
 
-  String? get pendingEndTime =>
-      state is BarberScheduleLoaded
-          ? (state as BarberScheduleLoaded).pendingEndTime
-          : null;
+  String? get pendingEndTime => state is BarberScheduleLoaded
+      ? (state as BarberScheduleLoaded).pendingEndTime
+      : null;
 
   BarberScheduleLoaded? get _loadedOrNull =>
       state is BarberScheduleLoaded ? state as BarberScheduleLoaded : null;
@@ -48,21 +49,23 @@ class BarberScheduleCubit extends Cubit<BarberScheduleState> {
       GetBarberScheduleParams(barbershopId: barbershopId, barberId: barberId),
     );
 
-    emit(result.when(
-      ok: (schedule) {
-        final scheduleMap = <int, BarberSchedule>{};
-        for (final s in schedule) {
-          scheduleMap[s.dayOfWeek] = s;
-        }
-        return BarberScheduleLoaded(
-          schedule: scheduleMap,
-          selectedDays: const {},
-          pendingStartTime: null,
-          pendingEndTime: null,
-        );
-      },
-      fail: (f) => BarberScheduleError(f.message),
-    ));
+    emit(
+      result.when(
+        ok: (schedule) {
+          final scheduleMap = <int, BarberSchedule>{};
+          for (final s in schedule) {
+            scheduleMap[s.dayOfWeek] = s;
+          }
+          return BarberScheduleLoaded(
+            schedule: scheduleMap,
+            selectedDays: const {},
+            pendingStartTime: null,
+            pendingEndTime: null,
+          );
+        },
+        fail: (f) => BarberScheduleError(f.message),
+      ),
+    );
   }
 
   void toggleDay(int dayOfWeek) {
@@ -75,31 +78,27 @@ class BarberScheduleCubit extends Cubit<BarberScheduleState> {
     } else {
       updated.add(dayOfWeek);
     }
-    emit(_buildLoaded(
-      current,
-      selectedDays: updated,
-    ));
+    emit(_buildLoaded(current, selectedDays: updated));
   }
 
   void selectPreset(List<int> days) {
     final current = _loadedOrNull;
     if (current == null) return;
 
-    emit(_buildLoaded(
-      current,
-      selectedDays: days.toSet(),
-    ));
+    emit(_buildLoaded(current, selectedDays: days.toSet()));
   }
 
   void setPendingTimes(String? startTime, String? endTime) {
     final current = _loadedOrNull;
     if (current == null) return;
 
-    emit(_buildLoaded(
-      current,
-      pendingStartTime: startTime,
-      pendingEndTime: endTime,
-    ));
+    emit(
+      _buildLoaded(
+        current,
+        pendingStartTime: startTime,
+        pendingEndTime: endTime,
+      ),
+    );
   }
 
   Future<void> saveDays() async {
@@ -107,21 +106,27 @@ class BarberScheduleCubit extends Cubit<BarberScheduleState> {
     if (current == null) return;
     if (_barbershopId == null || _barberId == null) return;
     if (current.selectedDays.isEmpty) return;
-    if (current.pendingStartTime == null || current.pendingEndTime == null) return;
+    if (current.pendingStartTime == null || current.pendingEndTime == null) {
+      return;
+    }
 
     final startTime24 = _to24h(current.pendingStartTime!);
     final endTime24 = _to24h(current.pendingEndTime!);
 
     final futures = <Future>[];
     for (final day in current.selectedDays) {
-      futures.add(_setSchedule(SetScheduleParams(
-        barbershopId: _barbershopId!,
-        barberId: _barberId!,
-        dayOfWeek: day,
-        startTime: startTime24,
-        endTime: endTime24,
-        isActive: true,
-      )));
+      futures.add(
+        _setSchedule(
+          SetScheduleParams(
+            barbershopId: _barbershopId!,
+            barberId: _barberId!,
+            dayOfWeek: day,
+            startTime: startTime24,
+            endTime: endTime24,
+            isActive: true,
+          ),
+        ),
+      );
     }
 
     await Future.wait(futures);
@@ -138,14 +143,17 @@ class BarberScheduleCubit extends Cubit<BarberScheduleState> {
     }
 
     emit(BarberScheduleDaysSaved(current.selectedDays.toList()));
+    _eventBus.emit(BarbershopEvent.scheduleUpdated);
 
     await Future.delayed(const Duration(milliseconds: 100));
-    emit(BarberScheduleLoaded(
-      schedule: updatedSchedule,
-      selectedDays: const {},
-      pendingStartTime: null,
-      pendingEndTime: null,
-    ));
+    emit(
+      BarberScheduleLoaded(
+        schedule: updatedSchedule,
+        selectedDays: const {},
+        pendingStartTime: null,
+        pendingEndTime: null,
+      ),
+    );
   }
 
   BarberScheduleLoaded _buildLoaded(
@@ -180,17 +188,20 @@ class BarberScheduleCubit extends Cubit<BarberScheduleState> {
     if (_barbershopId == null || _barberId == null) return;
 
     for (final entry in current.schedule.entries) {
-      await _setSchedule(SetScheduleParams(
-        barbershopId: _barbershopId!,
-        barberId: _barberId!,
-        dayOfWeek: entry.key,
-        startTime: entry.value.startTime,
-        endTime: entry.value.endTime,
-        isActive: entry.value.isActive,
-      ));
+      await _setSchedule(
+        SetScheduleParams(
+          barbershopId: _barbershopId!,
+          barberId: _barberId!,
+          dayOfWeek: entry.key,
+          startTime: entry.value.startTime,
+          endTime: entry.value.endTime,
+          isActive: entry.value.isActive,
+        ),
+      );
     }
 
     emit(const BarberScheduleSaved());
+    _eventBus.emit(BarbershopEvent.scheduleUpdated);
     if (_barbershopId != null && _barberId != null) {
       load(_barbershopId!, _barberId!);
     }

@@ -258,6 +258,7 @@ class _NotificationCard extends StatelessWidget {
     AppNotificationType.bookingCancelled => Icons.event_busy_rounded,
     AppNotificationType.lateCancellationPenalty => Icons.request_quote_rounded,
     AppNotificationType.penaltyResolved => Icons.check_circle_rounded,
+    AppNotificationType.membershipRequest => Icons.group_add_rounded,
   };
 }
 
@@ -282,6 +283,10 @@ String? _destinationFor(AppNotification notification) {
           ? '/cuenta-barbero/penalizaciones'
           : AppRouter.citas,
     AppNotificationType.penaltyResolved => AppRouter.citas,
+    AppNotificationType.membershipRequest =>
+      notification.recipientRole == 'barber'
+          ? AppRouter.membershipRequests
+          : null,
   };
 }
 

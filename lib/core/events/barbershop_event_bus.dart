@@ -5,6 +5,7 @@ enum BarbershopEvent {
   barbershopUpdated,
   bookingUpdated,
   favoritesUpdated,
+  scheduleUpdated,
 }
 
 class BarbershopEventBus {

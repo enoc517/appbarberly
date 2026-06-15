@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../../core/router/app_router.dart';
 import '../../../../../shared/motion/app_motion.dart';
 import '../../../../../shared/theme/app_theme.dart';
 import '../../../../bookings/domain/entities/booking.dart';
@@ -1152,7 +1153,7 @@ class _EmptyView extends StatelessWidget {
                 child: SizedBox(
                   width: double.infinity,
                   child: FilledButton.icon(
-                    onPressed: () => context.go('/cuenta-barbero/mi-horario'),
+                    onPressed: () => context.go(AppRouter.manageSchedule),
                     icon: Icon(
                       isNoBarbershop
                           ? Icons.storefront_rounded

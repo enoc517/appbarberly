@@ -21,13 +21,13 @@ void main() {
     setUp(() {
       bookingsRepository = _FakeBookingsRepository();
       firestore = FakeFirebaseFirestore();
-        cubit = BarberAgendaCubit(
-          bookingsRepository: bookingsRepository,
-          firestore: firestore,
-          getBarberSchedule: GetBarberSchedule(_FakeBarberServicesRepository()),
-          userId: 'barber-1',
-          eventBus: BarbershopEventBus.instance,
-        );
+      cubit = BarberAgendaCubit(
+        bookingsRepository: bookingsRepository,
+        firestore: firestore,
+        getBarberSchedule: GetBarberSchedule(_FakeBarberServicesRepository()),
+        userId: 'barber-1',
+        eventBus: BarbershopEventBus.instance,
+      );
     });
 
     tearDown(() async {
@@ -54,7 +54,8 @@ void main() {
     test(
       'completeBooking returns false without entering an error state when the repository fails',
       () async {
-        final failingRepository = _FakeBookingsRepository()..throwOnComplete = true;
+        final failingRepository = _FakeBookingsRepository()
+          ..throwOnComplete = true;
         final localCubit = BarberAgendaCubit(
           bookingsRepository: failingRepository,
           firestore: FakeFirebaseFirestore(),
@@ -142,6 +143,23 @@ void main() {
       expect(bookingsRepository.watchArgs!.$2, 'barber-1');
       expect(bookingsRepository.watchArgs!.$3, '2026-06-03');
     });
+
+    test('scheduleUpdated refreshes the current agenda', () async {
+      await firestore.collection('users').doc('barber-1').set({
+        'barbershopId': 'shop-1',
+      });
+
+      await cubit.load(day: DateTime(2026, 6, 3));
+      expect(bookingsRepository.watchCount, 1);
+
+      BarbershopEventBus.instance.emit(BarbershopEvent.scheduleUpdated);
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+
+      expect(bookingsRepository.watchCount, 2);
+      expect(bookingsRepository.watchArgs!.$1, 'shop-1');
+      expect(bookingsRepository.watchArgs!.$2, 'barber-1');
+      expect(bookingsRepository.watchArgs!.$3, '2026-06-03');
+    });
   });
 }
 
@@ -224,6 +242,7 @@ class _FakeBarberServicesRepository implements BarberServicesRepository {
 class _FakeBookingsRepository implements BookingsRepository {
   final calls = <String>[];
   (String, String, String)? watchArgs;
+  var watchCount = 0;
   final _agendaController = StreamController<List<Booking>>.broadcast();
   bool throwOnComplete = false;
 
@@ -270,6 +289,7 @@ class _FakeBookingsRepository implements BookingsRepository {
     required String barberId,
     required String dateKey,
   }) {
+    watchCount++;
     watchArgs = (barbershopId, barberId, dateKey);
     return _agendaController.stream;
   }

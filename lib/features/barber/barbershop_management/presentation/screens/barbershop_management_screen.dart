@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../../core/router/app_router.dart';
 import '../../../../../shared/motion/app_motion.dart';
 import '../../../../../shared/theme/app_theme.dart';
 import '../cubit/barbershop_management_hub_cubit.dart';
@@ -193,7 +194,7 @@ class _ManagementHubView extends StatelessWidget {
             icon: Icons.schedule_rounded,
             title: 'Mi horario',
             subtitle: 'Configura tu disponibilidad semanal',
-            onTap: () => context.push('/cuenta-barbero/mi-horario'),
+            onTap: () => context.push(AppRouter.manageSchedule),
           ),
         ),
         if (isOwner) ...[
