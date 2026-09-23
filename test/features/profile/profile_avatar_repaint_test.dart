@@ -162,6 +162,9 @@ class _FakeImageUploader implements ImageUploadDatasource {
   }) async {
     return nextUrl;
   }
+
+  @override
+  Future<void> deleteImageByUrl(String imageUrl) async {}
 }
 
 class _FakeUserValidationDatasource implements UserValidationSource {

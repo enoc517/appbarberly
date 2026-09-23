@@ -169,13 +169,15 @@ class BarberProfileCubit extends Cubit<BarberProfileState> {
         }
       }
 
+      final previousImageUrl = user.profileImageUrl;
       String? uploadedImageUrl;
       if (imageFile != null) {
         try {
           uploadedImageUrl = await _imageUploader.uploadImage(
             file: File(imageFile.path),
             folder: 'users',
-            publicId: '${user.id}/avatar',
+            publicId:
+                '${user.id}/avatar_${DateTime.now().millisecondsSinceEpoch}',
           );
         } catch (e) {
           emit(
@@ -206,6 +208,16 @@ class BarberProfileCubit extends Cubit<BarberProfileState> {
           ),
         );
         return;
+      }
+
+      if (previousImageUrl != null &&
+          previousImageUrl.isNotEmpty &&
+          previousImageUrl != uploadedImageUrl) {
+        try {
+          await _imageUploader.deleteImageByUrl(previousImageUrl);
+        } catch (_) {
+          // Cleanup is best-effort; profile update already succeeded.
+        }
       }
 
       emit(

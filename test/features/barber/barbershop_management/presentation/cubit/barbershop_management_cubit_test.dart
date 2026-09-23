@@ -128,6 +128,9 @@ class _FakeImageUploader implements ImageUploadDatasource {
     calls.add('${file.path}:$folder:$publicId');
     return 'https://cdn.example/${file.path}';
   }
+
+  @override
+  Future<void> deleteImageByUrl(String imageUrl) async {}
 }
 
 CreateBarbershopParams _createParams({required String imageUrl}) {

@@ -9,6 +9,8 @@ abstract class ImageUploadDatasource {
     required String folder,
     required String publicId,
   });
+
+  Future<void> deleteImageByUrl(String imageUrl);
 }
 
 class CloudinaryDatasource implements ImageUploadDatasource {
@@ -55,6 +57,12 @@ class CloudinaryDatasource implements ImageUploadDatasource {
     }
   }
 
+  @override
+  Future<void> deleteImageByUrl(String imageUrl) async {
+    final publicId = _extractPublicId(imageUrl);
+    await deleteImage(publicId);
+  }
+
   Future<void> deleteImage(String publicId) async {
     final apiKey = this.apiKey;
     final apiSecret = this.apiSecret;
@@ -84,6 +92,26 @@ class CloudinaryDatasource implements ImageUploadDatasource {
     if (response.statusCode != 200) {
       throw Exception('Cloudinary delete failed: ${response.statusCode}');
     }
+  }
+
+  String _extractPublicId(String imageUrl) {
+    final uri = Uri.parse(imageUrl);
+    final uploadIndex = uri.pathSegments.indexOf('upload');
+    if (uploadIndex == -1 || uploadIndex + 1 >= uri.pathSegments.length) {
+      throw ArgumentError.value(imageUrl, 'imageUrl', 'Invalid Cloudinary URL');
+    }
+
+    final segments = uri.pathSegments.sublist(uploadIndex + 1);
+    if (segments.isNotEmpty && RegExp(r'^v\d+$').hasMatch(segments.first)) {
+      segments.removeAt(0);
+    }
+
+    if (segments.isEmpty) {
+      throw ArgumentError.value(imageUrl, 'imageUrl', 'Invalid Cloudinary URL');
+    }
+
+    final last = segments.removeLast().replaceFirst(RegExp(r'\.[^.\/]+$'), '');
+    return [...segments, last].join('/');
   }
 
   String _generateSignature(String publicId, int timestamp, String apiSecret) {

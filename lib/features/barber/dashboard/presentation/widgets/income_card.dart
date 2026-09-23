@@ -69,7 +69,7 @@ class IncomeCard extends StatelessWidget {
             duration: reduced ? Duration.zero : AppMotion.entrance,
             curve: AppMotion.standard,
             builder: (context, value, child) => Text(
-              '\$${value.toStringAsFixed(2)}',
+              '₡${value.toStringAsFixed(2)}',
               style: AppTypography.displaySmall.copyWith(
                 color: theme.colorScheme.onPrimary,
                 fontWeight: FontWeight.w800,
@@ -79,7 +79,7 @@ class IncomeCard extends StatelessWidget {
           if (estimatedIncome != null) ...[
             const SizedBox(height: 8),
             Text(
-              'Estimado: \$${estimatedIncome!.toStringAsFixed(2)}',
+              'Estimado: ₡${estimatedIncome!.toStringAsFixed(2)}',
               style: AppTypography.labelLarge.copyWith(
                 color: theme.colorScheme.onPrimary.withValues(alpha: 0.9),
                 fontWeight: FontWeight.w700,

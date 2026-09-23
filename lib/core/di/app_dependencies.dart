@@ -81,6 +81,11 @@ import '../theme/theme_cubit.dart';
 class AppDependencies {
   AppDependencies._();
 
+  static const String _cloudinaryApiKey =
+      String.fromEnvironment('CLOUDINARY_API_KEY');
+  static const String _cloudinaryApiSecret =
+      String.fromEnvironment('CLOUDINARY_API_SECRET');
+
   static final FirebaseAuth firebaseAuth = FirebaseAuth.instance;
   static final FirebaseFirestore firestore = FirebaseFirestore.instance;
   static final GoogleSignIn googleSignIn = GoogleSignIn(
@@ -95,6 +100,8 @@ class AppDependencies {
   static final CloudinaryDatasource cloudinaryDatasource = CloudinaryDatasource(
     cloudName: 'ducfjckca',
     uploadPreset: 'mediaflows',
+    apiKey: _cloudinaryApiKey.isEmpty ? null : _cloudinaryApiKey,
+    apiSecret: _cloudinaryApiSecret.isEmpty ? null : _cloudinaryApiSecret,
   );
 
   static final UserValidationDatasource userValidationDatasource =

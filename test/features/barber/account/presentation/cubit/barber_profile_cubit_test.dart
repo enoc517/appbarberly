@@ -49,6 +49,23 @@ void main() {
       expect(cubit.state.userName, 'Barber Updated');
     });
 
+    test('tries to delete the previous avatar after a successful update', () async {
+      authRepository.currentUser = authRepository.currentUser.copyWith(
+        profileImageUrl: 'https://cdn.test/old-barber.jpg',
+      );
+      imageUploader.nextUrl = 'https://cdn.test/new-barber.jpg';
+      await cubit.loadData();
+
+      await cubit.saveProfile(
+        fullName: 'Barber Updated',
+        phone: '333',
+        imageFile: XFile('barber.jpg'),
+      );
+
+      expect(imageUploader.deletedUrls, ['https://cdn.test/old-barber.jpg']);
+      expect(cubit.state.profileImageUrl, imageUploader.nextUrl);
+    });
+
     test('does not persist profile changes when upload fails', () async {
       imageUploader.error = Exception('network down');
 
@@ -125,6 +142,7 @@ class _FakeImageUploader implements ImageUploadDatasource {
   String nextUrl = 'https://cdn.test/avatar.jpg';
   Object? error;
   final calls = <String>[];
+  final deletedUrls = <String>[];
 
   @override
   Future<String> uploadImage({
@@ -136,6 +154,11 @@ class _FakeImageUploader implements ImageUploadDatasource {
     final error = this.error;
     if (error != null) throw error;
     return nextUrl;
+  }
+
+  @override
+  Future<void> deleteImageByUrl(String imageUrl) async {
+    deletedUrls.add(imageUrl);
   }
 }
 
